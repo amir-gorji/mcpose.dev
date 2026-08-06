@@ -1,0 +1,46 @@
+.page {
+  min-height: 100vh;
+}
+
+.shell {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0 var(--space-8);
+  display: flex;
+  gap: calc(var(--space-8) * 2);
+  align-items: flex-start;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  max-width: 720px;
+  padding: calc(var(--space-8) * 1.6) 0 calc(var(--space-8) * 3);
+}
+
+.title {
+  font-size: 32px;
+  margin: 0 0 var(--space-4);
+}
+
+/* The article's first paragraph is the lede. */
+.main > p:first-of-type {
+  margin: 0 0 calc(var(--space-8) * 1.6);
+  font-size: 15.5px;
+  line-height: 1.7;
+  color: var(--color-neutral-400);
+  text-wrap: pretty;
+}
+
+/* The article keeps the full width once the sidebar becomes a drawer. */
+@media (max-width: 768px) {
+  .shell {
+    gap: 0;
+    padding: 0 var(--space-6);
+  }
+
+  .main {
+    max-width: none;
+    padding-top: var(--space-8);
+  }
+}

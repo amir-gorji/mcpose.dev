@@ -1,0 +1,72 @@
+.grid {
+  display: grid;
+  grid-template-columns: 1.02fr 1fr;
+  gap: calc(var(--space-8) * 2.5);
+  align-items: center;
+}
+
+.kicker {
+  margin-bottom: var(--space-6);
+}
+
+.heading {
+  margin: 0 0 var(--space-6);
+  text-wrap: pretty;
+}
+
+.lede {
+  margin: 0 0 var(--space-8);
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--color-neutral-400);
+  max-width: 520px;
+  text-wrap: pretty;
+}
+
+.installRow {
+  margin-bottom: var(--space-6);
+}
+
+.buttonRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.metaRow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-neutral-500);
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.metaDot {
+  color: var(--color-neutral-700);
+}
+
+.codeLang {
+  font-size: 10.5px;
+  color: var(--color-neutral-600);
+}
+
+@media (max-width: 960px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: calc(var(--space-8) * 1.6);
+  }
+
+  /* Stacked, the code window must yield to the viewport instead of sizing
+     to its longest line; the <pre> takes over with its own scroll. */
+  .codeColumn {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .heading {
+    font-size: 34px;
+  }
+}

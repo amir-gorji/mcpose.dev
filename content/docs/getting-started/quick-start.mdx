@@ -1,0 +1,107 @@
+---
+title: "Quick Start"
+description: "Wrap an upstream MCP server with a logging middleware and serve it over stdio."
+prev: "/docs/getting-started/install"
+next: "/docs/concepts/proxy-model"
+---
+
+Wrap an upstream MCP server with a logging middleware and serve it over stdio.
+Ten lines of glue — nothing upstream changes.
+
+## Prerequisites [#prerequisites]
+
+- Node.js `20` or newer.
+- `@modelcontextprotocol/sdk ≥ 1.0` as a peer dependency.
+- TypeScript is optional — mcpose ships ESM with first-class types.
+
+## Install [#install]
+
+```bash title="terminal" copy="commands"
+# core
+npm install mcpose
+
+# peer dependency — installed separately
+npm install @modelcontextprotocol/sdk@">=1.0.0"
+
+# compliance audit trails (optional)
+npm install @mcpose/audit
+```
+
+## Wrap a server [#wrap]
+
+Connect to the upstream, define middleware, start the proxy.
+Middleware follows the onion model: each layer runs before *and* after the inner pipeline.
+
+```ts title="proxy.ts" copy="strip-line-comments"
+import { createBackendClient, startProxy } from 'mcpose';
+import type { ToolMiddleware } from 'mcpose';
+
+// 1 · Connect to the upstream MCP server (stdio)
+const backend = await createBackendClient({
+  command: 'node',
+  args: ['/path/to/backend-server.mjs'],
+});
+
+// 2 · Define middleware — before and after the upstream call
+const logging: ToolMiddleware = async (req, next) => {
+  console.error(`→ ${req.params.name}`);
+  const result = await next(req);
+  console.error(`← ${req.params.name} done`);
+  return result;
+};
+
+// 3 · Start the proxy on stdio
+await startProxy(backend, {
+  toolMiddleware: [logging],
+});
+```
+
+<Note kicker="Note · Middleware order">Middleware arrays use **response-processing order**: the first element processes the response first. To keep raw PII out of audit logs, write `toolMiddleware: [piiMW, auditMW]` — the audit layer then only ever sees redacted data.</Note>
+
+## Run it [#run]
+
+The proxy is a normal MCP server.
+Point any client at it:
+
+```json title="claude_desktop_config.json" copy="full"
+{
+  "mcpServers": {
+    "governed-search": {
+      "command": "node",
+      "args": ["./proxy.mjs"]
+    }
+  }
+}
+```
+
+Serving over HTTP instead?
+Swap `startProxy` for `startHttpProxy` — mTLS, session limits, per-session identity resolution, and SSE reconnect replay live there.
+
+## Routing paths [#routing]
+
+For each tool or resource, the proxy picks one of three paths:
+
+| Path | Option | Behavior |
+| --- | --- | --- |
+| Hidden | hiddenTools | Omitted from lists; rejected with `TOOL_HIDDEN` at call time — still audited. |
+| Pass-through | passThroughTools | Forwarded raw; transformers skipped, wrapped observers still run. |
+| Middleware | everything else | Routed through the full `toolMiddleware` pipeline. |
+
+Hidden beats pass-through: a tool listed in both stays hidden.
+
+## Next steps [#next]
+
+<LinkCards>
+  <LinkCard
+    href="/docs/concepts/middleware-model/"
+    title="Middleware model →"
+    body="The onion, ordering conventions, compose(), and markPassThroughObserver()."
+  />
+  <LinkCard
+    href="/docs/packages/audit/"
+    title="@mcpose/audit →"
+    body="HMAC chains, the replay manifest, sensitivity tiers, and verifiers."
+  />
+</LinkCards>
+
+<EditLink />

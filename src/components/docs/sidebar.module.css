@@ -1,0 +1,78 @@
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 56px;
+  max-height: calc(100vh - 56px);
+  overflow-y: auto;
+  padding: var(--space-8) 0 calc(var(--space-8) * 2);
+  background:
+    linear-gradient(
+      to bottom,
+      transparent,
+      var(--color-divider) 48px,
+      var(--color-divider) calc(100% - 48px),
+      transparent
+    )
+    no-repeat right / 1px 100%;
+}
+
+/* Drawer variant: same tree, no sticky column or fading edge. */
+.sidebarDrawer {
+  width: 100%;
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding-right: var(--space-6);
+}
+
+.groupLabel {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-neutral-600);
+  font-weight: 500;
+  margin-bottom: var(--space-3);
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.item {
+  display: block;
+  font-size: 13px;
+  color: var(--color-neutral-400);
+  text-decoration: none;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+}
+
+.item:hover {
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+
+.itemMono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.itemActive,
+.itemActive:hover {
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  font-weight: 500;
+}
+
+/* The sticky column gives way to the nav drawer on narrow viewports. */
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+}

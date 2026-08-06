@@ -1,0 +1,29 @@
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: calc(var(--space-8) * 2.5) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.heading {
+  margin: 0 0 var(--space-3);
+}
+
+.subline {
+  margin: 0 0 var(--space-8);
+  font-size: 14px;
+  color: var(--color-neutral-400);
+}
+
+.installRow {
+  margin-bottom: var(--space-8);
+}
+
+@media (max-width: 560px) {
+  .card {
+    padding: calc(var(--space-8) * 1.5) var(--space-6);
+  }
+}
