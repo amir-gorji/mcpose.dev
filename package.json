@@ -8,6 +8,7 @@
     "postbuild": "pagefind --site out",
     "serve": "npx serve out -l 4000",
     "postinstall": "fumadocs-mdx",
+    "test": "pnpm build && node --test \"tests/*.test.mjs\"",
     "typecheck": "tsc --noEmit",
     "lint": "eslint ."
   },
