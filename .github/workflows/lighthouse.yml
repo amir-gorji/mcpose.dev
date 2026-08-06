@@ -1,0 +1,94 @@
+name: Lighthouse
+
+# Reusable audit, called once against the PR preview and once against production.
+# It runs against a real deployment rather than a local server so the measured
+# numbers include the actual Cloudflare edge, compression, and the response
+# headers from public/_headers.
+on:
+  workflow_call:
+    inputs:
+      base-url:
+        description: Origin to audit, with no trailing slash.
+        required: true
+        type: string
+      pr-number:
+        description: PR to comment the results on. Omit to skip commenting.
+        required: false
+        type: number
+        default: 0
+      label:
+        description: Human-readable name for the target, used in the PR comment.
+        required: false
+        type: string
+        default: deployment
+
+jobs:
+  audit:
+    name: SEO and Web Vitals
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      # A fresh Workers version can 404 for a moment while it propagates.
+      # Auditing during that window would score a 404 page, not the site.
+      - name: Wait for the deployment to serve
+        env:
+          BASE: ${{ inputs.base-url }}
+        run: |
+          for attempt in $(seq 1 30); do
+            code="$(curl -fsS -o /dev/null -w '%{http_code}' "${BASE}/" || true)"
+            if [ "$code" = "200" ]; then
+              echo "Serving after ${attempt} attempt(s)."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::${BASE}/ never returned 200 (last status: ${code:-none})"
+          exit 1
+
+      # Split collect from assert so a threshold breach is reported as an
+      # assertion failure with the offending numbers, not as a collection error.
+      - name: Collect Lighthouse runs
+        env:
+          BASE: ${{ inputs.base-url }}
+        run: |
+          npx --yes @lhci/cli@0.15.1 collect \
+            --url="${BASE}/" \
+            --url="${BASE}/docs/" \
+            --url="${BASE}/docs/concepts/middleware-model/"
+
+      - name: Summarise scores
+        id: summary
+        run: node .github/scripts/lighthouse-summary.mjs .lighthouseci "$GITHUB_STEP_SUMMARY" summary.md
+
+      - name: Comment results on the PR
+        if: inputs.pr-number > 0
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ inputs.pr-number }}
+          LABEL: ${{ inputs.label }}
+        run: |
+          {
+            printf '### Lighthouse — %s\n\n' "$LABEL"
+            cat summary.md
+            printf '\n_Median of 3 mobile runs against the live %s._\n' "$LABEL"
+          } | gh pr comment "$PR" --body-file - --edit-last --create-if-none
+
+      # Assert last so the summary and PR comment are published even on a breach.
+      - name: Assert thresholds
+        run: npx --yes @lhci/cli@0.15.1 assert
+
+      - name: Upload full reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lighthouse-${{ inputs.label }}
+          path: .lighthouseci/
+          retention-days: 14

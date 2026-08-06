@@ -97,6 +97,8 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+    outputs:
+      url: ${{ steps.upload.outputs.deployment-url }}
     steps:
       - uses: actions/checkout@v7
 
@@ -127,3 +129,29 @@ jobs:
             "" \
             "_Updated automatically on each push to this PR._" \
             | gh pr comment "$PR" --body-file - --edit-last --create-if-none
+
+  # SEO and Core Web Vitals are measured against real deployments, not a local
+  # server, so the numbers include the Cloudflare edge, compression, and the
+  # response headers from public/_headers.
+  audit-preview:
+    name: Audit preview
+    needs: preview
+    permissions:
+      contents: read
+      pull-requests: write
+    uses: ./.github/workflows/lighthouse.yml
+    with:
+      base-url: ${{ needs.preview.outputs.url }}
+      pr-number: ${{ github.event.number }}
+      label: preview
+
+  audit-production:
+    name: Audit production
+    needs: deploy
+    permissions:
+      contents: read
+      pull-requests: write
+    uses: ./.github/workflows/lighthouse.yml
+    with:
+      base-url: https://mcpose.dev
+      label: production
