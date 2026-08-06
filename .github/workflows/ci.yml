@@ -87,6 +87,11 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: ${{ needs.verify.outputs.wrangler-version }}
+          # The action otherwise infers pnpm from pnpm-lock.yaml and fails,
+          # because this job only checks out and downloads the artifact — it
+          # never installs pnpm. npm is preinstalled and is all the action
+          # needs to fetch and run Wrangler.
+          packageManager: npm
           command: deploy
 
   preview:
@@ -119,6 +124,8 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: ${{ needs.verify.outputs.wrangler-version }}
+          # See the deploy job: this job has no pnpm either.
+          packageManager: npm
           command: versions upload --preview-alias pr-${{ github.event.number }}
 
       - name: Comment preview URL on the PR
