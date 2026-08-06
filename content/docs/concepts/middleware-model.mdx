@@ -1,9 +1,147 @@
 ---
 title: "Middleware model"
 description: "The onion, ordering conventions, compose(), and markPassThroughObserver()."
-stub: true
 ---
 
-This page is being written.
+Middleware is how mcpose applies cross-cutting behavior such as PII redaction and audit logging to every supported tool and resource call.
+It follows the **onion model**: outer layers run code before *and* after inner layers.
 
-In the meantime, the [Quick Start](/docs/getting-started/quick-start/) covers the core workflow end to end.
+## The onion [#the-onion]
+
+```
+  request ──►
+             ┌──────────────────────────────────────────┐
+             │  outerMW  (enter)                        │
+             │  ┌────────────────────────────────────┐  │
+             │  │  innerMW  (enter)                  │  │
+             │  │  ┌──────────────────────────────┐  │  │
+             │  │  │  upstream call               │  │  │
+             │  │  └──────────────────────────────┘  │  │
+             │  │  innerMW  (exit) ◄── response      │  │
+             │  └────────────────────────────────────┘  │
+             │  outerMW  (exit) ◄── response            │
+             └──────────────────────────────────────────┘
+  ◄── response
+```
+
+Code before `await next(req)` transforms the request on the way in.
+Code after `await next(req)` transforms the response on the way out.
+The response passes back through the layers in reverse order, so each layer's exit code sees the result of every layer inside it.
+
+## Middleware signature [#middleware-signature]
+
+Each middleware is a plain async function with the signature `(req, next, ctx) => Promise<Res>`.
+
+```ts
+type Middleware<Req, Res> = (
+  req: Req,
+  next: (req: Req) => Promise<Res>,
+  context: ProxyContext,
+) => Promise<Res>;
+```
+
+`next(req)` invokes the rest of the pipeline and resolves with the upstream's response.
+`ToolMiddleware`, `ResourceMiddleware`, and `ListToolsMiddleware` are aliases that fix `Req` and `Res` to the MCP message shapes for each call type.
+See the [type definitions](#type-definitions) below for the full declarations.
+
+## Response-processing order [#response-processing-order]
+
+The middleware arrays in `ProxyOptions` are in **response-processing order**: the first element is the innermost layer and processes the response *first*, and the last element processes it *last*.
+
+## Execution trace [#execution-trace]
+
+The dominant use case places PII redaction ahead of audit:
+
+```ts
+toolMiddleware: [piiMW, auditMW]
+```
+
+A call executes through five steps:
+
+1. `auditMW` enter, capture start time (outermost)
+2. `piiMW` enter, transform the request
+3. upstream call
+4. `piiMW` exit, redact PII from the response (processes response first)
+5. `auditMW` exit, log the already-clean data (processes response last)
+
+The array position of `piiMW` before `auditMW` means the PII layer redacts the response before the audit layer ever logs it.
+
+## Why this order [#why-this-order]
+
+`[piiMW, auditMW]` reads as "PII runs before audit", meaning audit never sees raw PII.
+That intent maps naturally to array position.
+`compose([outerMW, innerMW])` uses the **opposite** outermost-first convention: its first argument is the outermost layer.
+`ProxyOptions` arrays are therefore **not** interchangeable with `compose()` arguments, and an array must not be passed directly to `compose()`.
+The decision is recorded in [ADR-0002](/docs/project/adrs/#adr-0002).
+
+## markPassThroughObserver [#markpassthroughobserver]
+
+Tools listed in `passThroughTools` skip transforming middleware and are forwarded upstream as-is.
+Middleware that must observe every call regardless of pass-through status (audit, telemetry) can be wrapped in `markPassThroughObserver(mw)`.
+
+```ts
+import { markPassThroughObserver } from 'mcpose';
+
+toolMiddleware: [piiMW, markPassThroughObserver(metricsMW)]
+// piiMW is skipped for passThroughTools; metricsMW still sees every call.
+```
+
+Never use it for middleware that transforms requests or responses: pass-through means "forward upstream as-is".
+The middleware returned by `createAuditMiddleware` in `@mcpose/audit` is already wrapped, so pass-through tools stay audited without extra setup.
+
+## Type definitions [#type-definitions]
+
+<details>
+<summary>Show middleware type definitions</summary>
+
+```ts
+interface ProxyContext {
+  requestId: string;
+  transport: 'stdio' | 'http';
+  sessionId?: string;
+  headers?: Readonly<Record<string, string>>;
+  signal?: AbortSignal;
+  /** Resolved caller identity. Present when resolveIdentity is configured. */
+  identity?: Identity;
+  /** Agent delegation chain: populated from A2A handoff headers. */
+  delegatedFrom?: Identity[];
+  /** Reserved for v3 policy engine. */
+  policy?: never;
+}
+
+type Middleware<Req, Res> = (
+  req: Req,
+  next: (req: Req) => Promise<Res>,
+  context: ProxyContext,
+) => Promise<Res>;
+
+type ToolMiddleware      = Middleware<CallToolRequest, CompatibilityCallToolResult>;
+type ResourceMiddleware  = Middleware<ReadResourceRequest, ReadResourceResult>;
+type ListToolsMiddleware = Middleware<ListToolsRequest, ListToolsResult>;
+
+// Wraps a middleware so it still runs for passThroughTools (returns a new
+// middleware; the input is not mutated). Use for observers, never transformers.
+function markPassThroughObserver<Req, Res>(mw: Middleware<Req, Res>): Middleware<Req, Res>;
+```
+
+</details>
+
+## Next steps [#next-steps]
+
+<LinkCards>
+  <LinkCard
+    href="/docs/concepts/proxy-model/"
+    title="Proxy model →"
+    body="How mcpose mirrors the upstream MCP surface and routes each call through the pipeline."
+  />
+  <LinkCard
+    href="/docs/packages/audit/"
+    title="@mcpose/audit →"
+    body="The tamper-evident audit chain, already wrapped as an observer middleware."
+  />
+  <LinkCard
+    href="/docs/recipes/pii-redaction-audit/"
+    title="PII redaction + audit →"
+    body="Keep raw PII out of audit logs with middleware ordering."
+  />
+</LinkCards>

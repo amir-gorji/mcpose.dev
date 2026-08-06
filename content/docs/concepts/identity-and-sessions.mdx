@@ -1,9 +1,131 @@
 ---
 title: "Identity & sessions"
 description: "Resolve a caller once per session and stamp the Identity on every request."
-stub: true
 ---
 
-This page is being written.
+Identity resolution is how mcpose answers "who is making this request?" without paying the cost of a full auth round trip on every call.
+On HTTP, mcpose resolves a caller identity once when a session starts, then stamps that identity on every `ProxyContext` in the session.
+Middleware reads `context.identity` instead of parsing credentials itself, and audit events record the same identity.
 
-In the meantime, the [Quick Start](/docs/getting-started/quick-start/) covers the core workflow end to end.
+## The Identity shape [#identity-shape]
+
+The `Identity` interface is the contract between your `resolveIdentity` hook and the rest of the proxy.
+
+<details>
+<summary>Show the <code>Identity</code> interface</summary>
+
+```ts
+interface Identity {
+  sub: string;                       // Stable unique identifier (e.g. OIDC sub claim)
+  type: 'human' | 'agent' | 'service';
+  displayName?: string;
+  roles: string[];                   // Governance inputs (e.g. ['admin'])
+  claims: Record<string, unknown>;   // Raw claims from the source (JWT payload, cert CN, ...)
+  resolvedAt: string;                // ISO 8601 timestamp of when identity was resolved
+  source: 'jwt' | 'mtls' | 'apikey' | 'custom';  // Which resolver produced this identity
+}
+```
+
+</details>
+
+`sub` is the stable key: sessions, audit events, and future policy rules all key off it.
+`type` records whether the caller is a human user, an AI agent, or an automated service.
+`roles` and `claims` carry what your middleware needs for governance, without re-parsing the original credential.
+`resolvedAt` is the ISO 8601 timestamp of when the identity was resolved.
+`source` says which resolver produced the identity, so an audit trail can tell whether the caller came in via JWT, mTLS, API key, or a custom resolver.
+Your `resolveIdentity` hook builds the whole object; mcpose stamps it as-is.
+
+## Resolution lifecycle [#resolution-lifecycle]
+
+`resolveIdentity` runs once per new session, on the `initialize` POST that creates it.
+A session that already exists never re-runs resolution: its requests reuse the stored identity.
+If the resolver throws, the session is aborted with a 401.
+A resolver that cannot establish who the caller is therefore fails fast at session start instead of producing an unauthenticated session.
+
+The resolved identity is stored on the session record.
+Every `ProxyContext` created for that session, including the initial request, carries it in `context.identity`.
+Middleware and audit see the same identity on the first request and on every routed request after it.
+
+## validateSession: re-checking every request [#validate-session]
+
+HTTP sessions are keyed by `mcp-session-id`, and a client that holds the id can route requests into the session.
+To make sure the id alone is not enough, pass `validateSession`:
+
+```ts
+validateSession: async (req, session) => {
+  const token = parseBearer(req.headers.authorization);
+  return token !== null && (await tokenStillValid(token));
+},
+```
+
+`validateSession` re-validates an existing session on every routed request.
+It receives the raw `http.IncomingMessage` and the session record (`sessionId` plus the resolved `identity`).
+Return `false`, or throw, to reject the request with a 401.
+This binds the session to its original credential: a leaked `mcp-session-id` alone cannot take over a session, because the leaked id still fails the re-check.
+
+## Credential header stripping [#credential-headers]
+
+Credential-bearing headers never reach middleware or audit logs.
+`authorization`, `proxy-authorization`, `cookie`, `set-cookie`, and `x-api-key` are stripped from `ProxyContext.headers` before middleware can read them.
+Audit middleware records what `ProxyContext` contains, so credentials stay out of the audit trail too.
+
+`resolveIdentity` and `validateSession` are the exception: they read the raw `http.IncomingMessage`, so they still see the original headers.
+Your resolver can parse the bearer token, cookie, or client certificate from the request directly.
+
+## Sessions on HTTP [#sessions-http]
+
+Only an `initialize` POST can create a session.
+A session-less GET or DELETE returns 400, because a new session can only begin with MCP initialization.
+After that, `mcp-session-id` names the session on every routed request.
+
+A session ends through one of three paths:
+
+- The client sends a `DELETE` for the session.
+- The TTL expires, when `sessionTtlMs` is set.
+- The server shuts down.
+
+All three flow through the same teardown path, and `onSessionClosed` fires on every one of them.
+That is why the audit recipe wires `onSessionClosed` to `auditHandle.closeSession`: the `ReplayManifest` flushes no matter how the session ends.
+
+## Sessions on stdio [#sessions-stdio]
+
+stdio has no session concept in core.
+The stdio transport is a process-local pipe, so there is no `mcp-session-id`, no TTL, and no `onSessionClosed`.
+On stdio, a session is an audit-only boundary: the concept that groups audit events and produces one replay manifest on close.
+Identity resolution is HTTP-only too: `resolveIdentity` and `validateSession` live on `HttpProxyOptions`, and `ProxyOptions` has no equivalent.
+
+## Agent delegation [#delegation]
+
+`ProxyContext` carries a `delegatedFrom?: Identity[]` field, intended to record the chain of agents that handed off the request before reaching mcpose.
+Core does not populate it: there is no delegation header spec yet, and core's request-to-context path never sets `delegatedFrom`.
+Only the host can stamp it, for example by building the context with `createProxyContext({ delegatedFrom })`.
+When the host does stamp it, the audit middleware records the chain on the event and the chain is covered by the audit chain and manifest.
+Populating delegation directly from requests lands with the v3 delegation spec.
+
+## Mapping identity to the upstream [#upstream-mapping]
+
+The identity mcpose resolves describes the client calling the proxy.
+The upstream connection is a separate concern: `BackendConfig` describes how the proxy's own client reaches the upstream server.
+For an HTTP/SSE upstream, `headers` sets static credentials, such as an API key or bearer token, sent on every request to the upstream.
+`authProvider` passes an `OAuthClientProvider` to the HTTP transport, which runs the MCP OAuth flow with interactive or browser authorization and transparent token refresh.
+Both are HTTP/SSE only: in stdio mode they are ignored, because the upstream is a spawned process rather than an HTTP endpoint.
+
+## Next steps [#next]
+
+<LinkCards>
+  <LinkCard
+    href="/docs/concepts/proxy-model/"
+    title="Proxy model →"
+    body="How mcpose mirrors the upstream MCP surface."
+  />
+  <LinkCard
+    href="/docs/packages/audit/"
+    title="@mcpose/audit →"
+    body="HMAC-chained events and a Merkle ReplayManifest per session."
+  />
+  <LinkCard
+    href="/docs/recipes/oauth-upstream/"
+    title="OAuth upstream →"
+    body="Connect the proxy to an upstream MCP server that requires OAuth."
+  />
+</LinkCards>

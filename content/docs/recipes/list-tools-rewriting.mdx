@@ -1,9 +1,103 @@
 ---
 title: "list_tools rewriting"
 description: "Rewrite tool listings on the way through the proxy."
-stub: true
 ---
 
-This page is being written.
+`listToolsMiddleware` transforms the upstream `list_tools` response before the LLM client ever sees it.
+Each middleware receives the request, the inner `next` function, and the `ProxyContext`, and runs on the response: call `next(req)`, then rewrite `result.tools` on the way back.
+This is where description enrichment, risk annotations, and caller-specific listings belong, because the listing is rebuilt on every `list_tools` request.
 
-In the meantime, the [Quick Start](/docs/getting-started/quick-start/) covers the core workflow end to end.
+## What listToolsMiddleware is [#what]
+
+`listToolsMiddleware` is the tool-listing slot in `ProxyOptions`, alongside `toolMiddleware` and `resourceMiddleware`.
+Its type is `Middleware<ListToolsRequest, ListToolsResult>`: the same onion contract as tool middleware, applied to the listing instead of individual calls.
+The proxy routes every `list_tools` request through the configured array in response-processing order, where the first element processes the response first as the innermost layer.
+Middleware can observe or rewrite both the request and the response, though rewriting the returned `tools` array is the common use.
+
+## The recipe [#recipe]
+
+The compact form annotates high-risk tools so the LLM sees the requirement before it calls them.
+Append a warning to the `wire_transfer` description, leaving every other tool untouched.
+
+```ts title="list-tools-rewriting.ts" copy="full"
+import { startHttpProxy } from 'mcpose';
+import type { ListToolsMiddleware } from 'mcpose';
+
+// Annotate high-risk tools so the LLM sees the requirement before calling
+const enrichDescriptions: ListToolsMiddleware = async (req, next) => {
+  const result = await next(req);
+  return {
+    ...result,
+    tools: result.tools.map((tool) =>
+      tool.name === 'wire_transfer'
+        ? { ...tool, description: `${tool.description ?? ''} (approval required)` }
+        : tool,
+    ),
+  };
+};
+
+await startHttpProxy(backend, {
+  listToolsMiddleware: [enrichDescriptions],
+});
+```
+
+## Per-caller rewrites [#per-caller]
+
+`listToolsMiddleware` receives `context.identity` on every request, resolved once per session by `resolveIdentity` and stamped on the `ProxyContext`.
+Branch on `identity.roles` or `identity.claims` to tailor the listing per caller.
+Static `hiddenTools` applies to every caller alike, so per-caller gating is exactly the job of `listToolsMiddleware`.
+
+```ts title="role-aware-listing.ts" copy="full"
+import type { ListToolsMiddleware } from 'mcpose';
+
+const roleAwareListing: ListToolsMiddleware = async (req, next, context) => {
+  const result = await next(req);
+  const isAdmin = context.identity?.roles.includes('admin') ?? false;
+  return {
+    ...result,
+    tools: result.tools.map((tool) =>
+      isAdmin ? tool : { ...tool, description: 'Requires admin approval.' },
+    ),
+  };
+};
+```
+
+`context.identity` is present only when `resolveIdentity` is configured on `HttpProxyOptions`.
+Without it the field is `undefined`, so fall back to a default listing.
+See [Identity and sessions](/docs/concepts/identity-and-sessions/) for the full model.
+
+## Enforcement [#enforcement]
+
+Hidden filtering is applied both before and after `listToolsMiddleware`, so `hiddenTools` always wins.
+Before: the upstream response is filtered before the middleware chain sees it.
+After: the final result is filtered again, so even a middleware that deliberately re-adds a hidden tool has it stripped from the listing.
+A tool listed in both `hiddenTools` and `passThroughTools` stays hidden.
+The same guarantee holds at call time: a call to a hidden tool is rejected with `TOOL_HIDDEN` thrown inside the pipeline, and the backend is never called.
+
+## Audit [#audit]
+
+Rejected hidden-tool calls are still audited.
+The rejection is thrown by the innermost `next` inside the middleware pipeline, so the audit middleware observes the rejected call in-chain with `outcome: 'rejected'` and `rejectionReason: 'TOOL_HIDDEN'`.
+`createAuditMiddleware` records rejections by default, with `includeRejections` defaulting to `true`.
+Its middleware is already wrapped as a pass-through observer, so it sees every call even for `passThroughTools`.
+Audit is a pure observer: it never transforms the listing.
+
+## Reference example [#reference]
+
+[`examples/governance-proxy.ts`](https://github.com/amir-gorji/mcpose/blob/main/examples/governance-proxy.ts) in the mcpose repository is a self-contained reference for the governance surface: `hiddenTools`, `passThroughTools`, and telemetry, backed by `createMockBackendClient` so no upstream server is needed.
+Run it from the repository root with `pnpm --filter mcpose-examples governance-proxy`.
+
+## Next steps [#next]
+
+<LinkCards>
+  <LinkCard
+    href="/docs/concepts/middleware-model/"
+    title="Middleware model →"
+    body="The onion, ordering conventions, compose(), and markPassThroughObserver()."
+  />
+  <LinkCard
+    href="/docs/packages/audit/"
+    title="@mcpose/audit →"
+    body="HMAC chains, the replay manifest, sensitivity tiers, and verifiers."
+  />
+</LinkCards>

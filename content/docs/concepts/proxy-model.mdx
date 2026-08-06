@@ -1,9 +1,88 @@
 ---
 title: "Proxy model"
 description: "How mcpose mirrors the upstream MCP surface."
-stub: true
 ---
 
-This page is being written.
+mcpose is a transparent proxy between a client and an upstream MCP server.
+The client sees a normal MCP server.
+The upstream sees a normal MCP client.
+Nothing upstream changes: mcpose never modifies the upstream, and the upstream never needs to know mcpose exists.
+Instead, mcpose mirrors the upstream MCP surface and routes supported calls through its pipeline.
 
-In the meantime, the [Quick Start](/docs/getting-started/quick-start/) covers the core workflow end to end.
+## How it fits together [#how-it-fits]
+
+```
++--------------+        +----------------------------------+        +------------------+
+| LLM client   | <----> | mcpose                           | <----> | Upstream MCP     |
+| (Claude,     |        |  - identity resolution           |        | server           |
+|  Cursor, ...)|        |  - visibility filters            |        | (stdio or HTTP)  |
++--------------+        |  - middleware pipeline           |        +------------------+
+                        |  - audit trail                   |
+                        +----------------------------------+
+```
+
+## Three routing paths [#routing-paths]
+
+For each supported tool or resource, the proxy picks one of three routing paths:
+
+| Path | Option | Behavior |
+|---|---|---|
+| **Hidden** | `hiddenTools` / `hiddenResources` | Omitted from list responses; rejected with `TOOL_HIDDEN` / `RESOURCE_HIDDEN` at call time. |
+| **Pass-through** | `passThroughTools` / `passThroughResources` | Forwarded raw to the upstream; transforming middleware is skipped. Wrapped observers still run. |
+| **Middleware** | everything else | Routed through the full `toolMiddleware` / `resourceMiddleware` pipeline. |
+
+Hidden beats pass-through: a tool listed in both `hiddenTools` and `passThroughTools` stays hidden.
+A governance decision is therefore never bypassed by a broad pass-through list.
+
+For hidden tools, the rejection is thrown inside the middleware pipeline, not before it.
+Middleware such as audit observes the rejected call and records an `outcome: 'rejected'` event.
+The upstream is never called.
+
+Pass-through skips transforming middleware only.
+Middleware wrapped in `markPassThroughObserver()` (audit, telemetry) still runs for pass-through tools.
+The middleware returned by `createAuditMiddleware` is already wrapped, so pass-through tools stay audited without extra setup.
+
+## Request lifecycle [#request-lifecycle]
+
+Every supported call passes through the same lifecycle:
+
+1. The client sends `initialize`, and the proxy negotiates with the upstream.
+2. Advertised capabilities are mirrored from the upstream server.
+3. The proxy resolves identity: once per session on HTTP, then stamped on every `ProxyContext` in that session.
+4. Visibility filtering decides the routing path: hidden, pass-through, or middleware.
+5. The pipeline runs: each middleware layer enters, the upstream call happens, and layers exit in reverse order.
+6. The response flows back to the client.
+7. Telemetry fires and the audit trail records the call.
+
+## Semantics preserved [#semantics]
+
+The proxy preserves core request semantics end to end:
+
+- Abort signals are forwarded to upstream tool, resource, and prompt calls.
+- Upstream progress updates are relayed back to the client.
+- List-changed notifications are advertised and fanned out when the upstream supports them.
+- `list_tools` responses can be transformed through `listToolsMiddleware` without weakening local `hiddenTools` guarantees, because hidden filtering is applied both before and after the middleware.
+
+## Transport contrast [#transport]
+
+The proxy surface is identical on both transports; only the entry point differs:
+
+- **stdio**: `startProxy()` connects to an upstream spawned as a child process via `createBackendClient({ command, args })`.
+  Core has no session concept on stdio; sessions are an audit-only notion there.
+- **HTTP/SSE**: `startHttpProxy()` serves remote clients with stateful sessions, each mapping 1:1 to an `mcp-session-id` lifetime.
+  It adds per-session identity resolution through `resolveIdentity`, `validateSession` re-checks, mTLS via `tlsOptions`, and SSE reconnect replay through the event store.
+
+## Next steps [#next]
+
+<LinkCards>
+  <LinkCard
+    href="/docs/concepts/middleware-model/"
+    title="Middleware model →"
+    body="The onion, ordering conventions, compose(), and markPassThroughObserver()."
+  />
+  <LinkCard
+    href="/docs/concepts/identity-and-sessions/"
+    title="Identity & sessions →"
+    body="Resolve a caller once per session and stamp the Identity on every request."
+  />
+</LinkCards>

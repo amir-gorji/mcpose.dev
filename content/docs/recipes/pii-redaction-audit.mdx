@@ -1,9 +1,137 @@
 ---
 title: "PII redaction + audit"
 description: "Keep raw PII out of audit logs with middleware ordering."
-stub: true
 ---
 
-This page is being written.
+This is the origin use case for mcpose: a financial-grade MCP server where every Elasticsearch tool response must be scrubbed of PII before it reaches the LLM or the audit log.
+Two middleware layers sit in front of the upstream: one redacts the response, the other records it in a tamper-evident, compliance-grade audit trail.
 
-In the meantime, the [Quick Start](/docs/getting-started/quick-start/) covers the core workflow end to end.
+## The recipe [#recipe]
+
+The compact form wires a PII redaction middleware ahead of the audit middleware from `@mcpose/audit`.
+The PII patterns come from the runnable example, covering social security style IDs, passport-style codes, card numbers, and email addresses.
+
+```ts title="pii-redaction-audit.ts" copy="full"
+import { hasToolContent } from 'mcpose';
+import type { ToolMiddleware } from 'mcpose';
+import { createAuditMiddleware, createDefaultSigningKeyProvider, createSensitivityResolver } from '@mcpose/audit';
+
+// 1 · PII redaction middleware
+const PII_PATTERNS: RegExp[] = [
+  /\b\d{9}\b/g,                                            // 9-digit IDs (social security style)
+  /[A-Z]{2}\d{6}/g,                                        // alphanumeric codes (passport style)
+  /\b\d{16}\b/g,                                           // 16-digit card numbers
+  /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi,           // email addresses
+];
+
+function createPiiMiddleware(patterns: RegExp[]): ToolMiddleware {
+  return async (req, next) => {
+    const result = await next(req);
+    if (!hasToolContent(result)) return result;
+    return {
+      ...result,
+      content: result.content.map((item) =>
+        item.type === 'text'
+          ? { ...item, text: patterns.reduce((t, re) => t.replace(re, '[REDACTED]'), item.text) }
+          : item,
+      ),
+    };
+  };
+}
+
+// 2 · Audit middleware: tamper-evident events + signed replay manifest
+const auditHandle = createAuditMiddleware({
+  signingKey: createDefaultSigningKeyProvider(process.env.AUDIT_SECRET!),
+  sensitivityResolver: createSensitivityResolver({ search: 'medium', transfer: 'high' }),
+  onEvent: (e) => auditLog.append(e),
+  onManifest: (m) => manifestStore.save(m),
+});
+
+// 3 · Wire it together: PII first, audit second
+await startHttpProxy(backend, {
+  toolMiddleware: [
+    createPiiMiddleware(PII_PATTERNS), // PII first
+    auditHandle.middleware,           // audit sees clean data
+  ],
+}, {
+  resolveIdentity: extractJwt,
+  onSessionClosed: (id) => auditHandle.closeSession(id),
+});
+```
+
+PII is redacted before the audit layer ever sees the response; no raw PII reaches a log.
+
+## Why the order matters [#ordering]
+
+<Note kicker="Note · Middleware order">Middleware arrays use **response-processing order**: the first element processes the response first.
+With `toolMiddleware: [piiMW, auditMW]`, the PII middleware redacts the response, and the audit layer processes it last, so it only ever sees redacted data.
+Swap the order and raw PII lands in the audit log.</Note>
+
+This is why ordering is part of the compliance story, not just a style choice.
+The [Middleware model](/docs/concepts/middleware-model/) explains the full onion semantics.
+
+## Sensitivity tiers [#tiers]
+
+`createSensitivityResolver` maps tool names to sensitivity tiers that decide how an audit event stores its payloads.
+
+- `search` resolves to `'medium'`: the event keeps plaintext `inputRaw` and `outputRaw`, and `assertPiiRedacted` requires that no PII pattern matches them.
+- `transfer` resolves to `'high'`: the event is structurally encrypted, with `inputEncrypted` and `outputEncrypted` in place of the plaintext payloads.
+- Any tool missing from the map resolves to `'high'` too, so a new or unmapped tool fails closed to encryption instead of leaking plaintext.
+
+The resolver fails closed even on bad map values: anything that is not a known tier resolves to `'high'`.
+The runnable example adds `get_balance: 'low'` for read-only lookups.
+
+## Identity and session close [#identity]
+
+`resolveIdentity` runs once when an HTTP session is established, and the resolved `Identity` is stamped on every `ProxyContext` in that session.
+Errors from `resolveIdentity` abort the session with HTTP 401.
+`onSessionClosed` wires session teardown into the audit layer: `auditHandle.closeSession(id)` finalizes the session's event chain and flushes its signed replay manifest.
+Miss the hook and the manifest is never closed.
+See [Identity and sessions](/docs/concepts/identity-and-sessions/) for the full model.
+
+## Proving the redaction [#proving]
+
+`@mcpose/testing` ships compliance assertions for exactly this guarantee.
+`assertPiiRedacted(event, patterns)` throws if any pattern still matches a plaintext field, or if a high-tier event is not structurally encrypted.
+
+```ts title="audit.test.ts" copy="full"
+import { assertPiiRedacted } from '@mcpose/testing';
+
+// Throws if PII survived redaction
+assertPiiRedacted(event, [/\b\d{16}\b/g, /[A-Z]{2}\d{6}/g]);
+```
+
+Run it over every recorded event, and a regression in the redaction patterns fails the build instead of shipping PII to the log.
+The assertions are deliberately keyless: the signing secret is never available to tests.
+
+## Reference implementation [#reference]
+
+<Note kicker="Note · Reference implementation">[`elastic-pii-proxy`](https://github.com/amir-gorji/elastic-pii-proxy) is a production example of this pattern: an Elasticsearch MCP proxy that uses mcpose with PII redaction and `@mcpose/audit` to serve financial data safely to LLM agents.</Note>
+
+## Run the example [#run]
+
+The full runnable example is `examples/pii-redaction-audit.ts` in the mcpose repository, started with `npx tsx pii-redaction-audit.ts`.
+
+<Note kicker="Note · Upstream required">The example proxies a real upstream MCP server.
+Set `UPSTREAM_URL` to an HTTP/SSE endpoint (the default is `http://localhost:9000/mcp`) or switch `createBackendClient` to a stdio command, and set `AUDIT_SECRET` to a real secret.
+`createDefaultSigningKeyProvider` is fine for development and single-trust deployments; in production, use a KMS-backed `SigningKeyProvider`.</Note>
+
+## Next steps [#next]
+
+<LinkCards>
+  <LinkCard
+    href="/docs/concepts/middleware-model/"
+    title="Middleware model →"
+    body="The onion, ordering conventions, compose(), and markPassThroughObserver()."
+  />
+  <LinkCard
+    href="/docs/packages/audit/"
+    title="@mcpose/audit →"
+    body="HMAC chains, the replay manifest, sensitivity tiers, and verifiers."
+  />
+  <LinkCard
+    href="/docs/packages/testing/"
+    title="@mcpose/testing →"
+    body="assertPiiRedacted, assertAuditChainIntegrity, and replay manifest verification."
+  />
+</LinkCards>

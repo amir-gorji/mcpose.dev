@@ -19,9 +19,26 @@ const softwareSourceCode: JsonLdObject = {
   license: 'https://opensource.org/license/mit/',
 };
 
+const webSite: JsonLdObject = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: SITE.name,
+  url: SITE.url,
+  description: SITE.description,
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: {
+      '@type': 'EntryPoint',
+      urlTemplate: `${SITE.url}/docs/?q={search_term_string}`,
+    },
+    'query-input': 'required name=search_term_string',
+  },
+};
+
 const LandingPage = () => (
   <main>
     <JsonLd data={softwareSourceCode} />
+    <JsonLd data={webSite} />
     <section aria-label="Hero" className={styles.heroSection}>
       <Hero />
     </section>

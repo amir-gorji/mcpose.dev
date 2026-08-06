@@ -1,9 +1,304 @@
 ---
 title: "mcpose"
 description: "Proxy core \u2014 pipeline, transports, identity, governance."
-stub: true
 ---
 
-This page is being written.
+The composable middleware proxy for MCP.
+mcpose sits between a **client** (an LLM or agent) and an **upstream** MCP server, forwarding every tool, resource, and `list_tools` call through a **pipeline** of composable middleware.
+It is a transparent proxy: the client talks to mcpose exactly as it would talk to the upstream, while you intercept, transform, hide, or govern calls in between, without touching the upstream server.
 
-In the meantime, the [Quick Start](/docs/getting-started/quick-start/) covers the core workflow end to end.
+## When to reach for it [#when]
+
+- Add cross-cutting behavior (logging, PII redaction, identity resolution, rate limiting) to an MCP server you don't own.
+- Hide or gate specific tools and resources per caller.
+- Resolve a caller **identity** once per session and stamp it on every request.
+- Lay the foundation for compliance-grade audit trails with [@mcpose/audit](/docs/packages/audit/).
+
+If you only need the audit chain or the compliance test helpers, see the ecosystem packages below; they build on this core.
+
+## Install [#install]
+
+Requires Node.js 20 or newer.
+Ships ESM with TypeScript types.
+
+```bash title="terminal" copy="commands"
+# core
+npm install mcpose
+
+# peer dependency - installed separately
+npm install @modelcontextprotocol/sdk@">=1.0.0"
+```
+
+## Quick start [#quick-start]
+
+Connect to an upstream over stdio, add one middleware, and serve the proxy:
+
+```ts title="proxy.ts" copy="strip-line-comments"
+import { createBackendClient, startProxy } from 'mcpose';
+import type { ToolMiddleware } from 'mcpose';
+
+// 1. Connect to the upstream MCP server (stdio)
+const backend = await createBackendClient({
+  command: 'node',
+  args: ['/path/to/backend-server.mjs'],
+});
+
+// 2. Define middleware: (req, next, ctx) => Promise<result>
+const loggingMW: ToolMiddleware = async (req, next) => {
+  console.error(`→ ${req.params.name}`);
+  const result = await next(req);
+  console.error(`← ${req.params.name} done`);
+  return result;
+};
+
+// 3. Start the proxy on stdio
+await startProxy(backend, {
+  toolMiddleware: [loggingMW],
+});
+```
+
+For the full walkthrough, see the [Quick Start guide](/docs/getting-started/quick-start/).
+Serving over HTTP instead?
+Swap `startProxy` for `startHttpProxy` to get per-session identity resolution, mTLS, session limits, and SSE reconnect replay.
+
+## Core concepts [#core-concepts]
+
+- **Middleware**: a single function `(req, next, ctx) => Promise<result>`. Call `next(req)` to delegate downstream; transform the request before, or the response after. Middlewares nest onion-style.
+- **Pipeline**: middlewares passed to `ProxyOptions` run in response-processing order (first = innermost). `[piiMW, auditMW]` redacts before it audits.
+- **ProxyContext**: per-request metadata threaded through the pipeline: `requestId`, `transport`, `sessionId`, resolved `identity`, and the agent `delegatedFrom` chain.
+
+## API surface [#api-surface]
+
+| Export | Purpose |
+|---|---|
+| `createBackendClient(config)` | Connect to an upstream over stdio (`command`/`args`) or HTTP (`url`). |
+| `startProxy(backend, options?)` | Serve the proxy over **stdio**. |
+| `startHttpProxy(backend, proxyOptions?, httpOptions?)` | Serve over **HTTP/SSE**: identity, mTLS, sessions, reconnect replay. |
+| `createProxyServer(backend, options?)` | Build the underlying `Server` without binding a transport. Throws if the backend is not connected. |
+| `compose(middlewares)` | Compose middlewares into one (outermost-first). |
+| `markPassThroughObserver(mw)` | Mark a middleware (audit, telemetry) to still run for `passThroughTools`. |
+| `rejectionMcpError(reason, code, message)` | Build an `McpError` with a `RejectionReason` in `error.data`. |
+| `createProxyContext(overrides?)` | Construct a `ProxyContext` (useful in tests). |
+| `createInMemoryEventStore()` | Default SSE reconnect event store; swap for a `PersistentEventStore`. |
+| `hasToolContent(result)` | Type guard for tool-call results. |
+
+**Key types:** `Middleware<Req, Res>`, `ToolMiddleware`, `ResourceMiddleware`, `ListToolsMiddleware`, `ProxyContext`, `Identity`, `BackendConfig`, `ProxyOptions`, `HttpProxyOptions`, `RejectionReason`, `TelemetryEvent`, `PersistentEventStore`.
+
+### ProxyContext, Identity, and middleware aliases [#proxycontext]
+
+The per-request `ProxyContext`, the `Identity` shape, the middleware type aliases, and the `hasToolContent` type guard.
+
+<details>
+<summary>Show the ProxyContext and Identity type definitions</summary>
+
+```ts title="proxy-context.ts" copy="full"
+interface ProxyContext {
+  requestId: string;
+  transport: 'stdio' | 'http';
+  sessionId?: string;
+  headers?: Readonly<Record<string, string>>;
+  signal?: AbortSignal;
+  /** Resolved caller identity. Present when resolveIdentity is configured. */
+  identity?: Identity;
+  /** Agent delegation chain: populated from A2A handoff headers. */
+  delegatedFrom?: Identity[];
+  /** Reserved for v3 policy engine. */
+  policy?: never;
+}
+
+interface Identity {
+  sub: string;
+  type: 'human' | 'agent' | 'service';
+  displayName?: string;
+  roles: string[];
+  claims: Record<string, unknown>;
+  resolvedAt: string;  // ISO 8601
+  source: 'jwt' | 'mtls' | 'apikey' | 'custom';
+}
+
+function createProxyContext(overrides?: Partial<ProxyContext>): ProxyContext;
+
+type Middleware<Req, Res> = (
+  req: Req,
+  next: (req: Req) => Promise<Res>,
+  context: ProxyContext,
+) => Promise<Res>;
+
+type ToolMiddleware     = Middleware<CallToolRequest, CompatibilityCallToolResult>;
+type ResourceMiddleware = Middleware<ReadResourceRequest, ReadResourceResult>;
+type ListToolsMiddleware = Middleware<ListToolsRequest, ListToolsResult>;
+
+// Type guard: narrows CompatibilityCallToolResult to CallToolResult
+function hasToolContent(r: CompatibilityCallToolResult): r is CallToolResult;
+
+// Wraps a middleware so it still runs for passThroughTools (returns a new
+// middleware; the input is not mutated). Use for observers, never transformers.
+function markPassThroughObserver<Req, Res>(mw: Middleware<Req, Res>): Middleware<Req, Res>;
+```
+
+</details>
+
+### BackendConfig [#backend-config]
+
+`createBackendClient` accepts a `BackendConfig` describing how to reach the upstream, in one of two modes: stdio (spawn a process) or HTTP/SSE (talk to a running server, which takes precedence).
+
+<details>
+<summary>Show the BackendConfig interface</summary>
+
+```ts title="backend-config.ts" copy="full"
+interface BackendConfig {
+  command?: string;   // Executable to spawn for stdio transport (e.g., "node")
+  args?:    string[]; // Arguments for the spawned process
+  url?:     string;   // HTTP endpoint of a running MCP server (takes precedence over stdio)
+  headers?: Record<string, string>;      // HTTP/SSE only: sent on every request to the backend
+  authProvider?: OAuthClientProvider;    // HTTP/SSE only: interactive OAuth with token refresh
+}
+
+async function createBackendClient(config: BackendConfig): Promise<BackendClient>;
+```
+
+</details>
+
+`headers` is HTTP/SSE only and is ignored in stdio mode.
+Use it to authenticate with the upstream, for example an API key or bearer token.
+
+```ts title="backend.ts" copy="full"
+const backend = await createBackendClient({
+  url: 'https://mcp.example.com/sse',
+  headers: { Authorization: `Bearer ${process.env.UPSTREAM_TOKEN}` },
+});
+```
+
+For backends that require OAuth rather than a static token, pass an `authProvider`.
+mcpose forwards it to the HTTP/SSE transport, which runs the MCP OAuth flow (interactive/browser authorization with transparent token refresh), so you don't manage tokens yourself.
+Like `headers`, it is HTTP/SSE only and ignored in stdio mode.
+
+### ProxyOptions and entry points [#proxy-options]
+
+Middleware arrays, visibility filters (`hiddenTools` / `passThroughTools`), and the telemetry hook.
+
+<details>
+<summary>Show the ProxyOptions interface and entry-point signatures</summary>
+
+```ts title="proxy-options.ts" copy="full"
+interface ProxyOptions {
+  name?:                 string;
+  version?:              string;
+  toolMiddleware?:       ReadonlyArray<ToolMiddleware>;
+  resourceMiddleware?:   ReadonlyArray<ResourceMiddleware>;
+  listToolsMiddleware?:  ReadonlyArray<ListToolsMiddleware>;
+  passThroughTools?:     ReadonlyArray<string>;
+  passThroughResources?: ReadonlyArray<string>;
+  hiddenTools?:          ReadonlyArray<string>;
+  hiddenResources?:      ReadonlyArray<string>;
+  onTelemetry?:          (event: TelemetryEvent) => void;
+}
+
+async function startProxy(backend: BackendClient, options?: ProxyOptions): Promise<void>;
+function createProxyServer(backend: BackendClient, options?: ProxyOptions): Server;
+```
+
+</details>
+
+`hiddenTools` / `hiddenResources` reject calls with a structured `RejectionReason` in the MCP error `data` field.
+The hidden-tool rejection is thrown inside the middleware pipeline, so middleware such as audit observes it; the backend is never called.
+`passThroughTools` skip transforming middleware, but middleware wrapped in `markPassThroughObserver()` still runs for them; a tool that is both hidden and pass-through stays hidden.
+
+### HttpProxyOptions [#http-proxy-options]
+
+The HTTP/SSE entry point: port, host, path, body and session limits, per-session identity resolution, mTLS, and the SSE reconnect replay store.
+
+<details>
+<summary>Show the HttpProxyOptions interface and startHttpProxy signature</summary>
+
+```ts title="http-proxy-options.ts" copy="full"
+interface HttpProxyOptions {
+  port?: number;         // Default: 3000
+  host?: string;         // Default: all interfaces
+  path?: string;         // Default: '/mcp'
+  onRequest?: (req: http.IncomingMessage, res: http.ServerResponse) => boolean | Promise<boolean>;
+  onError?: (err: unknown) => void;
+  maxBodyBytes?: number; // Default: 4 MB; returns 413 on excess
+  maxSessions?: number;  // Excess requests return 503
+  sessionTtlMs?: number; // Sessions auto-close after this duration
+  /** Resolves caller identity once per session. Errors abort the session with 401. */
+  resolveIdentity?: (req: http.IncomingMessage) => Identity | Promise<Identity>;
+  /** Re-validates an existing session on every routed request. Return false (or throw) for a 401. */
+  validateSession?: (
+    req: http.IncomingMessage,
+    session: { sessionId: string; identity?: Identity },
+  ) => boolean | Promise<boolean>;
+  /** mTLS: pass Node's https.ServerOptions (key, cert, ca, requestCert, rejectUnauthorized). */
+  tlsOptions?: https.ServerOptions;
+  /** SSE reconnect replay store. Defaults to in-memory. Pass null to disable.
+   *  PersistentEventStore is an alias of the SDK's EventStore type. */
+  eventStore?: PersistentEventStore | null;
+  /** Called when a session closes: client DELETE, TTL expiry, or server shutdown. */
+  onSessionClosed?: (sessionId: string) => void;
+  /** Hosts allowed in the Host header when DNS-rebinding protection is on. Forwarded to the SDK transport. */
+  allowedHosts?: string[];
+  /** Origins allowed in the Origin header. Forwarded to the SDK transport. */
+  allowedOrigins?: string[];
+  /** Enables the SDK transport's Host/Origin checks. Recommended for localhost proxies. */
+  enableDnsRebindingProtection?: boolean;
+}
+
+function startHttpProxy(
+  backend: BackendClient,
+  options?: ProxyOptions,
+  httpOptions?: HttpProxyOptions,
+): Promise<http.Server>;
+```
+
+</details>
+
+Only an `initialize` POST can create a session; a session-less GET or DELETE returns 400.
+Credential-bearing headers (`authorization`, `proxy-authorization`, `cookie`, `set-cookie`, `x-api-key`) are stripped from `ProxyContext.headers` before middleware sees them; `resolveIdentity` still reads the raw request.
+SSE reconnect replay is scoped per stream: the in-memory store replays only events from the reconnecting stream, and an unknown or already-evicted `Last-Event-ID` replays nothing.
+
+## Behavior notes [#behavior-notes]
+
+- **name and version defaults**: both set the MCP server identity returned in `initialize`. `name` defaults to `'mcpose'` and `version` defaults to the mcpose library version, so set your own when you ship a proxy.
+- **createProxyServer throws when the backend is not connected**, so a mis-wired proxy fails at startup instead of on the first call.
+- **onTelemetry** emits per-call timing and outcome. Results with `isError: true` are reported as outcome `'error'`, and a throwing sink is logged but never fails the call.
+
+## mcpose/testing [#testing]
+
+The core package exposes proxy and middleware test utilities under a subpath:
+
+```ts title="testing.ts" copy="full"
+import { createMockBackendClient, runToolMiddleware } from 'mcpose/testing';
+```
+
+`createMockBackendClient()` returns an in-memory backend stub with capability lookup and notification hooks.
+It works with both `createProxyServer()` and `startHttpProxy()` tests.
+
+> **Not to be confused with** [@mcpose/testing](/docs/packages/testing/), the separate package of compliance-chain assertions.
+
+## Ecosystem [#ecosystem]
+
+| Package | What it adds |
+|---|---|
+| **`mcpose`** (this package) | Proxy core: pipeline, transports, identity, governance. |
+| [@mcpose/audit](/docs/packages/audit/) | Tamper-evident, HMAC-chained audit events + Merkle `ReplayManifest`. |
+| [@mcpose/testing](/docs/packages/testing/) | Runner-agnostic compliance assertions for the audit chain. |
+
+## Next steps [#next]
+
+<LinkCards>
+  <LinkCard
+    href="/docs/packages/audit/"
+    title="@mcpose/audit →"
+    body="HMAC chains, the replay manifest, sensitivity tiers, and verifiers."
+  />
+  <LinkCard
+    href="/docs/packages/testing/"
+    title="@mcpose/testing →"
+    body="Runner-agnostic compliance assertions for the audit chain."
+  />
+  <LinkCard
+    href="/docs/concepts/middleware-model/"
+    title="Middleware model →"
+    body="The onion, ordering conventions, compose(), and markPassThroughObserver()."
+  />
+</LinkCards>
