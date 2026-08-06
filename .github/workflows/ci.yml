@@ -1,0 +1,129 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  # Never let two deploys to main race. PR runs supersede themselves on new pushes.
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Typecheck, lint, test
+    runs-on: ubuntu-latest
+    outputs:
+      # Single source of truth for the Wrangler version: package.json. The deploy
+      # jobs reuse this so CI can never ship with a different Wrangler than local.
+      wrangler-version: ${{ steps.wrangler.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      # postinstall runs `fumadocs-mdx`, which generates .source/ — required
+      # before typecheck and build can resolve the MDX collections.
+      - run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      # `pnpm test` builds first, then runs the static-export invariant tests
+      # against out/. That build becomes the artifact the deploy jobs publish,
+      # so the exact bytes that passed CI are the bytes that ship.
+      - name: Build and test
+        run: pnpm test
+
+      - id: wrangler
+        run: |
+          version="$(node -p "require('./package.json').devDependencies.wrangler")"
+          echo "version=${version#[^0-9]}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: site
+          path: out/
+          retention-days: 7
+          if-no-files-found: error
+
+  deploy:
+    name: Deploy to production
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://mcpose.dev
+    steps:
+      # wrangler.jsonc is read from the repo; out/ comes from the verified build.
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: site
+          path: out
+
+      - uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: ${{ needs.verify.outputs.wrangler-version }}
+          command: deploy
+
+  preview:
+    name: Deploy preview
+    needs: verify
+    # Forks cannot read repository secrets, so the upload would fail with a
+    # confusing auth error instead of an honest skip.
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: site
+          path: out
+
+      # `versions upload` publishes an addressable version WITHOUT moving the
+      # production custom domain onto it. Only the deploy job above does that.
+      - id: upload
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: ${{ needs.verify.outputs.wrangler-version }}
+          command: versions upload --preview-alias pr-${{ github.event.number }}
+
+      - name: Comment preview URL on the PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PREVIEW_URL: ${{ steps.upload.outputs.deployment-url }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR: ${{ github.event.number }}
+        run: |
+          printf '%s\n' \
+            "Preview of \`${HEAD_SHA:0:7}\`: ${PREVIEW_URL}" \
+            "" \
+            "_Updated automatically on each push to this PR._" \
+            | gh pr comment "$PR" --body-file - --edit-last --create-if-none

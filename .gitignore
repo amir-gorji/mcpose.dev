@@ -9,7 +9,13 @@ next-env.d.ts
 # fumadocs-mdx generated
 .source/
 
+# wrangler / cloudflare
+.wrangler/
+.dev.vars
+
 # misc
 .DS_Store
 *.tsbuildinfo
 *.log
+AGENTS.md
+CLAUDE.md
