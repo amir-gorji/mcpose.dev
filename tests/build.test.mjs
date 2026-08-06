@@ -181,11 +181,20 @@ test('the accent never becomes a solid fill', () => {
     const rules = text.split(/[{}]/);
     for (let i = 0; i < rules.length; i += 1) {
       const block = rules[i];
-      if (!block.includes('background') || !block.includes('var(--color-accent)')) continue;
+      if (!block.includes('var(--color-accent)')) continue;
+      /* Only flag the specific line that combines a background with the accent token.
+         (A block with both `background: var(--color-surface)` and `caret-color: var(--color-accent)`
+         on separate lines is not a solid fill.) */
+      const accentLine = block
+        .split(/;\s*/)
+        .find((line) => line.includes('background') && line.includes('var(--color-accent)'));
+      if (!accentLine) continue;
+      /* color-mix is always a transparent wash, never a solid fill. */
+      if (accentLine.includes('color-mix')) continue;
       const selector = (i > 0 ? rules[i - 1] : '').toLowerCase();
       if (DECO.test(selector) || DECO.test(block)) continue;
       if (SIZED.test(block) || SIZED.test(selector)) continue;
-      const trimmed = block.replace(/\s+/g, ' ').trim().slice(0, 120);
+      const trimmed = accentLine.replace(/\s+/g, ' ').trim().slice(0, 120);
       solid.push(`${path.replace(src + '/', 'src/')}: ${trimmed}`);
     }
   }
