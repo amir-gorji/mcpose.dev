@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="nocturne.css">
+<style>
+a:hover{color:var(--color-accent-300);}
+</style>
+</helmet>
+<div style="min-height:100vh;">
+<sc-if value="{{ showAnnouncement }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="Announcement" style="background:var(--color-accent-900);border-bottom:1px solid var(--color-accent-800);padding:var(--space-2) var(--space-8);display:flex;align-items:center;justify-content:center;gap:var(--space-3);font-size:12.5px;color:var(--color-accent-200);">
+<span class="tag tag-accent" style="font-size:10px;letter-spacing:0.06em;">NEW</span>
+<span><span style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:11.5px;">@mcpose/audit 3.0</span> — audit format v2: canonical serialization, full-manifest signatures</span>
+<a href="mcpose Docs.dc.html" style="color:var(--color-accent-300);font-size:12.5px;">ADR-0004 →</a>
+</div>
+</sc-if>
+<nav data-screen-label="Nav" style="position:sticky;top:0;z-index:50;background:color-mix(in srgb, var(--color-bg) 85%, transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--color-divider);">
+<div style="max-width:1160px;margin:0 auto;padding:0 var(--space-8);height:56px;display:flex;align-items:center;justify-content:space-between;">
+<div style="display:flex;align-items:center;gap:var(--space-3);">
+<div style="width:20px;height:20px;border:1.5px solid var(--color-neutral-700);border-radius:5px;display:flex;align-items:center;justify-content:center;">
+<div style="width:11px;height:11px;border:1.5px solid var(--color-accent);border-radius:3px;display:flex;align-items:center;justify-content:center;">
+<div style="width:3px;height:3px;background:var(--color-accent);border-radius:1px;"></div>
+</div>
+</div>
+<a href="mcpose Landing.dc.html" style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-weight:500;font-size:15px;color:var(--color-text);letter-spacing:-0.01em;">mcpose</a>
+<span class="tag tag-neutral" style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:10px;">2.x</span>
+</div>
+<div style="display:flex;align-items:center;gap:var(--space-6);">
+<div style="display:flex;align-items:center;gap:var(--space-2);background:var(--color-surface);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:var(--space-2) var(--space-3);font-size:12px;color:var(--color-neutral-500);min-width:170px;">
+<span style="flex:1;">Search docs…</span><span style="border:1px solid var(--color-divider);border-radius:var(--radius-sm);padding:1px 5px;font-size:10px;color:var(--color-neutral-600);">⌘K</span>
+</div>
+<a href="mcpose Docs.dc.html" style="font-size:14px;color:var(--color-text);text-decoration:none;" style-hover="color:var(--color-accent);">Docs</a>
+<a href="https://github.com/amir-gorji/mcpose" style="font-size:14px;color:var(--color-text);text-decoration:none;" style-hover="color:var(--color-accent);">GitHub</a>
+<a href="https://www.npmjs.com/package/mcpose" style="font-size:14px;color:var(--color-text);text-decoration:none;" style-hover="color:var(--color-accent);">npm</a>
+</div>
+</div>
+</nav>
+<section data-screen-label="Hero" style="max-width:1160px;margin:0 auto;padding:calc(var(--space-8) * 3.5) var(--space-8) 0;">
+<div style="display:grid;grid-template-columns:1.02fr 1fr;gap:calc(var(--space-8) * 2.5);align-items:center;">
+<div>
+<div style="font-size:10.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--color-accent);font-weight:500;margin-bottom:var(--space-6);">Transparent MCP proxy · TypeScript</div>
+<h1 style="margin:0 0 var(--space-6);text-wrap:pretty;">The audit and governance layer for MCP.</h1>
+<p style="margin:0 0 var(--space-8);font-size:16px;line-height:1.65;color:var(--color-neutral-400);max-width:520px;text-wrap:pretty;">Drop mcpose between any LLM client and any MCP server. Intercept, transform, and govern every tool call through composable onion middleware — and log it in a tamper-evident, compliance-grade audit trail. Nothing upstream changes.</p>
+<div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-6);max-width:460px;">
+<div style="flex:1;display:flex;align-items:center;gap:var(--space-3);background:var(--color-surface);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:var(--space-3) var(--space-4);font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:13.5px;">
+<span style="color:var(--color-neutral-600);">$</span><span style="color:var(--color-neutral-100);">npm install mcpose</span>
+</div>
+<button class="btn btn-secondary" onClick="{{ copyInstall }}" style="font-size:12px;">{{ installLabel }}</button>
+</div>
+<div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-6);">
+<a class="btn btn-primary" href="mcpose Docs.dc.html">Get started →</a>
+<a class="btn btn-secondary" href="https://github.com/amir-gorji/mcpose">GitHub</a>
+</div>
+<div style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:11px;color:var(--color-neutral-500);display:flex;gap:var(--space-2);flex-wrap:wrap;">
+<span>v2.x on npm</span><span style="color:var(--color-neutral-700);">·</span><span>MIT</span><span style="color:var(--color-neutral-700);">·</span><span>Node 20+</span><span style="color:var(--color-neutral-700);">·</span><span>ESM, types included</span><span style="color:var(--color-neutral-700);">·</span><span>semver-disciplined</span>
+</div>
+</div>
+<div>
+<div class="elev-md" style="background:var(--color-surface);border-radius:var(--radius-md);overflow:hidden;">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:var(--space-2) var(--space-4);border-bottom:1px solid var(--color-divider);">
+<span style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:11.5px;color:var(--color-neutral-500);">proxy.ts</span>
+<span style="font-size:10.5px;color:var(--color-neutral-600);">TypeScript</span>
+</div>
+<sc-if value="{{ heroAudit }}" hint-placeholder-val="{{ true }}">
+<pre style="margin:0;padding:var(--space-4) var(--space-6);font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12.5px;line-height:1.7;color:var(--color-neutral-200);overflow-x:auto;"><span style="color:var(--color-neutral-600)">// Wrap any upstream MCP server — unmodified</span>
+<span style="color:var(--color-accent-400)">const</span> backend = <span style="color:var(--color-accent-400)">await</span> <span style="color:var(--color-accent-200)">createBackendClient</span>({
+  command: <span style="color:var(--color-accent-2-500)">'node'</span>,
+  args: [<span style="color:var(--color-accent-2-500)">'./es-server.mjs'</span>],
+});
+
+<span style="color:var(--color-accent-400)">const</span> audit = <span style="color:var(--color-accent-200)">createAuditMiddleware</span>({
+  signingKey: <span style="color:var(--color-accent-200)">createDefaultSigningKeyProvider</span>(process.env.AUDIT_SECRET!),
+  onEvent: (e) <span style="color:var(--color-accent-400)">=></span> auditLog.<span style="color:var(--color-accent-200)">append</span>(e), <span style="color:var(--color-neutral-600)">// HMAC-chained, tamper-evident</span>
+});
+
+<span style="color:var(--color-accent-400)">await</span> <span style="color:var(--color-accent-200)">startHttpProxy</span>(backend, {
+  hiddenTools: [<span style="color:var(--color-accent-2-500)">'delete_index'</span>],        <span style="color:var(--color-neutral-600)">// rejections are audited too</span>
+  toolMiddleware: [redactPii, audit.middleware],
+});                     <span style="color:var(--color-neutral-600)">// audit only ever sees redacted data</span></pre>
+</sc-if>
+<sc-if value="{{ heroMinimal }}" hint-placeholder-val="{{ false }}">
+<pre style="margin:0;padding:var(--space-4) var(--space-6);font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12.5px;line-height:1.7;color:var(--color-neutral-200);overflow-x:auto;"><span style="color:var(--color-accent-400)">import</span> { createBackendClient, startProxy } <span style="color:var(--color-accent-400)">from</span> <span style="color:var(--color-accent-2-500)">'mcpose'</span>;
+
+<span style="color:var(--color-neutral-600)">// Connect to the upstream MCP server (stdio)</span>
+<span style="color:var(--color-accent-400)">const</span> backend = <span style="color:var(--color-accent-400)">await</span> <span style="color:var(--color-accent-200)">createBackendClient</span>({
+  command: <span style="color:var(--color-accent-2-500)">'node'</span>,
+  args: [<span style="color:var(--color-accent-2-500)">'./backend-server.mjs'</span>],
+});
+
+<span style="color:var(--color-neutral-600)">// Onion middleware: runs before and after</span>
+<span style="color:var(--color-accent-400)">const</span> logging = <span style="color:var(--color-accent-400)">async</span> (req, next) <span style="color:var(--color-accent-400)">=></span> {
+  console.<span style="color:var(--color-accent-200)">error</span>(`→ ${req.params.name}`);
+  <span style="color:var(--color-accent-400)">const</span> result = <span style="color:var(--color-accent-400)">await</span> <span style="color:var(--color-accent-200)">next</span>(req);
+  console.<span style="color:var(--color-accent-200)">error</span>(`← ${req.params.name} done`);
+  <span style="color:var(--color-accent-400)">return</span> result;
+};
+
+<span style="color:var(--color-accent-400)">await</span> <span style="color:var(--color-accent-200)">startProxy</span>(backend, { toolMiddleware: [logging] });</pre>
+</sc-if>
+</div>
+</div>
+</div>
+</section>
+<section data-screen-label="Features" style="max-width:1160px;margin:0 auto;padding:calc(var(--space-8) * 4) var(--space-8) 0;">
+<div style="font-size:10.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--color-accent);font-weight:500;margin-bottom:var(--space-4);">Why mcpose</div>
+<h2 style="margin:0 0 calc(var(--space-8) * 1.6);">Cross-cutting concerns, composed.</h2>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--space-8) * 1.6) var(--space-8);">
+<div><div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent);font-weight:500;margin-bottom:var(--space-2);">Transparent proxy</div><div style="font-size:13.5px;line-height:1.6;color:var(--color-neutral-400);">Wrap any upstream MCP server without modifying it. The client sees a normal server; the upstream sees a normal client.</div></div>
+<div><div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent);font-weight:500;margin-bottom:var(--space-2);">Onion middleware</div><div style="font-size:13.5px;line-height:1.6;color:var(--color-neutral-400);">Each layer runs before <em>and</em> after the inner pipeline. Predictable ordering, fully typed, composable.</div></div>
+<div><div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent);font-weight:500;margin-bottom:var(--space-2);">Governance</div><div style="font-size:13.5px;line-height:1.6;color:var(--color-neutral-400);">Hide or gate tools and resources per caller. Every blocked call carries a structured <span style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;color:var(--color-neutral-200);">RejectionReason</span>.</div></div>
+<div><div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent);font-weight:500;margin-bottom:var(--space-2);">Identity</div><div style="font-size:13.5px;line-height:1.6;color:var(--color-neutral-400);">Resolve a caller once per session — JWT, mTLS, API key — then stamp the <span style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;color:var(--color-neutral-200);">Identity</span> on every request.</div></div>
+<div><div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent);font-weight:500;margin-bottom:var(--space-2);">Tamper-evident audit</div><div style="font-size:13.5px;line-height:1.6;color:var(--color-neutral-400);">HMAC-chained events and a signed Merkle replay manifest per session, via <span style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;color:var(--color-neutral-200);">@mcpose/audit</span>.</div></div>
+<div><div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent);font-weight:500;margin-bottom:var(--space-2);">Production transport</div><div style="font-size:13.5px;line-height:1.6;color:var(--color-neutral-400);">HTTP/SSE with mTLS, session limits, and reconnect replay — or plain stdio. Abort signals and progress relay through.</div></div>
+</div>
+</section>
+<section data-screen-label="Concept diagram" style="max-width:1160px;margin:0 auto;padding:calc(var(--space-8) * 4) var(--space-8) 0;">
+<div style="font-size:10.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--color-accent);font-weight:500;margin-bottom:var(--space-4);">Concept</div>
+<h2 style="margin:0 0 var(--space-3);">One proxy in the middle.</h2>
+<p style="margin:0 0 calc(var(--space-8) * 1.6);font-size:14.5px;line-height:1.6;color:var(--color-neutral-400);max-width:600px;">mcpose mirrors the upstream MCP surface and routes supported calls through middleware. Capabilities, abort signals, progress, and list-changed notifications pass through intact.</p>
+<div style="display:flex;align-items:stretch;gap:0;">
+<div class="card" style="width:190px;justify-content:center;">
+<div style="font-size:14px;font-weight:500;font-family:var(--font-heading);">LLM client</div>
+<div style="font-size:11.5px;line-height:1.55;color:var(--color-neutral-500);">Claude · Cursor · any MCP client</div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 var(--space-2);">
+<div style="font-size:9.5px;letter-spacing:0.12em;color:var(--color-neutral-600);margin-bottom:var(--space-2);">MCP</div>
+<div style="width:100%;display:flex;align-items:center;">
+<div style="width:5px;height:5px;background:var(--color-neutral-600);transform:rotate(45deg);"></div>
+<div style="flex:1;height:1px;background:var(--color-divider);"></div>
+<div style="width:5px;height:5px;background:var(--color-neutral-600);transform:rotate(45deg);"></div>
+</div>
+<div style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:9.5px;color:var(--color-neutral-600);margin-top:var(--space-2);">http · sse · stdio</div>
+</div>
+<div style="width:300px;background:var(--color-surface);border-radius:var(--radius-md);overflow:hidden;box-shadow:0 0 0 1px var(--color-accent-700);">
+<div style="padding:var(--space-3) var(--space-6);border-bottom:1px solid var(--color-divider);display:flex;align-items:center;justify-content:space-between;">
+<span style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:13px;font-weight:500;color:var(--color-accent-300);">mcpose</span>
+<span style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:9.5px;color:var(--color-neutral-600);">:3000/mcp</span>
+</div>
+<div style="padding:var(--space-3) var(--space-6);display:flex;flex-direction:column;gap:var(--space-2);">
+<div style="display:flex;align-items:center;gap:var(--space-3);"><div style="width:4px;height:4px;background:var(--color-accent);transform:rotate(45deg);"></div><span style="font-size:12px;color:var(--color-neutral-300);">identity resolution</span></div>
+<div style="display:flex;align-items:center;gap:var(--space-3);"><div style="width:4px;height:4px;background:var(--color-accent);transform:rotate(45deg);"></div><span style="font-size:12px;color:var(--color-neutral-300);">visibility filters</span></div>
+<div style="display:flex;align-items:center;gap:var(--space-3);"><div style="width:4px;height:4px;background:var(--color-accent);transform:rotate(45deg);"></div><span style="font-size:12px;color:var(--color-neutral-300);">middleware pipelines</span></div>
+<div style="display:flex;align-items:center;gap:var(--space-3);"><div style="width:4px;height:4px;background:var(--color-accent);transform:rotate(45deg);"></div><span style="font-size:12px;color:var(--color-neutral-300);">audit trail</span></div>
+</div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 var(--space-2);">
+<div style="font-size:9.5px;letter-spacing:0.12em;color:var(--color-neutral-600);margin-bottom:var(--space-2);">MCP</div>
+<div style="width:100%;display:flex;align-items:center;">
+<div style="width:5px;height:5px;background:var(--color-neutral-600);transform:rotate(45deg);"></div>
+<div style="flex:1;height:1px;background:var(--color-divider);"></div>
+<div style="width:5px;height:5px;background:var(--color-neutral-600);transform:rotate(45deg);"></div>
+</div>
+<div style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:9.5px;color:var(--color-neutral-600);margin-top:var(--space-2);">stdio · http</div>
+</div>
+<div class="card" style="width:190px;justify-content:center;">
+<div style="font-size:14px;font-weight:500;font-family:var(--font-heading);">Upstream server</div>
+<div style="font-size:11.5px;line-height:1.55;color:var(--color-neutral-500);">any MCP server — unmodified</div>
+</div>
+</div>
+<sc-if value="{{ showRouting }}" hint-placeholder-val="{{ true }}">
+<div style="margin-top:calc(var(--space-8) * 1.6);">
+<div style="font-size:14px;font-weight:500;font-family:var(--font-heading);margin-bottom:var(--space-4);">Three routing paths per tool or resource</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-3);">
+<div class="card">
+<div class="card-kicker">Hidden</div>
+<div style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:10.5px;color:var(--color-neutral-500);">hiddenTools · hiddenResources</div>
+<p class="card-body">Omitted from list responses; rejected with <span style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:11px;">TOOL_HIDDEN</span> at call time. The rejection still hits the audit trail.</p>
+</div>
+<div class="card">
+<div class="card-kicker">Pass-through</div>
+<div style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:10.5px;color:var(--color-neutral-500);">passThroughTools · passThroughResources</div>
+<p class="card-body">Forwarded raw. Transformers are skipped; observers wrapped in <span style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:11px;">markPassThroughObserver()</span> still run.</p>
+</div>
+<div class="card">
+<div class="card-kicker">Middleware</div>
+<div style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:10.5px;color:var(--color-neutral-500);">everything else</div>
+<p class="card-body">Routed through the full <span style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:11px;">toolMiddleware</span> / <span style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:11px;">resourceMiddleware</span> pipeline.</p>
+</div>
+</div>
+</div>
+</sc-if>
+</section>
+<section data-screen-label="Audit" style="max-width:1160px;margin:0 auto;padding:calc(var(--space-8) * 4) var(--space-8) 0;">
+<div style="font-size:10.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--color-accent);font-weight:500;margin-bottom:var(--space-4);">@mcpose/audit</div>
+<h2 style="margin:0 0 var(--space-3);">Audit trails an examiner can verify.</h2>
+<p style="margin:0 0 calc(var(--space-8) * 1.6);font-size:14.5px;line-height:1.6;color:var(--color-neutral-400);max-width:600px;">Built for DORA Art. 17 and SR 11-7. Every event chains to the last; every session closes with a signed Merkle manifest. Extracted from a production financial deployment.</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--space-8) * 2.5);align-items:start;">
+<div style="display:flex;flex-direction:column;gap:var(--space-8);">
+<div><div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent);font-weight:500;margin-bottom:var(--space-2);">HMAC-chained events</div><div style="font-size:13.5px;line-height:1.6;color:var(--color-neutral-400);"><span style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;color:var(--color-neutral-200);">chainHash = HMAC(entry || prevChainHash)</span> — truncation, reordering, and rewrites are detectable.</div></div>
+<div><div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent);font-weight:500;margin-bottom:var(--space-2);">Replay manifest</div><div style="font-size:13.5px;line-height:1.6;color:var(--color-neutral-400);">A signed Merkle-proof document per session. A third party can verify a single event without access to the full log.</div></div>
+<div><div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent);font-weight:500;margin-bottom:var(--space-2);">Sensitivity tiers</div><div style="font-size:13.5px;line-height:1.6;color:var(--color-neutral-400);">Classify every tool call; high-tier payloads are encrypted with AES-256-GCM and a per-event key.</div></div>
+<div><div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent);font-weight:500;margin-bottom:var(--space-2);">Never in the hot path</div><div style="font-size:13.5px;line-height:1.6;color:var(--color-neutral-400);">Audit failures go to <span style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;color:var(--color-neutral-200);">onAuditError</span> — a tool call never fails because logging did.</div></div>
+</div>
+<div>
+<div style="display:flex;align-items:center;margin-bottom:var(--space-8);">
+<span style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:11.5px;color:var(--color-neutral-200);border:1px solid var(--color-divider);border-radius:var(--radius-sm);padding:4px 10px;background:var(--color-surface);">e₀</span>
+<div style="flex:1;max-width:52px;display:flex;flex-direction:column;align-items:center;"><span style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:9px;color:var(--color-neutral-600);margin-bottom:2px;">hmac</span><div style="width:100%;height:1px;background:var(--color-divider);"></div></div>
+<span style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:11.5px;color:var(--color-neutral-200);border:1px solid var(--color-divider);border-radius:var(--radius-sm);padding:4px 10px;background:var(--color-surface);">e₁</span>
+<div style="flex:1;max-width:52px;display:flex;flex-direction:column;align-items:center;"><span style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:9px;color:var(--color-neutral-600);margin-bottom:2px;">hmac</span><div style="width:100%;height:1px;background:var(--color-divider);"></div></div>
+<span style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:11.5px;color:var(--color-neutral-200);border:1px solid var(--color-divider);border-radius:var(--radius-sm);padding:4px 10px;background:var(--color-surface);">e₂</span>
+<div style="flex:1;max-width:52px;display:flex;flex-direction:column;align-items:center;"><span style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:9px;color:var(--color-neutral-600);margin-bottom:2px;">hmac</span><div style="width:100%;height:1px;background:var(--color-divider);"></div></div>
+<span style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:11.5px;color:var(--color-neutral-600);padding:4px 4px;">…</span>
+<div style="flex:1;max-width:52px;height:1px;background:var(--color-divider);"></div>
+<span class="tag tag-outline" style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:11px;">manifest ✓</span>
+</div>
+<table class="table">
+<thead><tr><th style="width:110px;">Tier</th><th>Stored fields</th></tr></thead>
+<tbody>
+<tr><td><span class="tag tag-neutral" style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:10.5px;">low</span></td><td style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:11.5px;color:var(--color-neutral-400);">inputRaw, outputRaw <span style="color:var(--color-neutral-600);">(plaintext)</span></td></tr>
+<tr><td><span class="tag tag-accent-2" style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:10.5px;">medium</span></td><td style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:11.5px;color:var(--color-neutral-400);">inputRaw, outputRaw <span style="color:var(--color-neutral-600);">(PII redacted upstream)</span></td></tr>
+<tr><td><span class="tag tag-accent" style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:10.5px;">high</span></td><td style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:11.5px;color:var(--color-neutral-400);">inputEncrypted, outputEncrypted <span style="color:var(--color-neutral-600);">(AES-256-GCM)</span></td></tr>
+</tbody>
+</table>
+<div style="font-size:11.5px;color:var(--color-neutral-500);margin-top:var(--space-3);">Unknown tools always resolve to <span style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:10.5px;">'high'</span>.</div>
+</div>
+</div>
+</section>
+<section data-screen-label="Packages" style="max-width:1160px;margin:0 auto;padding:calc(var(--space-8) * 4) var(--space-8) 0;">
+<div style="font-size:10.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--color-accent);font-weight:500;margin-bottom:var(--space-4);">Packages</div>
+<h2 style="margin:0 0 var(--space-8);">Three packages, one surface.</h2>
+<table class="table">
+<thead><tr><th style="width:230px;">Package</th><th>What it does</th><th style="width:140px;text-align:right;">Version</th></tr></thead>
+<tbody>
+<tr>
+<td><a href="https://www.npmjs.com/package/mcpose" style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:13px;">mcpose</a></td>
+<td style="color:var(--color-neutral-400);">Proxy core — pipeline, transports, identity, governance.</td>
+<td style="text-align:right;"><span class="tag tag-neutral" style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:10px;">v2.x</span></td>
+</tr>
+<tr>
+<td><a href="https://www.npmjs.com/package/@mcpose/audit" style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:13px;">@mcpose/audit</a></td>
+<td style="color:var(--color-neutral-400);">Tamper-evident HMAC audit chain + Merkle replay manifest.</td>
+<td style="text-align:right;"><span class="tag tag-neutral" style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:10px;">v3.0 · format v2</span></td>
+</tr>
+<tr>
+<td><a href="https://www.npmjs.com/package/@mcpose/testing" style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:13px;">@mcpose/testing</a></td>
+<td style="color:var(--color-neutral-400);">Runner-agnostic compliance assertions for the audit chain.</td>
+<td style="text-align:right;"><span class="tag tag-neutral" style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:10px;">devDependency</span></td>
+</tr>
+</tbody>
+</table>
+<div style="font-size:11.5px;color:var(--color-neutral-500);margin-top:var(--space-4);">Peer dependency: <span style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:10.5px;">@modelcontextprotocol/sdk ≥ 1.0</span> — installed separately.</div>
+</section>
+<section data-screen-label="CTA" style="max-width:1160px;margin:0 auto;padding:calc(var(--space-8) * 4) var(--space-8) 0;">
+<div class="elev-sm" style="background:var(--color-surface);border-radius:var(--radius-lg);padding:calc(var(--space-8) * 2.5) var(--space-8);display:flex;flex-direction:column;align-items:center;text-align:center;">
+<h3 style="margin:0 0 var(--space-3);">Drop it in front of any MCP server.</h3>
+<p style="margin:0 0 var(--space-8);font-size:14px;color:var(--color-neutral-400);">Ten lines of glue. Nothing upstream changes.</p>
+<div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-8);">
+<div style="display:flex;align-items:center;gap:var(--space-3);background:var(--color-bg);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:var(--space-3) var(--space-6);font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:14px;">
+<span style="color:var(--color-neutral-600);">$</span><span style="color:var(--color-neutral-100);">npm install mcpose</span>
+</div>
+<button class="btn btn-secondary" onClick="{{ copyCta }}" style="font-size:12px;">{{ ctaLabel }}</button>
+</div>
+<a class="btn btn-primary" href="mcpose Docs.dc.html">Read the docs →</a>
+</div>
+</section>
+<footer data-screen-label="Footer" style="max-width:1160px;margin:calc(var(--space-8) * 2.5) auto 0;padding:0 var(--space-8) calc(var(--space-8) * 1.5);">
+<div class="hr" style="margin:0 0 var(--space-8);"></div>
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--space-4);">
+<div style="display:flex;align-items:center;gap:var(--space-3);">
+<div style="width:16px;height:16px;border:1.5px solid var(--color-neutral-700);border-radius:4px;display:flex;align-items:center;justify-content:center;">
+<div style="width:8px;height:8px;border:1.5px solid var(--color-accent);border-radius:2px;"></div>
+</div>
+<span style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12.5px;color:var(--color-neutral-300);">mcpose</span>
+<span style="font-size:11.5px;color:var(--color-neutral-500);">· MIT license</span>
+</div>
+<div style="display:flex;gap:var(--space-6);font-size:12.5px;">
+<a href="https://github.com/amir-gorji/mcpose" style="color:var(--color-neutral-400);" style-hover="color:var(--color-accent);">GitHub</a>
+<a href="https://www.npmjs.com/package/mcpose" style="color:var(--color-neutral-400);" style-hover="color:var(--color-accent);">npm</a>
+<a href="mcpose Docs.dc.html" style="color:var(--color-neutral-400);" style-hover="color:var(--color-accent);">Docs</a>
+<a href="https://github.com/amir-gorji/mcpose/blob/main/SECURITY.md" style="color:var(--color-neutral-400);" style-hover="color:var(--color-accent);">Security</a>
+</div>
+</div>
+<div style="font-size:11.5px;color:var(--color-neutral-500);margin-top:var(--space-4);">Extracted from a production financial Elasticsearch MCP deployment · Node 20+ · ESM · TypeScript-first</div>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;announcement&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Sections&quot; },
+  &quot;showRoutingPaths&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Sections&quot; },
+  &quot;heroSnippet&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;audit-http&quot;, &quot;minimal-stdio&quot;], &quot;default&quot;: &quot;audit-http&quot;, &quot;tsType&quot;: &quot;'audit-http' | 'minimal-stdio'&quot;, &quot;section&quot;: &quot;Hero&quot; }
+}">
+class Component extends DCLogic {
+  state = { copied: false, copiedCta: false };
+  copy(key) {
+    try { navigator.clipboard.writeText('npm install mcpose'); } catch (e) {}
+    this.setState({ [key]: true });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this.setState({ copied: false, copiedCta: false }), 1400);
+  }
+  renderVals() {
+    const hero = this.props.heroSnippet ?? 'audit-http';
+    return {
+      showAnnouncement: this.props.announcement ?? true,
+      showRouting: this.props.showRoutingPaths ?? true,
+      heroAudit: hero !== 'minimal-stdio',
+      heroMinimal: hero === 'minimal-stdio',
+      copyInstall: () => this.copy('copied'),
+      installLabel: this.state.copied ? 'copied ✓' : 'copy',
+      copyCta: () => this.copy('copiedCta'),
+      ctaLabel: this.state.copiedCta ? 'copied ✓' : 'copy',
+    };
+  }
+}
+</script>
+</body>
+</html>
