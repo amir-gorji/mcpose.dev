@@ -1,0 +1,192 @@
+.lede {
+  margin: 0 0 calc(var(--space-8) * 1.6);
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--color-neutral-400);
+  max-width: 600px;
+}
+
+.flowRow {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.edgeCard {
+  width: 190px;
+  justify-content: center;
+}
+
+.edgeTitle {
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font-heading);
+}
+
+.edgeSub {
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--color-neutral-500);
+}
+
+.connector {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-2);
+}
+
+.connectorLabel {
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  color: var(--color-neutral-600);
+  margin-bottom: var(--space-2);
+}
+
+.connectorLine {
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.connectorRule {
+  flex: 1;
+  height: 1px;
+  background: var(--color-divider);
+}
+
+.connectorTransport {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--color-neutral-600);
+  margin-top: var(--space-2);
+}
+
+.diamond {
+  width: 5px;
+  height: 5px;
+  background: var(--color-neutral-600);
+  transform: rotate(45deg);
+}
+
+.diamondAccent {
+  width: 4px;
+  height: 4px;
+  background: var(--color-accent);
+  transform: rotate(45deg);
+}
+
+.centerBox {
+  width: 300px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--color-accent-700);
+}
+
+.centerHeader {
+  padding: var(--space-3) var(--space-6);
+  border-bottom: 1px solid var(--color-divider);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.centerName {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-accent-300);
+}
+
+.centerAddress {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--color-neutral-600);
+}
+
+.centerBody {
+  padding: var(--space-3) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.centerRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.centerRowLabel {
+  font-size: 12px;
+  color: var(--color-neutral-300);
+}
+
+.routing {
+  margin-top: calc(var(--space-8) * 1.6);
+}
+
+.routingHeading {
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font-heading);
+  margin-bottom: var(--space-4);
+}
+
+.routingGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.routingOption {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--color-neutral-500);
+}
+
+.inlineCode {
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+@media (max-width: 900px) {
+  .flowRow {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .edgeCard {
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .connector {
+    flex: 0 0 auto;
+    padding: var(--space-3) 0;
+  }
+
+  /* The line turns vertical: 1px rule, 5px diamond endpoints top/bottom. */
+  .connectorLine {
+    width: auto;
+    height: 40px;
+    flex-direction: column;
+  }
+
+  .connectorRule {
+    width: 1px;
+    height: auto;
+  }
+
+  .centerBox {
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .routingGrid {
+    grid-template-columns: 1fr;
+  }
+}

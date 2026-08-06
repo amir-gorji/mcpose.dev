@@ -1,0 +1,34 @@
+{
+  "name": "mcpose.dev",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "postbuild": "pagefind --site out",
+    "serve": "npx serve out -l 4000",
+    "postinstall": "fumadocs-mdx",
+    "test": "pnpm build && node --test \"tests/*.test.mjs\"",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "fumadocs-core": "16.14.0",
+    "fumadocs-mdx": "15.2.2",
+    "next": "16.3.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "shiki": "4.4.2",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/mdx": "^2.0.13",
+    "@types/node": "^25.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "16.3.0",
+    "pagefind": "1.5.2",
+    "typescript": "^5.7.0"
+  }
+}

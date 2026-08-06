@@ -1,0 +1,20 @@
+/* Next-steps link cards — hover swaps in a 1px accent outline (accent is
+   only ever outline weight, never a fill). */
+.cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-bottom: calc(var(--space-8) * 1.4);
+}
+.cardLink {
+  text-decoration: none;
+}
+.cardLink:hover {
+  box-shadow: 0 0 0 1px var(--color-accent-700);
+}
+.title {
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font-heading);
+  color: var(--color-accent-300);
+}

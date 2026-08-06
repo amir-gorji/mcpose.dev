@@ -1,0 +1,146 @@
+.sectionKicker {
+  margin-bottom: var(--space-4);
+}
+
+.heading {
+  margin: 0 0 var(--space-3);
+}
+
+.lede {
+  margin: 0 0 calc(var(--space-8) * 1.6);
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--color-neutral-400);
+  max-width: 600px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: calc(var(--space-8) * 2.5);
+  align-items: start;
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.itemKicker {
+  margin-bottom: var(--space-2);
+}
+
+.itemBody {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--color-neutral-400);
+}
+
+.code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-neutral-200);
+}
+
+.chain {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--space-8);
+}
+
+.chip {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--color-neutral-200);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  background: var(--color-surface);
+}
+
+.link {
+  flex: 1;
+  max-width: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.linkLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--color-neutral-600);
+  margin-bottom: 2px;
+}
+
+.linkLine {
+  width: 100%;
+  height: 1px;
+  background: var(--color-divider);
+}
+
+.ellipsis {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--color-neutral-600);
+  padding: 4px 4px;
+}
+
+.tailLine {
+  flex: 1;
+  max-width: 52px;
+  height: 1px;
+  background: var(--color-divider);
+}
+
+.manifestTag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.tierCol {
+  width: 110px;
+}
+
+.tierTag {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+}
+
+.fieldsCell {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--color-neutral-400);
+}
+
+.fieldsNote {
+  color: var(--color-neutral-600);
+}
+
+.footnote {
+  font-size: 11.5px;
+  color: var(--color-neutral-500);
+  margin-top: var(--space-3);
+}
+
+.footnoteCode {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+}
+
+@media (max-width: 960px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: calc(var(--space-8) * 1.6);
+  }
+}
+
+@media (max-width: 560px) {
+  /* Scroll the tier table sideways; row-level gradient rules keep painting
+     across the anonymous table box. */
+  .chain + :global(.table) {
+    display: block;
+    overflow-x: auto;
+  }
+}

@@ -1,0 +1,61 @@
+.trigger {
+  appearance: none;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  color: var(--color-neutral-500);
+  min-width: 170px;
+  cursor: pointer;
+}
+
+.label {
+  flex: 1;
+}
+
+.keycap {
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-sm);
+  padding: 1px 5px;
+  font-size: 10px;
+  color: var(--color-neutral-600);
+}
+
+/* The desktop field carries its own label; the icon stands in for it once
+   the nav runs out of room. */
+.icon {
+  display: none;
+  flex: none;
+}
+
+@media (max-width: 640px) {
+  .trigger {
+    min-width: 0;
+  }
+
+  .icon {
+    display: block;
+  }
+
+  /* Hidden visually, kept in the accessibility tree so the icon-only
+     button still announces as "Search docs". */
+  .label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .keycap {
+    display: none;
+  }
+}

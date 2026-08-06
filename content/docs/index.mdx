@@ -1,0 +1,48 @@
+---
+title: "Documentation"
+description: "Guides, concepts, and package reference for mcpose — the drop-in audit and governance proxy for MCP."
+next: "/docs/getting-started/quick-start"
+---
+
+mcpose sits between any LLM client and any MCP server, routing every tool call through composable onion middleware and recording it in a tamper-evident, compliance-grade audit trail — nothing upstream changes.
+These docs cover the core workflow, the concepts behind the proxy, and the reference for every published package.
+
+## Start here [#start-here]
+
+<LinkCards>
+  <LinkCard
+    href="/docs/getting-started/quick-start/"
+    title="Quick Start →"
+    body="Wrap an upstream MCP server with a logging middleware and serve it over stdio — ten lines of glue."
+  />
+  <LinkCard
+    href="/docs/getting-started/introduction/"
+    title="Introduction →"
+    body="What mcpose is and why it exists."
+  />
+</LinkCards>
+
+## Explore the docs [#explore]
+
+<LinkCards>
+  <LinkCard
+    href="/docs/concepts/proxy-model/"
+    title="Concepts →"
+    body="The proxy model, the middleware onion, identity and sessions, and rejection reasons."
+  />
+  <LinkCard
+    href="/docs/packages/mcpose/"
+    title="Packages →"
+    body="Reference for mcpose, @mcpose/audit, and @mcpose/testing."
+  />
+  <LinkCard
+    href="/docs/recipes/pii-redaction-audit/"
+    title="Recipes →"
+    body="PII redaction with audit, list-tools rewriting, and OAuth against an upstream server."
+  />
+  <LinkCard
+    href="/docs/project/roadmap/"
+    title="Project →"
+    body="Roadmap, ADRs, contributing, and the security policy."
+  />
+</LinkCards>

@@ -1,0 +1,42 @@
+.trigger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.bar {
+  display: block;
+  width: 14px;
+  height: 1.5px;
+  background: var(--color-neutral-300);
+}
+
+/* The nocturne backdrop centers its child; the drawer pins left instead. */
+.scrim {
+  place-items: stretch;
+  padding: 0;
+  z-index: 60;
+}
+
+.panel {
+  width: 280px;
+  height: 100dvh;
+  padding: var(--space-6);
+  overflow-y: auto;
+  background: var(--color-bg);
+  border-right: 1px solid var(--color-divider);
+}
+
+@media (max-width: 768px) {
+  .trigger {
+    display: flex;
+  }
+}

@@ -1,0 +1,127 @@
+/* Docs article prose — the mock's inline styles for the Quick Start <main>
+   content, keyed off the elements getMDXComponents maps. Spacing follows the
+   mock's margin-bottom-only rhythm; the two places where a code frame's
+   bottom margin varies in the mock (space-6 before flowing content,
+   space-8*1.4 before a section heading) are reproduced with a constant
+   frame margin plus adjacent-sibling rules, so every gap lands on the
+   mock's exact pixel value. */
+
+/* — section headings — the mock uses h4 visually (20px, nocturne heading
+   defaults); we ship h2 semantics and restate the size. */
+.sectionHeading {
+  font-size: 20px;
+  margin: 0 0 var(--space-4);
+  scroll-margin-top: calc(56px + var(--space-6)); /* sticky nav offset */
+}
+/* "Next steps" (the article's last section heading) sits space-6 above its
+   card grid in the mock, not the usual space-4. */
+.sectionHeading:last-of-type {
+  margin-bottom: var(--space-6);
+}
+
+/* — paragraphs — */
+.paragraph {
+  margin: 0 0 var(--space-6);
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--color-neutral-400);
+}
+/* Lede — the first paragraph after the h1. Covers both page shapes: the
+   MDX body as h1's sibling, or wrapped in its own container. */
+.paragraph:first-child,
+h1 + .paragraph {
+  margin: 0 0 calc(var(--space-8) * 1.6);
+  font-size: 15.5px;
+  text-wrap: pretty;
+}
+
+/* — lists — */
+.list {
+  margin: 0 0 calc(var(--space-8) * 1.4);
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.listItem {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--color-neutral-400);
+}
+
+/* — inline code in prose — */
+.inlineCode {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--color-neutral-200);
+  /* Package specifiers are longer than a phone's line box. */
+  overflow-wrap: anywhere;
+}
+
+/* — prose links — (nocturne default accent, restated for the mapping) */
+.link {
+  color: var(--color-accent);
+}
+
+/* — code frames — mock: space-6 below a frame that flows into content;
+   space-8*1.4 in total before the next section heading (as padding-top so
+   collapsing block margins cannot eat the difference). */
+.codeFrame {
+  margin-bottom: var(--space-6);
+}
+.codeFrame + .sectionHeading {
+  padding-top: calc(var(--space-8) * 1.4 - var(--space-6));
+}
+/* The paragraph following a frame closes its section ("Serving over HTTP
+   instead? …"). */
+.codeFrame + .paragraph {
+  margin-bottom: calc(var(--space-8) * 1.4);
+}
+
+/* — note callout — (composed with the global .card) */
+.note {
+  margin-bottom: calc(var(--space-8) * 1.4);
+}
+.note strong {
+  font-weight: 500;
+  color: var(--color-neutral-200);
+}
+.note code {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--color-neutral-200);
+}
+
+/* — routing-paths table — (composed with the global .table) */
+.docsTable {
+  margin-bottom: var(--space-4);
+}
+.docsTable th:first-child {
+  width: 120px;
+}
+.docsTable th:nth-child(2) {
+  width: 190px;
+}
+.docsTable td:first-child {
+  font-weight: 500;
+  font-family: var(--font-heading);
+}
+.docsTable td:nth-child(2) {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-neutral-400);
+}
+.docsTable td:nth-child(3) {
+  font-size: 13px;
+  color: var(--color-neutral-400);
+}
+.docsTable code {
+  font-size: 11px;
+}
+/* Table footnote ("Hidden beats pass-through …"). */
+.docsTable + .paragraph {
+  margin: 0 0 calc(var(--space-8) * 1.4);
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--color-neutral-500);
+}

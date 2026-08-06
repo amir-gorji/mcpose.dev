@@ -1,0 +1,20 @@
+.section {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: calc(var(--space-8) * 4) var(--space-8) 0;
+}
+
+.heroSection {
+  composes: section;
+  padding-top: calc(var(--space-8) * 3.5);
+}
+
+@media (max-width: 768px) {
+  .section {
+    padding-top: calc(var(--space-8) * 2.5);
+  }
+
+  .heroSection {
+    padding-top: calc(var(--space-8) * 2.5);
+  }
+}
