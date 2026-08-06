@@ -52,21 +52,29 @@ Each page is measured three times and assertions aggregate by median, because a 
 ### Thresholds
 
 Thresholds live in `.lighthouserc.json` and were calibrated against measured baselines rather than picked from round numbers.
-Measured medians at the time they were set (mobile, 3 runs):
+They were recalibrated against **production** once the site went live, because the real Cloudflare edge is measurably slower than a local server — LCP rose by roughly 250ms across the board once real network latency was in play.
+
+Measured on `https://mcpose.dev` (mobile, 3 runs, median / worst run):
 
 | Page | Perf | A11y | Best practices | SEO | LCP | CLS | TBT |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `/` | 97 | 96 | 100 | 100 | 2.56s | 0 | 7ms |
-| `/docs/` | 98 | 95 | 100 | 100 | 2.31s | 0 | 3ms |
-| `/docs/concepts/middleware-model/` | 98 | 96 | 100 | 100 | 2.31s | 0 | 4ms |
+| `/` | 96 / 95 | 96 | 100 | 100 | 2.79s / 2.79s | 0 | 6ms |
+| `/docs/` | 96 / 96 | 95 | 100 | 100 | 2.65s / 2.70s | 0 | 4ms |
+| `/docs/concepts/middleware-model/` | 96 / 96 | 96 | 100 | 100 | 2.65s / 2.69s | 0 | 3ms |
 
-SEO and best practices are asserted at a perfect 100 because both currently score 100 and both are deterministic — they do not vary with runner load.
-Performance is gated at 95 and accessibility at 95, just under the measured values, so the gate catches a real regression without flapping on runner noise.
+SEO and best practices are asserted at a perfect 100 because both score 100 and neither varies with runner load.
+Accessibility is asserted at 95, exactly the measured value, which is safe because axe rules are deterministic — the score only moves when a real accessibility defect is introduced or fixed.
 
-`largest-contentful-paint` is gated at 3000ms rather than Google's 2500ms "good" boundary.
-The landing page currently medians at 2556ms, marginally over that boundary, so asserting 2500 would fail on the first run.
-3000ms still sits well inside Google's 4000ms "poor" line and leaves headroom over the 2710ms worst observed run.
-**The landing page LCP is worth optimising**; when it drops under 2500ms, tighten this assertion to match.
+Performance and the timing metrics are deliberately **not** gated at their measured values.
+A GitHub-hosted runner is slower and noisier than the machine these baselines came from, so a gate sitting on the measured value would fail intermittently.
+An intermittently red gate gets ignored, which is worse than no gate at all.
+So performance is gated at 90 against a measured 96, `largest-contentful-paint` at 3500ms against a measured worst of 2792ms, and `first-contentful-paint` at 2200ms against a measured worst of 1689ms.
+Each still catches a genuine regression, because a real one moves these numbers far more than runner noise does.
+
+`largest-contentful-paint` therefore sits above Google's 2500ms "good" boundary, though still well inside the 4000ms "poor" line.
+**The landing page LCP is worth optimising** — at 2.79s it is currently outside "good" on mobile.
+The PR comment always prints the raw number against the 2500ms marker, so the gap stays visible on every run even though the gate tolerates it.
+Once the page is under 2500ms, tighten this assertion.
 
 `color-contrast` is asserted as a warning rather than an error.
 It currently fails on both the landing page and the docs pages, which is why accessibility sits at 95/96 instead of 100.
