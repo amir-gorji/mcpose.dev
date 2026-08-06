@@ -1,0 +1,28 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "mcpose-dev",
+  "compatibility_date": "2026-08-06",
+
+  // Static-only Worker: no `main` script, Cloudflare serves `out/` from the edge.
+  // Asset requests are not billed as Worker invocations.
+  "assets": {
+    "directory": "./out",
+    // Matches `trailingSlash: true` in next.config.ts, so `/docs` 307s to
+    // `/docs/` and every page has exactly one canonical URL.
+    "html_handling": "force-trailing-slash",
+    // Serve the nearest 404.html with a real 404 status instead of an SPA fallback.
+    "not_found_handling": "404-page"
+  },
+
+  // Wrangler creates the DNS record and issues the certificate on deploy.
+  // The zone must live in the same Cloudflare account as the Worker.
+  "routes": [{ "pattern": "mcpose.dev", "custom_domain": true }],
+
+  // No workers.dev URL in production: a second public origin serving identical
+  // HTML splits SEO signal with the custom domain.
+  "workers_dev": false,
+  // Still needed for per-PR preview URLs, which default to `workers_dev`.
+  "preview_urls": true,
+
+  "observability": { "enabled": true }
+}

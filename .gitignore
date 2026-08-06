@@ -9,7 +9,16 @@ next-env.d.ts
 # fumadocs-mdx generated
 .source/
 
+# wrangler / cloudflare
+.wrangler/
+.dev.vars
+
+# lighthouse ci run output
+.lighthouseci/
+
 # misc
 .DS_Store
 *.tsbuildinfo
 *.log
+AGENTS.md
+CLAUDE.md

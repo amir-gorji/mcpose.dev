@@ -1,0 +1,25 @@
+# Served by Cloudflare Workers static assets. Next.js copies public/ into out/,
+# so this file lands at the root of the asset directory where Cloudflare expects it.
+# Note: these apply to static asset responses only.
+
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), interest-cohort=()
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+
+# Content-hashed filenames — safe to cache forever.
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Only pagefind's index/ and fragment/ chunks carry a content hash in the
+# filename. pagefind-entry.json is the stable manifest that points at those
+# hashes, and pagefind-ui.* keep fixed names — caching either one immutably
+# would strand search on a stale index after a content change, so they are
+# deliberately left on the default revalidating cache.
+/pagefind/index/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/pagefind/fragment/*
+  Cache-Control: public, max-age=31536000, immutable
