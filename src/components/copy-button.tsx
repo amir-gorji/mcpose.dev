@@ -15,10 +15,10 @@ const CopyButton = ({ text, className, style }: CopyButtonProps) => {
   const handleClick = async () => {
     try {
       await navigator.clipboard.writeText(text);
+      setCopied(true);
+      window.clearTimeout(timeoutRef.current);
+      timeoutRef.current = window.setTimeout(() => setCopied(false), 1400);
     } catch {}
-    setCopied(true);
-    window.clearTimeout(timeoutRef.current);
-    timeoutRef.current = window.setTimeout(() => setCopied(false), 1400);
   };
 
   return (

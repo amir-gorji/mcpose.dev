@@ -45,6 +45,11 @@ type ResultItem = {
   excerpt: string;
 };
 
+type SearchResult = {
+  query: string;
+  items: readonly ResultItem[];
+};
+
 type SearchDialogProps = {
   onClose: () => void;
 };
@@ -57,10 +62,12 @@ const SearchDialog = ({ onClose }: SearchDialogProps) => {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState('');
-  const [items, setItems] = useState<readonly ResultItem[]>([]);
+  const [result, setResult] = useState<SearchResult | null>(null);
   const [selected, setSelected] = useState(0);
-  const [searchedQuery, setSearchedQuery] = useState('');
   const [loadFailed, setLoadFailed] = useState(false);
+
+  const items = result?.items ?? [];
+  const searchedQuery = result?.query ?? '';
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -79,12 +86,7 @@ const SearchDialog = ({ onClose }: SearchDialogProps) => {
 
   useEffect(() => {
     const trimmed = query.trim();
-    if (trimmed === '') {
-      setItems([]);
-      setSelected(0);
-      setSearchedQuery('');
-      return;
-    }
+    if (trimmed === '') return;
     let cancelled = false;
     void (async () => {
       try {
@@ -94,18 +96,18 @@ const SearchDialog = ({ onClose }: SearchDialogProps) => {
         const response = await pagefind.debouncedSearch(trimmed);
         if (response === null || cancelled) return;
         const data = await Promise.all(
-          response.results.slice(0, MAX_RESULTS).map((result) => result.data()),
+          response.results.slice(0, MAX_RESULTS).map((entry) => entry.data()),
         );
         if (cancelled) return;
-        setItems(
-          data.map((entry) => ({
+        setResult({
+          query: trimmed,
+          items: data.map((entry) => ({
             url: entry.url,
             title: entry.meta.title,
             excerpt: entry.excerpt,
           })),
-        );
+        });
         setSelected(0);
-        setSearchedQuery(trimmed);
       } catch {
         if (!cancelled) setLoadFailed(true);
       }
@@ -136,6 +138,14 @@ const SearchDialog = ({ onClose }: SearchDialogProps) => {
     }
   };
 
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(event.target.value);
+    if (event.target.value.trim() === '') {
+      setResult(null);
+      setSelected(0);
+    }
+  };
+
   const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if (event.target === event.currentTarget) dialogRef.current?.close();
   };
@@ -149,7 +159,7 @@ const SearchDialog = ({ onClose }: SearchDialogProps) => {
             className="input"
             type="text"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={handleChange}
             onKeyDown={handleKeyDown}
             placeholder="Search docs…"
             aria-label="Search docs"

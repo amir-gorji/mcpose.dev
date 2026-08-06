@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Fragment } from 'react';
 import CodeBlockFrame from '@/components/code-block';
 import InstallRow from '@/components/install-row';
@@ -36,9 +37,9 @@ const Hero = async () => {
           <InstallRow variant="hero" />
         </div>
         <div className={styles.buttonRow}>
-          <a className="btn btn-primary" href="/docs/getting-started/quick-start/">
+          <Link className="btn btn-primary" href="/docs/getting-started/quick-start/">
             Get started →
-          </a>
+          </Link>
           <a className="btn btn-secondary" href={SITE.github} rel="noreferrer">
             GitHub
           </a>

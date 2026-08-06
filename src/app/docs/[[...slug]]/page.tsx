@@ -1,13 +1,12 @@
-import type * as PageTree from 'fumadocs-core/page-tree';
 import { findNeighbour } from 'fumadocs-core/page-tree';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import type { ReactNode } from 'react';
 
 import Breadcrumb from '@/components/docs/breadcrumb';
 import Pager from '@/components/docs/pager';
 import Toc from '@/components/docs/toc';
 import JsonLd, { type JsonLdObject } from '@/components/seo/json-ld';
+import { DOCS_ROOT_URL, breadcrumbTrail, withTrailingSlash } from '@/lib/docs-tree';
 import { SITE } from '@/lib/site';
 import { source } from '@/lib/source';
 import { getMDXComponents } from '@/mdx-components';
@@ -21,62 +20,40 @@ export const generateStaticParams = () => source.generateParams();
 type PageProps = { params: Promise<{ slug?: string[] }> };
 type DocsPageData = NonNullable<ReturnType<typeof source.getPage>>;
 
-/* Canonical URLs carry the trailing slash (next.config trailingSlash: true);
-   fumadocs page.url does not, so normalize at the boundary. */
-const withTrailingSlash = (url: string): string => (url.endsWith('/') ? url : `${url}/`);
-
 const canonicalUrl = (page: DocsPageData): string => SITE.url + withTrailingSlash(page.url);
 
-/* Tree walk mirroring components/docs/breadcrumb.tsx, so the structured data
-   matches the visible trail. */
-const nodeName = (name: ReactNode): string => (typeof name === 'string' ? name : String(name ?? ''));
+const isDocsRoot = (page: DocsPageData): boolean => withTrailingSlash(page.url) === DOCS_ROOT_URL;
 
-const containsUrl = (node: PageTree.Node, url: string): boolean => {
-  if (node.type === 'page') return node.url === url;
-  if (node.type === 'folder') {
-    return node.index?.url === url || node.children.some((child) => containsUrl(child, url));
-  }
-  return false;
-};
+/* The docs root is a hub of section entry points, not an article. */
+const articleFor = (page: DocsPageData): JsonLdObject =>
+  isDocsRoot(page)
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: page.data.title,
+        ...(page.data.description !== undefined ? { description: page.data.description } : {}),
+        url: canonicalUrl(page),
+      }
+    : {
+        '@context': 'https://schema.org',
+        '@type': 'TechArticle',
+        headline: page.data.title,
+        ...(page.data.description !== undefined ? { description: page.data.description } : {}),
+        url: canonicalUrl(page),
+      };
 
-const folderCrumb = (folder: PageTree.Folder): { name: string; item?: string } => {
-  const firstChildPage = folder.children.find((child) => child.type === 'page');
-  const url = folder.index?.url ?? (firstChildPage?.type === 'page' ? firstChildPage.url : undefined);
-  return {
-    name: nodeName(folder.name),
-    ...(url !== undefined ? { item: SITE.url + withTrailingSlash(url) } : {}),
-  };
-};
-
-const techArticleFor = (page: DocsPageData): JsonLdObject => ({
+const breadcrumbListFor = (page: DocsPageData): JsonLdObject => ({
   '@context': 'https://schema.org',
-  '@type': 'TechArticle',
-  headline: page.data.title,
-  ...(page.data.description !== undefined ? { description: page.data.description } : {}),
-  url: canonicalUrl(page),
-});
-
-const breadcrumbListFor = (page: DocsPageData): JsonLdObject => {
-  const folder = source.pageTree.children.find(
-    (node): node is PageTree.Folder => node.type === 'folder' && containsUrl(node, page.url),
-  );
-  const crumbs: readonly { name: string; item?: string }[] = [
-    /* "Docs" links to Quick Start, same as the visual breadcrumb (no /docs/ index). */
-    { name: 'Docs', item: `${SITE.url}/docs/getting-started/quick-start/` },
-    ...(folder !== undefined ? [folderCrumb(folder)] : []),
-    { name: page.data.title, item: canonicalUrl(page) },
-  ];
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: crumbs.map((crumb, index) => ({
+  '@type': 'BreadcrumbList',
+  itemListElement: breadcrumbTrail(source.pageTree, page.url, page.data.title).map(
+    (crumb, index) => ({
       '@type': 'ListItem',
       position: index + 1,
       name: crumb.name,
-      ...(crumb.item !== undefined ? { item: crumb.item } : {}),
-    })),
-  };
-};
+      ...(crumb.url !== undefined ? { item: SITE.url + crumb.url } : {}),
+    }),
+  ),
+});
 
 export const generateMetadata = async ({ params }: PageProps): Promise<Metadata> => {
   const { slug } = await params;
@@ -113,7 +90,7 @@ const DocsPage = async ({ params }: PageProps) => {
     <>
       {page.data.stub ? null : (
         <>
-          <JsonLd data={techArticleFor(page)} />
+          <JsonLd data={articleFor(page)} />
           <JsonLd data={breadcrumbListFor(page)} />
         </>
       )}

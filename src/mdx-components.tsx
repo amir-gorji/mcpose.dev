@@ -5,7 +5,6 @@ import CopyButton from '@/components/copy-button';
 import LinkCard, { LinkCards } from '@/components/docs/link-card';
 import Note from '@/components/docs/note-card';
 import styles from '@/components/docs/docs-article.module.css';
-import { SITE } from '@/lib/site';
 
 const cx = (...classes: ReadonlyArray<string | undefined>): string =>
   classes.filter(Boolean).join(' ');
@@ -38,14 +37,6 @@ const Pre = ({ 'data-title': title, 'data-copy': copy, title: nativeTitle, ...re
   </div>
 );
 
-const EditLink = () => (
-  <div className={styles.editLinkWrap}>
-    <a className={styles.editLink} href={SITE.github}>
-      Edit this page on GitHub →
-    </a>
-  </div>
-);
-
 export const getMDXComponents = (overrides: MDXComponents = {}): MDXComponents => ({
   pre: Pre,
   h2: (props: ComponentPropsWithoutRef<'h2'>) => (
@@ -72,6 +63,5 @@ export const getMDXComponents = (overrides: MDXComponents = {}): MDXComponents =
   Note,
   LinkCards,
   LinkCard,
-  EditLink,
   ...overrides,
 });

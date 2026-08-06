@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import type { ReactNode } from 'react';
-import type * as PageTree from 'fumadocs-core/page-tree';
+import { Fragment } from 'react';
 
+import { DOCS_ROOT_URL, breadcrumbTrail } from '@/lib/docs-tree';
 import { source } from '@/lib/source';
 
 import styles from './breadcrumb.module.css';
@@ -12,36 +12,25 @@ type BreadcrumbProps = {
   page: DocsPage;
 };
 
-const nodeName = (name: ReactNode): string => (typeof name === 'string' ? name : String(name ?? ''));
-
-const containsUrl = (node: PageTree.Node, url: string): boolean => {
-  if (node.type === 'page') return node.url === url;
-  if (node.type === 'folder') {
-    return node.index?.url === url || node.children.some((child) => containsUrl(child, url));
-  }
-  return false;
-};
-
-const folderNameFor = (tree: PageTree.Root, url: string): string | null => {
-  const folder = tree.children.find((node) => node.type === 'folder' && containsUrl(node, url));
-  return folder !== undefined && folder.type === 'folder' ? nodeName(folder.name) : null;
-};
-
 const Breadcrumb = ({ page }: BreadcrumbProps) => {
-  const folderName = folderNameFor(source.pageTree, page.url);
+  const trail = breadcrumbTrail(source.pageTree, page.url, page.data.title);
+  const leading = trail.slice(0, -1);
+  const current = trail[trail.length - 1];
   return (
     <div className={styles.breadcrumb}>
-      <Link href="/docs/getting-started/quick-start/" className={styles.docsLink}>
-        Docs
-      </Link>
-      {' / '}
-      {folderName !== null ? (
-        <>
-          <span>{folderName}</span>
+      {leading.map((crumb) => (
+        <Fragment key={crumb.name}>
+          {crumb.url === DOCS_ROOT_URL ? (
+            <Link href={crumb.url} className={styles.docsLink}>
+              {crumb.name}
+            </Link>
+          ) : (
+            <span>{crumb.name}</span>
+          )}
           {' / '}
-        </>
-      ) : null}
-      <span className={styles.current}>{page.data.title}</span>
+        </Fragment>
+      ))}
+      <span className={styles.current}>{current.name}</span>
     </div>
   );
 };

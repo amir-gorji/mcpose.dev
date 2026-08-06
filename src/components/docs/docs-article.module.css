@@ -125,16 +125,3 @@ h1 + .paragraph {
   line-height: 1.65;
   color: var(--color-neutral-500);
 }
-
-/* — edit link — */
-.editLinkWrap {
-  margin-bottom: var(--space-8);
-}
-.editLink {
-  font-size: 12px;
-  color: var(--color-neutral-500);
-  text-decoration: none;
-}
-.editLink:hover {
-  color: var(--color-accent);
-}

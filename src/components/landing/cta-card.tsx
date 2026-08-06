@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 import InstallRow from '@/components/install-row';
 import styles from './cta-card.module.css';
 
@@ -8,9 +10,9 @@ const CtaCard = () => (
     <div className={styles.installRow}>
       <InstallRow variant="cta" />
     </div>
-    <a className="btn btn-primary" href="/docs/getting-started/quick-start/">
+    <Link className="btn btn-primary" href="/docs/getting-started/quick-start/">
       Read the docs →
-    </a>
+    </Link>
   </div>
 );
 

@@ -1,6 +1,7 @@
 import Link from 'next/link';
-import type { ReactNode } from 'react';
 import type * as PageTree from 'fumadocs-core/page-tree';
+
+import { nodeName, withTrailingSlash } from '@/lib/docs-tree';
 
 import styles from './sidebar.module.css';
 
@@ -22,10 +23,6 @@ type SidebarGroup = {
   readonly label: string;
   readonly items: readonly SidebarItem[];
 };
-
-const nodeName = (name: ReactNode): string => (typeof name === 'string' ? name : String(name ?? ''));
-
-const withTrailingSlash = (url: string): string => (url.endsWith('/') ? url : `${url}/`);
 
 const toGroups = (tree: PageTree.Root): readonly SidebarGroup[] =>
   tree.children.flatMap((node): readonly SidebarGroup[] => {
