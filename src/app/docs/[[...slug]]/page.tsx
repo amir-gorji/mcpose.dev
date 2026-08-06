@@ -63,9 +63,10 @@ export const generateMetadata = async ({ params }: PageProps): Promise<Metadata>
     title: page.data.title,
     description: page.data.description,
     alternates: { canonical: canonicalUrl(page) },
-    /* Page-level openGraph replaces the root layout's, so restate site fields. */
+    /* Page-level openGraph replaces the root layout's, so restate site fields.
+       The docs hub is a section directory, not an article. */
     openGraph: {
-      type: 'article',
+      type: isDocsRoot(page) ? 'website' : 'article',
       siteName: SITE.name,
       title: page.data.title,
       description: page.data.description,
@@ -91,7 +92,9 @@ const DocsPage = async ({ params }: PageProps) => {
       {page.data.stub ? null : (
         <>
           <JsonLd data={articleFor(page)} />
-          <JsonLd data={breadcrumbListFor(page)} />
+          {/* Google wants ≥2 items for breadcrumb rich results; the docs hub
+              trail is a single entry. */}
+          {isDocsRoot(page) ? null : <JsonLd data={breadcrumbListFor(page)} />}
         </>
       )}
       <main className={styles.main} {...(page.data.stub ? {} : { 'data-pagefind-body': '' })}>
