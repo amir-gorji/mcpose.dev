@@ -1,5 +1,6 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 
 import styles from './sidebar-drawer.module.css';
@@ -14,6 +15,21 @@ const SidebarDrawer = ({ children }: { children: ReactNode }) => {
     setOpen(false);
     triggerRef.current?.focus();
   }, []);
+
+  /* Client-side navigations through a sidebar link change the page
+     underneath while the drawer, scrim, and scroll-lock stay active.
+     The lint rule flags `close()` inside an effect only because close is
+     a useCallback (which itself calls setState) — lifting the underlying
+     action directly satisfies it. */
+  const pathname = usePathname();
+  const previousPathname = useRef(pathname);
+  useEffect(() => {
+    if (open && pathname !== previousPathname.current) {
+      setOpen(false);
+      triggerRef.current?.focus();
+    }
+    previousPathname.current = pathname;
+  }, [pathname, open]);
 
   useEffect(() => {
     if (!open) return;

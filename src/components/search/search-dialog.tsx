@@ -55,6 +55,10 @@ type SearchDialogProps = {
 };
 
 const MAX_RESULTS = 8;
+const FAILURE_MSG =
+  process.env.NODE_ENV === 'development'
+    ? 'Search index is built at build time. Run pnpm build && pnpm serve to test locally.'
+    : 'Search is unavailable. Try again shortly.';
 const LISTBOX_ID = 'search-dialog-listbox';
 const optionId = (index: number) => `search-dialog-option-${index}`;
 
@@ -99,6 +103,7 @@ const SearchDialog = ({ onClose }: SearchDialogProps) => {
           response.results.slice(0, MAX_RESULTS).map((entry) => entry.data()),
         );
         if (cancelled) return;
+        setLoadFailed(false); // clear a stale failure now that a search succeeded
         setResult({
           query: trimmed,
           items: data.map((entry) => ({
@@ -171,12 +176,7 @@ const SearchDialog = ({ onClose }: SearchDialogProps) => {
             autoComplete="off"
             spellCheck={false}
           />
-          {loadFailed ? (
-            <p className={styles.note}>
-              Search index is built at build time. Run pnpm build &amp;&amp; pnpm serve to test
-              locally.
-            </p>
-          ) : null}
+          {loadFailed ? <p className={styles.note}>{FAILURE_MSG}</p> : null}
           {items.length > 0 ? (
             <div className={styles.results} role="listbox" id={LISTBOX_ID} aria-label="Search results">
               {items.map((item, index) => (
