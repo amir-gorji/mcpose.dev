@@ -1,9 +1,132 @@
 ---
 title: "OAuth upstream"
 description: "Proxy an upstream MCP server that requires OAuth."
-stub: true
 ---
 
-This page is being written.
+Upstream MCP servers often sit behind their own auth: an API key, a bearer token, or a full OAuth flow.
+This recipe covers both ways to authenticate the proxy to an upstream, both decided entirely inside `BackendConfig`.
 
-In the meantime, the [Quick Start](/docs/getting-started/quick-start/) covers the core workflow end to end.
+## Two kinds of auth [#framing]
+
+`headers` and `authProvider` are **upstream-facing**: they authenticate the proxy to the upstream MCP server.
+That is distinct from `resolveIdentity`, which is **client-facing**: it authenticates the proxy's callers when `startHttpProxy` establishes a session.
+Upstream auth runs inside the transport, before middleware sees anything; `resolveIdentity` runs once per HTTP session and stamps the result on every request in that session.
+The two never collide, so you can protect the proxy with one and authenticate to the upstream with the other.
+
+## Approach 1 · Static bearer token [#static-token]
+
+When the upstream accepts a fixed token, pass it as a header on every request to the backend.
+
+```ts title="backend.ts" copy="full"
+const backend = await createBackendClient({
+  url: 'https://mcp.example.com/sse',
+  headers: { Authorization: `Bearer ${process.env.UPSTREAM_TOKEN}` },
+});
+```
+
+`headers` is a plain record sent verbatim on every request to the backend.
+It is the right tool for API keys and long-lived tokens.
+It cannot refresh, so when the upstream issues short-lived tokens, use an `authProvider` instead.
+
+## Approach 2 · OAuth via authProvider [#oauth]
+
+For backends that run the MCP OAuth flow instead of accepting a static token, pass an `authProvider` to `createBackendClient`.
+
+```ts title="backend.ts" copy="full"
+import { OAuthClientProvider } from '@modelcontextprotocol/sdk/client/auth';
+
+// Your OAuthClientProvider implementation, see "A minimal provider" below
+const authProvider: OAuthClientProvider = /* ... */;
+
+const backend = await createBackendClient({
+  url: 'https://mcp.example.com/sse',
+  authProvider,
+});
+```
+
+mcpose forwards the provider to the HTTP/SSE transport, which then runs the whole OAuth dance for you: dynamic client registration, PKCE, interactive browser authorization, and transparent token refresh.
+The transport stores the registered client and tokens through the provider's callbacks, and reuses them on later connections.
+You never manage tokens yourself.
+
+## A minimal provider [#provider]
+
+An `OAuthClientProvider` is a small stateful object: it describes the client, persists the dynamic registration and tokens, and saves and reloads the PKCE verifier.
+
+```ts title="oauth-provider.ts" copy="full"
+import { OAuthClientProvider } from '@modelcontextprotocol/sdk/client/auth';
+import type {
+  OAuthClientInformationFull,
+  OAuthClientMetadata,
+  OAuthTokens,
+} from '@modelcontextprotocol/sdk/shared/auth.js';
+
+// Swap the in-memory store for disk or a secret manager
+let store: { client?: OAuthClientInformationFull; tokens?: OAuthTokens; verifier?: string } = {};
+
+const authProvider: OAuthClientProvider = {
+  get redirectUrl() {
+    return 'http://localhost:3003/login-callback';
+  },
+  get clientMetadata(): OAuthClientMetadata {
+    return {
+      client_name: 'my-proxy',
+      redirect_uris: ['http://localhost:3003/login-callback'],
+      grant_types: ['authorization_code', 'refresh_token'],
+      token_endpoint_auth_method: 'none',
+    };
+  },
+  clientInformation: () => store.client,
+  saveClientInformation: (client) => { store.client = client; },
+  tokens: () => store.tokens,
+  saveTokens: (tokens) => { store.tokens = tokens; },
+  saveCodeVerifier: (verifier) => { store.verifier = verifier; },
+  codeVerifier: () => {
+    if (!store.verifier) throw new Error('No PKCE code_verifier saved');
+    return store.verifier;
+  },
+  redirectToAuthorization: (authorizationUrl) => {
+    openBrowser(authorizationUrl.toString()); // your platform's browser opener
+  },
+};
+```
+
+The transport calls `redirectToAuthorization` when authorization is needed, and `codeVerifier` / `saveCodeVerifier` for the PKCE flow.
+Persist the store across restarts, or your users will re-authorize on every run.
+
+## Full runnable flow [#example]
+
+The complete flow runs as `examples/oauth-upstream-client.ts` in the mcpose repository.
+It implements a `NodeOAuthProvider` that does what VS Code does for a remote MCP server: dynamic client registration, PKCE, opening the system browser to authorize, and persisting the result.
+
+- The provider persists the registered client, tokens, and PKCE verifier to `~/.oauth-solution/oauth.json` with mode `0600`.
+- A loopback HTTP server on port `3003` handles `/login-callback`, capturing the authorization code and surfacing OAuth errors.
+- `connectWithBrowserAuth` connects with `StreamableHTTPClientTransport` and the provider; on the first run the transport throws `UnauthorizedError` after opening the browser, the code is exchanged with `finishAuth(code)`, and a fresh transport reconnects with the saved token.
+- On later runs the persisted tokens are reused directly, with the transport refreshing them transparently.
+
+Start it from the repository root:
+
+```bash title="terminal" copy="commands"
+pnpm --filter mcpose-examples oauth-upstream-client
+```
+
+It needs an OAuth-capable upstream MCP server.
+
+## Constraints [#constraints]
+
+`headers` and `authProvider` are HTTP/SSE only: both are ignored when the backend runs over stdio.
+The `OAuthClientProvider` interface comes from the MCP SDK, which is a peer dependency of mcpose: import it from `@modelcontextprotocol/sdk/client/auth`, with the token and metadata types from `@modelcontextprotocol/sdk/shared/auth.js`.
+
+## Next steps [#next]
+
+<LinkCards>
+  <LinkCard
+    href="/docs/concepts/identity-and-sessions/"
+    title="Identity & sessions →"
+    body="Resolve a caller once per session and stamp the Identity on every request."
+  />
+  <LinkCard
+    href="/docs/getting-started/examples/"
+    title="Examples →"
+    body="Runnable, well-commented examples of common proxy setups."
+  />
+</LinkCards>

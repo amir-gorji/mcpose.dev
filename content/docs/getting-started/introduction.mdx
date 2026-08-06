@@ -1,9 +1,78 @@
 ---
 title: "Introduction"
 description: "What mcpose is and why it exists."
-stub: true
 ---
 
-This page is being written.
+The audit and governance layer for MCP.
 
-In the meantime, the [Quick Start](/docs/getting-started/quick-start/) covers the core workflow end to end.
+## What mcpose is [#what]
+
+mcpose is a transparent proxy between an LLM client and an upstream MCP server.
+It mirrors the upstream MCP surface and routes supported calls through composable middleware.
+The client sees a normal MCP server.
+The upstream sees a normal MCP client.
+Nothing about the upstream changes.
+
+## Origin [#origin]
+
+mcpose was extracted from [financial-elastic-mcp-server](https://github.com/amir-gorji/financial-elastic-mcp-server), an Elasticsearch MCP server built for financial institutions that needed PII redaction and audit logging on every tool call.
+Those cross-cutting concerns were originally hardcoded into a single server.
+mcpose lifts that pattern into a reusable, composable middleware layer that can wrap any upstream MCP server.
+
+## Problems it solves [#problems]
+
+- **Composable middleware** with a predictable onion model: each layer runs before and after the inner pipeline.
+- **Hide or gate tools and resources** per caller, with a structured `RejectionReason` in every blocked call.
+- **Per-session identity resolution**: resolve a caller once, then stamp the `Identity` on every request in the session.
+- **Tamper-evident audit trails** (DORA Art. 17, SR 11-7) via `@mcpose/audit`: HMAC-chained events, a Merkle `ReplayManifest`, and AES-256-GCM for high-sensitivity tiers.
+- **HTTP/SSE transport** with mTLS, session limits, and SSE reconnect replay.
+- **Production-minded**: ships ESM with first-class TypeScript types and runs on Node.js 20+.
+
+## When to use mcpose [#when-to-use]
+
+- You operate MCP servers in a regulated environment (finance, healthcare) and need PII redaction, caller identity, and a tamper-evident audit trail on every tool call.
+- You want to add cross-cutting behavior (logging, redaction, rate limiting, governance) to an MCP server you do not control.
+- You need to hide or gate specific tools and resources per caller, or stamp a resolved identity onto every request.
+
+## When not to use mcpose [#when-not]
+
+- You are wrapping a single server with no cross-cutting concerns: a plain proxy is simpler.
+- Your environment runs Node.js older than 20: mcpose requires Node.js 20+.
+
+## The ecosystem [#ecosystem]
+
+mcpose is a monorepo.
+Each package publishes independently and has its own README on npm.
+
+<LinkCards>
+  <LinkCard
+    href="/docs/packages/mcpose/"
+    title="mcpose →"
+    body="The proxy core: pipeline, transports, identity, and governance."
+  />
+  <LinkCard
+    href="/docs/packages/audit/"
+    title="@mcpose/audit →"
+    body="Tamper-evident HMAC audit chain and Merkle ReplayManifest."
+  />
+  <LinkCard
+    href="/docs/packages/testing/"
+    title="@mcpose/testing →"
+    body="Runner-agnostic compliance assertions for the audit chain."
+  />
+</LinkCards>
+
+## Next steps [#next]
+
+<LinkCards>
+  <LinkCard
+    href="/docs/getting-started/quick-start/"
+    title="Quick Start →"
+    body="Wrap an upstream MCP server with a logging middleware and serve it over stdio."
+  />
+  <LinkCard
+    href="/docs/getting-started/install/"
+    title="Install →"
+    body="Install mcpose, its peer dependency, and the optional audit package."
+  />
+</LinkCards>

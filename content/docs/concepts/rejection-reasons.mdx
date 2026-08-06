@@ -1,9 +1,107 @@
 ---
 title: "Rejection reasons"
 description: "Structured RejectionReason values for every blocked call."
-stub: true
 ---
 
-This page is being written.
+Every blocked call carries a structured `RejectionReason` in the MCP error `data` field.
+The top-level error code is unchanged (`MethodNotFound` / `InvalidRequest`), so existing clients that only inspect the code are unaffected.
+Agents and audit middleware can inspect `error.data.rejectionReason` for programmatic handling and compliance logging.
 
-In the meantime, the [Quick Start](/docs/getting-started/quick-start/) covers the core workflow end to end.
+```ts
+// shape on the wire
+{
+  data: { rejectionReason: 'TOOL_HIDDEN' },
+}
+```
+
+## The union [#union]
+
+<details>
+<summary>Show the <code>RejectionReason</code> union</summary>
+
+```ts
+type RejectionReason =
+  | 'TOOL_HIDDEN'           // tool exists but is hidden from this caller
+  | 'RESOURCE_HIDDEN'       // resource exists but is hidden from this caller
+  | 'POLICY_DENIED'         // v3: RBAC policy blocked the call
+  | 'IDENTITY_UNRESOLVED'   // v3: identity could not be established
+  | 'CONSENT_MISSING'       // v3: GDPR/CCPA consent gate blocked the call
+  | 'SENSITIVITY_BLOCKED'   // v3: data sensitivity policy blocked the call
+  | 'DELEGATION_INVALID'    // v3: agent delegation chain is invalid or expired
+  | 'BUDGET_EXCEEDED'       // v3: cost budget for this session/user exceeded
+  | 'SESSION_LIMIT'         // max concurrent sessions reached (HTTP 503)
+  | 'BODY_LIMIT';           // request body exceeded maxBodyBytes (HTTP 413)
+```
+
+</details>
+
+## Current vs v3 [#split]
+
+Four reasons are produced today.
+The remaining six are reserved for v3: they are typed now so downstream code can handle them, but no mcpose component produces them yet.
+
+| Reason | Status | Meaning |
+|---|---|---|
+| `TOOL_HIDDEN` | Live today | tool exists but is hidden from this caller |
+| `RESOURCE_HIDDEN` | Live today | resource exists but is hidden from this caller |
+| `SESSION_LIMIT` | Live today | max concurrent sessions reached (HTTP 503) |
+| `BODY_LIMIT` | Live today | request body exceeded `maxBodyBytes` (HTTP 413) |
+| `POLICY_DENIED` | Reserved v3 | RBAC policy blocked the call |
+| `IDENTITY_UNRESOLVED` | Reserved v3 | identity could not be established |
+| `CONSENT_MISSING` | Reserved v3 | GDPR/CCPA consent gate blocked the call |
+| `SENSITIVITY_BLOCKED` | Reserved v3 | data sensitivity policy blocked the call |
+| `DELEGATION_INVALID` | Reserved v3 | agent delegation chain is invalid or expired |
+| `BUDGET_EXCEEDED` | Reserved v3 | cost budget for this session/user exceeded |
+
+## Semantics [#semantics]
+
+- `TOOL_HIDDEN`: the tool exists on the upstream server but is hidden from this caller.
+- `RESOURCE_HIDDEN`: the resource exists on the upstream server but is hidden from this caller.
+- `SESSION_LIMIT`: the HTTP transport reached its maximum concurrent sessions and responds with HTTP 503.
+- `BODY_LIMIT`: the request body exceeded `maxBodyBytes` and responds with HTTP 413.
+- `POLICY_DENIED`: an RBAC policy blocked the call.
+- `IDENTITY_UNRESOLVED`: the caller identity could not be established.
+- `CONSENT_MISSING`: a GDPR/CCPA consent gate blocked the call.
+- `SENSITIVITY_BLOCKED`: a data sensitivity policy blocked the call.
+- `DELEGATION_INVALID`: the agent delegation chain is invalid or expired.
+- `BUDGET_EXCEEDED`: the cost budget for this session or user was exceeded.
+
+## Lifecycle [#lifecycle]
+
+A rejection is thrown inside the pipeline: either middleware or the proxy itself throws an `McpError` with the reason embedded.
+The audit middleware observes the throw and records the event with `outcome: 'rejected'` plus the `rejectionReason`.
+Rejected events are recorded by default; set `includeRejections: false` to omit them from the audit chain.
+
+<Note kicker="Note · Distinguishing rejections">The audit middleware only classifies an outcome as `rejected` when the thrown error carries a `rejectionReason` in `error.data`.
+Any other throw is recorded as `outcome: 'error'`, which keeps a plain upstream failure distinct from a governance rejection.</Note>
+
+## Building a rejection [#building]
+
+`rejectionMcpError(reason, code, message)` builds an `McpError` with the reason embedded in `error.data`, so custom middleware can reject calls in the same structured shape the proxy uses.
+
+```ts title="rejection.ts" copy="full"
+import { rejectionMcpError } from 'mcpose';
+import { ErrorCode } from '@modelcontextprotocol/sdk/types.js';
+
+throw rejectionMcpError('TOOL_HIDDEN', ErrorCode.MethodNotFound, 'Tool not available');
+```
+
+## v3 reasons [#v3]
+
+<Note kicker="Note · Typed but not produced">The six v3 reasons (`POLICY_DENIED`, `IDENTITY_UNRESOLVED`, `CONSENT_MISSING`, `SENSITIVITY_BLOCKED`, `DELEGATION_INVALID`, `BUDGET_EXCEEDED`) are part of the public type so agents and audit tooling can handle them before the proxy itself emits them.
+Switch statements over `RejectionReason` should treat them as reachable today, not as dead branches.</Note>
+
+## Next steps [#next]
+
+<LinkCards>
+  <LinkCard
+    href="/docs/concepts/proxy-model/"
+    title="Proxy model →"
+    body="How mcpose mirrors the upstream MCP surface."
+  />
+  <LinkCard
+    href="/docs/packages/audit/"
+    title="@mcpose/audit →"
+    body="HMAC chains, the replay manifest, and how rejected calls land in the audit trail."
+  />
+</LinkCards>

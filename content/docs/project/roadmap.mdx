@@ -1,9 +1,77 @@
 ---
 title: "Roadmap"
 description: "Where mcpose is heading."
-stub: true
 ---
 
-This page is being written.
+mcpose's roadmap is organized into shipped work, the next major release (v3), and long-term ambitions (v4).
+Everything below mirrors the [Roadmap section](https://github.com/amir-gorji/mcpose/blob/main/README.md#roadmap) of the repository README.
 
-In the meantime, the [Quick Start](/docs/getting-started/quick-start/) covers the core workflow end to end.
+## Shipped [#shipped]
+
+These landed in the current 2.x release line:
+
+- [x] Composable middleware: `startProxy()`, `startHttpProxy()`, `createProxyServer()`
+- [x] Streamable HTTP transport with stateful sessions and SSE reconnect replay
+- [x] Identity resolution: `resolveIdentity` hook, `Identity` on `ProxyContext`
+- [x] mTLS support: `tlsOptions` on `HttpProxyOptions`
+- [x] `@mcpose/audit`: HMAC chain, Merkle proofs, `ReplayManifest`, sensitivity tiers, audit format v2
+- [x] `@mcpose/testing`: compliance assertion helpers
+
+## Next: v3 [#next]
+
+v3 targets Q1 2027.
+
+- `@mcpose/policy`: RBAC policy engine
+- `@mcpose/fintech-identity`: OIDC to financial identity profile
+- `@mcpose/otel`: OpenTelemetry spans adapter (does not exist yet)
+- Persistent EventStore adapters: Redis and Postgres
+- GDPR/CCPA consent middleware with cryptographic erasure
+- Signed delegation JWTs
+- Budget enforcement
+
+## Long term: v4 [#long-term]
+
+v4 targets Q3 2027.
+
+- Compliance report generator
+- Runnable compliance playbook
+- Full session replay
+- `@mcpose/splunk` and `@mcpose/datadog` adapters
+- `@mcpose/a2a` bridge
+
+## Timeline [#timeline]
+
+| Version | Target | Scope |
+| --- | --- | --- |
+| v2 | Aug 2026 | Core pipeline, transports, identity, mTLS, audit, testing |
+| v3 | Q1 2027 | Policy, fintech identity, otel, EventStore adapters, consent and erasure, delegation, budget enforcement |
+| v4 | Q3 2027 | Compliance tooling, full replay, observability adapters, A2A bridge |
+
+## Protocol watch [#protocol-watch]
+
+We track adjacent agent interoperability protocols in case they change the integration surface.
+
+- A2A: agent-to-agent communication between platforms; informs the long-term `@mcpose/a2a` bridge.
+- ATXP: agent transfer and handoff between platforms; informs the signed delegation JWT design.
+- OpenAI agent protocol: the emerging standard for agent task execution; watched for overlap with MCP tool discovery and sessions.
+
+## A note on dates [#note-on-dates]
+
+Roadmap items are plans, not promises.
+Dates are targets, not deadlines.
+Priorities may shift as the protocol ecosystem and compliance requirements evolve.
+
+## Next steps [#next-steps]
+
+<LinkCards>
+  <LinkCard
+    href="/docs/project/contributing/"
+    title="Contributing →"
+    body="Development setup, the common pnpm commands, and the project conventions."
+  />
+  <LinkCard
+    href="/docs/project/adrs/"
+    title="ADRs →"
+    body="Architecture decision records behind the audit chain and serialization format."
+  />
+</LinkCards>

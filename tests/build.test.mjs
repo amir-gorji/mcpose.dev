@@ -69,6 +69,26 @@ const CLIPBOARD = {
 
 const QUICK_START = 'docs/getting-started/quick-start/';
 
+const CONTENT = new URL('../content/docs/', import.meta.url).pathname;
+
+/* Slugs of pages whose frontmatter still marks them stub. */
+const stubSlugs = (() => {
+  const found = [];
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) { walk(full); continue; }
+      if (!entry.name.endsWith('.mdx')) continue;
+      const frontmatter = readFileSync(full, 'utf8').match(/^---\n([\s\S]*?)\n---/)?.[1] ?? '';
+      if (/^stub:\s*true$/m.test(frontmatter)) {
+        found.push(full.replace(CONTENT, '').replace(/\.mdx$/, '/'));
+      }
+    }
+  };
+  walk(CONTENT);
+  return found;
+})();
+
 test('static export emits every expected entry point', () => {
   for (const rel of [
     'index.html',
@@ -126,16 +146,16 @@ test('placeholder pages stay out of the index', () => {
   const sitemap = read('sitemap.xml');
   const listed = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(([, url]) => url);
   assert.ok(listed.length > 0, 'sitemap is empty');
-  assert.ok(
-    listed.every((url) => !url.includes('/introduction/') && !url.includes('/roadmap/')),
-    'a placeholder page leaked into the sitemap',
-  );
-  const stub = read('docs/getting-started/introduction/index.html');
-  assert.ok(stub.includes('noindex'), 'placeholder pages must be noindex');
-  assert.ok(
-    !stub.includes('data-pagefind-body'),
-    'placeholder pages must stay out of the search index',
-  );
+  const leaked = stubSlugs.filter((slug) => listed.some((url) => url.includes(`/docs/${slug}`)));
+  assert.deepEqual(leaked, [], 'placeholder pages leaked into the sitemap');
+  for (const slug of stubSlugs) {
+    const html = read(`docs/${slug}index.html`);
+    assert.ok(html.includes('noindex'), `${slug} must be noindex`);
+    assert.ok(
+      !html.includes('data-pagefind-body'),
+      `${slug} must stay out of the search index`,
+    );
+  }
 });
 
 test('pages carry their structured data', () => {

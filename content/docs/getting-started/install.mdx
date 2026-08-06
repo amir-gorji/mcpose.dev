@@ -1,9 +1,111 @@
 ---
 title: "Install"
 description: "Install mcpose and its peer dependency."
-stub: true
 ---
 
-This page is being written.
+Install mcpose, its peer dependency, and the optional audit package.
+Then verify the install with a runnable proxy before wiring up your client.
 
-In the meantime, the [Quick Start](/docs/getting-started/quick-start/) covers the core workflow end to end.
+## Prerequisites [#prerequisites]
+
+- Node.js `20` or newer.
+- `@modelcontextprotocol/sdk ≥ 1.0` as a peer dependency, installed separately below.
+- TypeScript is optional - mcpose ships ESM with first-class types.
+
+## Install [#install]
+
+```bash title="terminal" copy="commands"
+# core
+npm install mcpose
+
+# peer dependency - installed separately
+npm install @modelcontextprotocol/sdk@">=1.0.0"
+
+# compliance audit trails (optional)
+npm install @mcpose/audit
+```
+
+For the compliance test helpers, install `@mcpose/testing` as a dev dependency:
+
+```bash title="terminal" copy="commands"
+npm install --save-dev @mcpose/testing
+```
+
+## Verify it works [#verify]
+
+Save the Quick Start proxy as `proxy.ts`:
+
+```ts title="proxy.ts" copy="strip-line-comments"
+import { createBackendClient, startProxy } from 'mcpose';
+import type { ToolMiddleware } from 'mcpose';
+
+// 1 · Connect to the upstream MCP server (stdio)
+const backend = await createBackendClient({
+  command: 'node',
+  args: ['/path/to/backend-server.mjs'],
+});
+
+// 2 · Define middleware - before and after the upstream call
+const logging: ToolMiddleware = async (req, next) => {
+  console.error(`→ ${req.params.name}`);
+  const result = await next(req);
+  console.error(`← ${req.params.name} done`);
+  return result;
+};
+
+// 3 · Start the proxy on stdio
+await startProxy(backend, {
+  toolMiddleware: [logging],
+});
+```
+
+Run it:
+
+```bash title="terminal" copy="full"
+npx tsx proxy.ts
+```
+
+Point any client at it:
+
+```json title="claude_desktop_config.json" copy="full"
+{
+  "mcpServers": {
+    "governed-search": {
+      "command": "node",
+      "args": ["./proxy.ts"]
+    }
+  }
+}
+```
+
+## Versions [#versions]
+
+- `mcpose` core is on 2.x; `npm install mcpose` fetches the current release.
+- `@mcpose/audit` 3.0.0 writes audit format v2, a breaking format change.
+- Archives written by a 2.x release of `@mcpose/audit` verify only against a pinned 2.x:
+
+```bash title="terminal" copy="commands"
+npm install @mcpose/audit@2
+```
+
+## mcpose/testing vs @mcpose/testing [#testing-vs-testing]
+
+Two similarly named entry points, no relation:
+
+- `mcpose/testing` is a subpath of the core package: in-memory backend and pipeline helpers for proxy tests, `createMockBackendClient` and `runToolMiddleware`. See [mcpose/testing](/docs/packages/mcpose/#testing).
+- `@mcpose/testing` is a separate package: keyless compliance assertions for the audit chain, `assertAuditChainIntegrity`, `assertReplayManifestValid`, `assertPiiRedacted`, and `assertDelegationHonored`. See [@mcpose/testing](/docs/packages/testing/).
+
+## Next steps [#next]
+
+<LinkCards>
+  <LinkCard
+    href="/docs/getting-started/quick-start/"
+    title="Quick Start →"
+    body="Wrap an upstream MCP server with a logging middleware and serve it over stdio."
+  />
+  <LinkCard
+    href="/docs/getting-started/examples/"
+    title="Examples →"
+    body="Worked examples of common proxy setups."
+  />
+</LinkCards>

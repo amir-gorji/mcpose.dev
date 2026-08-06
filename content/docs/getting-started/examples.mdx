@@ -1,9 +1,59 @@
 ---
 title: "Examples"
 description: "Worked examples of common proxy setups."
-stub: true
 ---
 
-This page is being written.
+Runnable, well-commented examples live in the repository's [`examples/`](https://github.com/amir-gorji/mcpose/tree/main/examples) directory.
+Each example is a self-contained TypeScript file.
+The examples resolve the workspace packages directly, so they run against your checkout instead of a published build.
 
-In the meantime, the [Quick Start](/docs/getting-started/quick-start/) covers the core workflow end to end.
+## Examples [#examples]
+
+| File | What it shows |
+| --- | --- |
+| [`pii-redaction-audit.ts`](https://github.com/amir-gorji/mcpose/blob/main/examples/pii-redaction-audit.ts) | The canonical mcpose pattern: PII redaction composed with audit middleware over HTTP/SSE, with per-session identity resolution. Needs an upstream MCP server. |
+| [`governance-proxy.ts`](https://github.com/amir-gorji/mcpose/blob/main/examples/governance-proxy.ts) | Governance features: `hiddenTools`, `passThroughTools`, and `onTelemetry`. Self-contained, uses `createMockBackendClient`, so no upstream server is needed. |
+| [`oauth-upstream-client.ts`](https://github.com/amir-gorji/mcpose/blob/main/examples/oauth-upstream-client.ts) | Connecting to an OAuth-protected remote MCP server from Node: dynamic client registration, PKCE, browser authorization, and persisted tokens with automatic refresh. Needs an OAuth-capable upstream MCP server. |
+
+## Run them [#run]
+
+From the repository root, install dependencies and run an example with `tsx`:
+
+```bash title="terminal" copy="commands"
+# From the repository root:
+pnpm install
+pnpm --filter mcpose-examples governance-proxy        # governance (self-contained, no upstream needed)
+pnpm --filter mcpose-examples pii-redaction-audit     # PII redaction + audit (needs an upstream MCP server)
+pnpm --filter mcpose-examples oauth-upstream-client   # OAuth against a remote MCP server
+```
+
+## What you supply [#what-you-supply]
+
+Each example expects a few things supplied by your application: an upstream MCP server endpoint, an identity resolver, and durable sinks for audit events and manifests.
+The comments in each file walk through the setup step by step and mark the values you need to supply.
+`pii-redaction-audit.ts` needs an upstream MCP server.
+`governance-proxy.ts` uses `createMockBackendClient` and runs with zero external dependencies.
+
+## Reference implementation [#reference]
+
+> **Reference implementation:** [`elastic-pii-proxy`](https://github.com/amir-gorji/elastic-pii-proxy) is a production example of this pattern: an Elasticsearch MCP proxy that uses mcpose with PII redaction and `@mcpose/audit` to serve financial data safely to LLM agents.
+
+## Next steps [#next]
+
+<LinkCards>
+  <LinkCard
+    href="/docs/recipes/pii-redaction-audit/"
+    title="PII redaction + audit →"
+    body="Keep raw PII out of audit logs with middleware ordering."
+  />
+  <LinkCard
+    href="/docs/recipes/list-tools-rewriting/"
+    title="list_tools rewriting →"
+    body="Rewrite tool listings on the way through the proxy."
+  />
+  <LinkCard
+    href="/docs/recipes/oauth-upstream/"
+    title="OAuth upstream →"
+    body="Proxy an upstream MCP server that requires OAuth."
+  />
+</LinkCards>

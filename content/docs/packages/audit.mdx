@@ -1,9 +1,260 @@
 ---
 title: "@mcpose/audit"
 description: "Tamper-evident HMAC audit chain + Merkle replay manifest."
-stub: true
 ---
 
-This page is being written.
+`@mcpose/audit` turns every tool call flowing through an mcpose proxy into a tamper-evident **audit event**: HMAC-chained to its predecessor, hashed, and, for high-sensitivity calls, encrypted at rest.
+When a **session** closes, it emits a signed **replay manifest** with a Merkle root and per-event proofs, so any third party can verify that a single event happened without access to the full log.
 
-In the meantime, the [Quick Start](/docs/getting-started/quick-start/) covers the core workflow end to end.
+## When to reach for it [#when-to-reach-for-it]
+
+You operate an MCP server in a regulated environment (for example, financial services) and need to prove, after the fact, exactly which tool calls happened, by whom, and in what order, with cryptographic evidence that the record has not been altered, inserted into, or truncated.
+
+A plain log file proves nothing about whether an entry was edited or deleted.
+Reach for `@mcpose/audit` whenever the record must survive scrutiny.
+
+## Install [#install]
+
+```bash title="terminal" copy="commands"
+npm install @mcpose/audit mcpose
+```
+
+`mcpose` (>= 2.2.0) is a peer dependency.
+Requires Node.js 20+ (uses `node:crypto`).
+
+<Note kicker="Note · Audit format v2">Version 3.0.0 writes the v2 audit format (`mcpose/v2/*` domain labels).
+Chains and manifests written by 2.x do not verify under 3.x.
+Keep a pinned 2.x for verifying old archives.
+See [ADR-0004](/docs/project/adrs/) for the rationale.</Note>
+
+## Quick start [#quick-start]
+
+```ts title="proxy.ts" copy="strip-line-comments"
+import {
+  createAuditMiddleware,
+  createDefaultSigningKeyProvider,
+  createSensitivityResolver,
+} from '@mcpose/audit';
+import { startHttpProxy } from 'mcpose';
+
+// Supplied by your application:
+//   backend: an mcpose BackendClient (see `mcpose` docs)
+//   auditLog: your durable sink for audit events
+//   manifestStore: your durable sink for replay manifests
+//   piiMW: an upstream redaction middleware
+//   extractJwt: your resolveIdentity function
+
+// The signing secret never leaves the process; all subkeys derive from it.
+const signingKey = createDefaultSigningKeyProvider(process.env.AUDIT_SECRET!);
+
+// Map tools to a sensitivity tier. Unknown tools resolve to 'high'.
+const sensitivityResolver = createSensitivityResolver({
+  get_balance:    'low',
+  search_trades:  'medium',
+  transfer_funds: 'high',
+});
+
+const auditHandle = createAuditMiddleware({
+  signingKey,
+  sensitivityResolver,
+  onEvent: (event) => auditLog.append(event),
+  onManifest: (manifest) => manifestStore.save(manifest),
+});
+
+await startHttpProxy(
+  backend,
+  { toolMiddleware: [piiMW, auditHandle.middleware] },
+  {
+    resolveIdentity: extractJwt,
+    // Flush the replay manifest when the session ends.
+    onSessionClosed: (sessionId) => auditHandle.closeSession(sessionId),
+  },
+);
+```
+
+<Note kicker="Note · Middleware order">Middleware arrays use response-processing order.
+Keep the redaction middleware upstream of the audit middleware, as `[piiMW, auditHandle.middleware]`, so the audit layer only ever sees redacted data.</Note>
+
+## How it works [#how-it-works]
+
+- **Audit event**: a record of one tool call: `identity`, `tool`, `outcome`, input/output hashes, and a `chainHash` linking it to the previous event.
+  `AuditEvent` is a discriminated union on `sensitivityTier`.
+- **Sensitivity tier** (`low` | `medium` | `high`): decides whether the event stores plaintext (`inputRaw`/`outputRaw`) or AES-256-GCM ciphertext (`inputEncrypted`/`outputEncrypted`).
+  Unknown tools default to `high`.
+- **Replay manifest**: produced at session close: a Merkle root over every event's `chainHash`, individual `MerkleProof`s, and a signature over the root.
+  It proves *what happened*; it does not re-execute calls.
+
+The audit layer is a pass-through observer: rejected calls (hidden tools) and `passThroughTools` are audited too.
+
+## Sensitivity tiers [#sensitivity-tiers]
+
+| Tier | Stored fields |
+| --- | --- |
+| `'low'` | `inputRaw`, `outputRaw` (plaintext) |
+| `'medium'` | `inputRaw`, `outputRaw` (PII already redacted upstream) |
+| `'high'` | `inputEncrypted`, `outputEncrypted` (AES-256-GCM, per-event key) |
+
+Unknown tools always resolve to `'high'`.
+Unknown or invalid tiers fail closed to `high`, so an unclassified tool never lands in plaintext.
+
+## Why chains and Merkle trees [#why-chains-and-merkle-trees]
+
+A plain append-only log proves nothing about its own integrity, and a managed store needs a trusted third party to attest it.
+Chains and Merkle trees give tamper evidence without one.
+
+The HMAC chain links each event to its predecessor over a canonical serialization, so a holder of the signing secret can detect insertion, deletion, or reordering with `verifyAuditChain`.
+The chain is the whole-log integrity check.
+
+The Merkle tree in the manifest lets anyone verify a single event with only its proof, in O(log n) hash steps, without access to the full log.
+That is what makes third-party audit practical: send the manifest and one proof, and the verifier needs nothing else.
+
+The manifest signature covers the entire manifest, not just the Merkle root, so `sessionId`, `identity`, `eventCount`, and the proofs cannot be swapped around a validly signed root.
+
+## AuditEvent schema [#auditevent-schema]
+
+A discriminated union on `sensitivityTier`.
+The base record every event shares (hashes, chain link, outcome, identity).
+
+<details>
+<summary>Show the <code>AuditEvent</code> schema</summary>
+
+```ts
+// Discriminated union on sensitivityTier
+type AuditEvent = LowAuditEvent | MediumAuditEvent | HighAuditEvent;
+
+interface AuditEventBase {
+  id: string;                    // = ProxyContext.requestId
+  startedAt: string;             // ISO timestamp captured before the upstream call started
+  endedAt: string;               // ISO timestamp captured after the upstream call settled
+  sessionId?: string;
+  identity: Identity;
+  delegatedFrom?: Identity[];
+  tool: string;
+  duration_ms: number;
+  outcome: 'success' | 'rejected' | 'error';
+  /** Present when outcome is 'rejected' (from the MCP error's data field). */
+  rejectionReason?: RejectionReason;
+  /** Present when outcome is 'error': what the upstream call threw. */
+  error?: { name: string; message: string };
+  inputHash: string;             // SHA-256
+  outputHash: string;
+  chainHash: string;             // HMAC(entry || prevChainHash)
+  replayManifestPosition: number;
+}
+```
+
+</details>
+
+## ReplayManifest [#replaymanifest]
+
+Produced at session close.
+Covers all audit events with a Merkle root and individual proofs, signed by the `SigningKeyProvider`.
+The signature covers the canonical serialization of the entire manifest (every field, domain-separated), not just the Merkle root; verify it with `verifyManifestSignature(manifest, signingKey)`.
+Any third party can verify a single event without access to the full log.
+
+<details>
+<summary>Show the <code>ReplayManifest</code> interface</summary>
+
+```ts
+interface ReplayManifest {
+  sessionId: string;
+  identity: Identity;
+  startedAt: string;
+  closedAt: string;
+  eventCount: number;
+  merkleRoot: string;
+  merkleProofs: MerkleProof[];
+  signedBy: string;   // keyId
+  signature: string;  // HMAC over the canonical serialization of the ENTIRE manifest
+}
+```
+
+</details>
+
+## Security model [#security-model]
+
+**The signing secret is the root of all of it.**
+The per-entry **chain key** and the per-event AES **encryption root** are derived from the secret *through* the `SigningKeyProvider.sign()` oracle with domain separation (`mcpose/v2/chain`, `mcpose/v2/enc`), never from the public **key id**.
+
+The key id (`ReplayManifest.signedBy`) is a public identifier only.
+Never use it as key material, and never hand-roll the chain or encryption keys.
+See [ADR-0003](/docs/project/adrs/) for the attack this closes: an earlier design keyed the chain and encryption off `keyId`, so any manifest-holder could forge the chain and decrypt high-tier payloads.
+
+Without the signing secret, the keyless assertions in [`@mcpose/testing`](/docs/packages/testing/) catch only structural tampering (reordering, renumbering, duplication).
+
+For production, implement `SigningKeyProvider` against your KMS rather than holding the secret in process.
+`createDefaultSigningKeyProvider` is HMAC-SHA256 in-process signing, suitable for development and single-trust deployments.
+The secret must be high-entropy (32+ random bytes); `keyId` is published in every manifest, so a guessable passphrase is offline-attackable.
+
+High-tier ciphertexts are additionally bound with AAD to their event and direction, so input and output ciphertexts cannot be swapped within an event.
+
+## API surface [#api-surface]
+
+| Export | Purpose |
+| --- | --- |
+| `createAuditMiddleware(options)` | Returns `{ middleware, closeSession }`. Add `middleware` to the pipeline; call `closeSession(sessionId)` to emit the manifest. |
+| `createSensitivityResolver(map, override?)` | Build a `SensitivityResolverFn`; `override` receives the map's resolution as its fourth argument and can fall back to it. Unknown or invalid tiers resolve to `high`. |
+| `createDefaultSigningKeyProvider(secret)` | In-process HMAC-SHA256 `SigningKeyProvider`. |
+| `verifyAuditChain(events, signingKey)` | KEYED chain verification: recomputes every `chainHash`; reports the first tampered index. An empty event list is invalid. |
+| `verifyManifestSignature(manifest, signingKey)` | Recomputes the full-manifest signature; constant-time comparison. |
+| `computeMerkleRoot` · `computeMerkleProof` · `verifyMerkleProof` | Low-level Merkle helpers for independent verification. |
+| `canonicalJson` · `stableStringify` | The canonical serializations the format is defined over (for independent verifiers). |
+
+**Key types:** `AuditEvent` (`LowAuditEvent` | `MediumAuditEvent` | `HighAuditEvent`), `AuditEventBase`, `SensitivityTier`, `SensitivityResolverFn`, `SensitivityOverrideFn`, `SigningKeyProvider`, `AuditOptions`, `AuditMiddlewareHandle`, `ReplayManifest`, `MerkleProof`, `ChainVerification`.
+
+`canonicalJson` is strict canonical JSON (keys sorted at every depth); it is the hash and signature preimage format.
+`stableStringify` is a total, key-order-independent serialization used for `inputHash`/`outputHash`, so client key order cannot change a payload hash and serialization never throws into the call path.
+
+The returned `middleware` is already marked as a pass-through observer, so tools listed in `passThroughTools` stay audited.
+
+### AuditOptions [#auditoptions]
+
+```ts
+interface AuditOptions {
+  signingKey: SigningKeyProvider;
+  sensitivityResolver: SensitivityResolverFn;
+  onEvent: (event: AuditEvent) => void | Promise<void>;
+  onManifest?: (manifest: ReplayManifest) => void | Promise<void>;
+  includeRejections?: boolean; // default: true - audit rejected calls too
+  onAuditError?: (err, info) => void; // default: console.error - audit never throws into the call path
+}
+```
+
+## Never throws [#never-throws]
+
+The audit layer never throws into the tool-call path.
+Its own failures (event serialization, unserializable payloads, a throwing `onEvent` sink) are routed to the `onAuditError` hook instead, which defaults to `console.error`.
+The tool call always completes with its real result or error.
+
+## Closing a session [#closing-a-session]
+
+Sessions are owned by the HTTP transport, not by middleware, so the host signals session end.
+Wire `closeSession` to `HttpProxyOptions.onSessionClosed`, and `onManifest` is the push-based delivery for the resulting manifest.
+
+`closeSession(sessionId)` returns `undefined` if the session had no events or is unknown.
+
+## Verifying in tests [#verifying-in-tests]
+
+Use [`@mcpose/testing`](/docs/packages/testing/) in your test suite: `assertAuditChainIntegrity`, `assertReplayManifestValid`, `assertPiiRedacted`.
+
+The design decisions behind this package are recorded in the ADRs: [ADR-0003](/docs/project/adrs/) (subkeys derived from the signing oracle) and [ADR-0004](/docs/project/adrs/) (audit format v2 canonical serialization).
+
+## Next steps [#next]
+
+<LinkCards>
+  <LinkCard
+    href="/docs/packages/testing/"
+    title="@mcpose/testing →"
+    body="Runner-agnostic compliance assertions: assertAuditChainIntegrity, assertReplayManifestValid, assertPiiRedacted."
+  />
+  <LinkCard
+    href="/docs/recipes/pii-redaction-audit/"
+    title="PII redaction + audit →"
+    body="Keep raw PII out of audit logs with middleware ordering."
+  />
+  <LinkCard
+    href="/docs/project/adrs/"
+    title="ADRs →"
+    body="ADR-0003 subkey derivation and ADR-0004 the v2 audit format."
+  />
+</LinkCards>

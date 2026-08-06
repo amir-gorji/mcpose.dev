@@ -1,9 +1,80 @@
 ---
 title: "ADRs"
 description: "Architecture decision records."
-stub: true
 ---
 
-This page is being written.
+Architecture Decision Records (ADRs) capture the reasoning behind significant technical choices in mcpose.
+Each ADR records the decision, the options that were considered, and the consequences that follow.
 
-In the meantime, the [Quick Start](/docs/getting-started/quick-start/) covers the core workflow end to end.
+The records live in the mcpose repository at [`docs/adr/`](https://github.com/amir-gorji/mcpose/tree/main/docs/adr), numbered in sequence from `0001`.
+They are the source of truth for why the code works the way it does.
+Read the ADRs that touch an area before changing that area.
+
+## ADR-0001: Integrity-chained log, not a managed audit store [#adr-0001]
+
+`@mcpose/audit` emits tamper-evident events, HMAC chain plus Merkle root per session, to an operator-supplied sink.
+It does not manage its own write-once storage, query API, or report generator.
+Building a full audit substrate was considered and rejected: it turns mcpose from a library into a product, locks operators out of their existing Splunk, Elasticsearch, or S3 infrastructure, and puts mcpose in the critical path of a compliance failure if the store is compromised.
+The trust comes from producing cryptographically provable events, not from owning the store.
+A managed audit service remains an option once there are enough operator deployments to justify it.
+
+## ADR-0002: ProxyOptions arrays use response-processing order [#adr-0002]
+
+The `toolMiddleware`, `resourceMiddleware`, and `listToolsMiddleware` arrays in `ProxyOptions` are in response-processing order.
+The first element processes the response first (innermost layer) and the last element processes it last (outermost layer).
+This is the opposite of `compose()`, which takes outermost-first.
+The dominant use case `[piiMW, auditMW]` reads "PII runs before audit", meaning PII redacts the response before audit ever sees it, which maps naturally to array position.
+The two conventions are explicitly not interchangeable: `ProxyOptions` arrays must not be passed directly to `compose()`.
+See the [middleware model](/docs/concepts/middleware-model/) for how middleware layers compose.
+
+## ADR-0003: Subkeys derived from the signing secret via the oracle, not from keyId [#adr-0003]
+
+`@mcpose/audit` derives its per-entry HMAC chain key and its high-tier AES encryption root by calling `SigningKeyProvider.sign()` with domain-separation labels, never from `keyId`.
+`keyId` is treated strictly as a public identifier, published in `ReplayManifest.signedBy`, and is never key material.
+An earlier implementation keyed both the HMAC chain and the AES encryption off `Buffer.from(keyId, 'hex')`, where `keyId = SHA256(secret)`.
+Because `keyId` is published in every manifest, a manifest-holder could recompute any `chainHash` (forging the chain) and re-derive any per-event key (decrypting high-tier payloads).
+That collapsed tamper-evidence to the lone signed Merkle root and voided high-tier confidentiality entirely.
+See the [@mcpose/audit package docs](/docs/packages/audit/) for the derivation details and the [security page](/docs/project/security/) for the trust model this underpins.
+
+## ADR-0004: Audit format v2: canonical serialization, full-manifest signature, hardened derivations [#adr-0004]
+
+The v1 audit format had five independent weaknesses, each individually format-breaking to fix, so they ship together as one `mcpose/v1/*` to `mcpose/v2/*` scheme rotation in `@mcpose/audit` 3.0.0.
+
+1. **Canonical preimages.**
+v1 hashed `JSON.stringify` output, making object-key insertion order load-bearing.
+v2 hashes `canonicalJson` with keys sorted lexicographically at every depth and domain-tagged framing, so only the field set is load-bearing.
+2. **The signature covers the whole manifest.**
+v1 signed only the Merkle root, leaving `sessionId`, `identity`, `eventCount`, and the proofs swappable around a validly signed root.
+v2 signs every field except the signature itself, and signing `eventCount` also neutralizes the duplicate-last-leaf padding ambiguity.
+3. **Merkle domain separation.**
+Leaves and internal nodes are domain-tagged, so an internal node can never be replayed as a leaf, and `verifyMerkleProof` rejects malformed proofs.
+4. **keyId is no longer `SHA256(secret)`.**
+That construction let anyone holding a published manifest brute-force a low-entropy secret offline from `signedBy`.
+v2 uses an HMAC construction that cannot be checked against a candidate secret faster than attacking the signature itself.
+5. **Ciphertext binding.**
+Per-event AES keys are bound to the session, position, and event ID, and AES-GCM gets AAD, so keys stay unique under request ID reuse and input and output ciphertexts cannot be swapped within an event.
+
+Chains, manifests, keyIds, and ciphertexts written under v1 do not verify under v2 and vice versa.
+The label strings are pinned by tests, and any future scheme change repeats this rotation ritual as `v3`.
+See the [@mcpose/audit package docs](/docs/packages/audit/) for the v2 format details.
+
+## Adding a new ADR [#adding-a-new-adr]
+
+New ADRs are added to `docs/adr/` in the mcpose repository with sequential numbering: the next one is `0005-...md`.
+Add an ADR when a decision is non-obvious or reverses a prior choice.
+Existing ADR numbers never change, so references stay stable.
+
+## Next steps [#next-steps]
+
+<LinkCards>
+  <LinkCard
+    href="/docs/project/contributing/"
+    title="Contributing →"
+    body="How to contribute, including the rule to read the ADRs that touch an area before changing it."
+  />
+  <LinkCard
+    href="/docs/project/security/"
+    title="Security →"
+    body="The threat model and trust boundary that ADR-0003 and ADR-0004 underpin."
+  />
+</LinkCards>
