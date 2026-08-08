@@ -52,6 +52,7 @@ Each page is measured three times and assertions aggregate by median, because a 
 ### Thresholds
 
 Thresholds live in `.lighthouserc.json` and were calibrated against measured baselines rather than picked from round numbers.
+Preview deployments use `.lighthouserc.preview.json`, which relaxes only the SEO floor — Cloudflare adds `x-robots-tag: noindex` to preview URLs, so `is-crawlable` correctly fails there. Every other threshold is identical to production; a build test enforces this.
 They were recalibrated against **production** once the site went live, because the real Cloudflare edge is measurably slower than a local server — LCP rose by roughly 250ms across the board once real network latency was in play.
 
 Measured on `https://mcpose.dev` (mobile, 3 runs, median / worst run):
