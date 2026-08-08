@@ -324,3 +324,27 @@ test('every internal href is already canonical', async () => {
     }
   }
 });
+
+test('the preview Lighthouse gates differ from production only where they must', () => {
+  const ROOT = new URL('../', import.meta.url).pathname;
+  const load = (name) =>
+    JSON.parse(readFileSync(join(ROOT, name), 'utf8')).ci.assert.assertions;
+  const prod = load('.lighthouserc.json');
+  const preview = load('.lighthouserc.preview.json');
+
+  /* Cloudflare adds x-robots-tag: noindex to preview URLs, so is-crawlable
+     correctly fails there and the SEO floor cannot be met. That is the only
+     legitimate difference: audit-production runs AFTER the deploy, so any
+     other gate that is looser on preview lets a regression ship first and
+     fail second. */
+  const allowed = new Set(['categories:seo']);
+  const differing = [...new Set([...Object.keys(prod), ...Object.keys(preview)])].filter(
+    (key) => JSON.stringify(prod[key]) !== JSON.stringify(preview[key]),
+  );
+
+  assert.deepEqual(
+    differing.filter((key) => !allowed.has(key)),
+    [],
+    'a preview Lighthouse gate drifted from production; preview must not be the looser environment',
+  );
+});
