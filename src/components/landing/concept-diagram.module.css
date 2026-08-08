@@ -83,7 +83,7 @@
   background: var(--color-surface);
   border-radius: var(--radius-md);
   overflow: hidden;
-  box-shadow: 0 0 0 1px var(--color-accent-700);
+  box-shadow: var(--shadow-accent);
 }
 
 .centerHeader {

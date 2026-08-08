@@ -45,6 +45,9 @@
 }
 
 .item {
+  transition:
+    color var(--motion-fast) var(--motion-ease),
+    background-color var(--motion-fast) var(--motion-ease);
   display: block;
   font-size: 13px;
   color: var(--color-neutral-400);

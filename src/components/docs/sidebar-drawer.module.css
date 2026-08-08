@@ -40,3 +40,26 @@
     display: flex;
   }
 }
+
+/* Entrance only, same reasoning as the search dialog: the panel is a fresh
+   conditional insert, so it gets a first style resolution; close() unmounts it
+   synchronously, so there is nothing to animate out of. */
+.panel {
+  transition: translate var(--motion-base) var(--motion-ease);
+}
+
+@starting-style {
+  .panel {
+    translate: -100% 0;
+  }
+}
+
+.scrim {
+  transition: opacity var(--motion-fast) var(--motion-ease);
+}
+
+@starting-style {
+  .scrim {
+    opacity: 0;
+  }
+}

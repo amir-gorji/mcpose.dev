@@ -41,6 +41,7 @@
 }
 
 .item {
+  transition: background-color var(--motion-fast) var(--motion-ease);
   flex: none;
   display: flex;
   flex-direction: column;
@@ -105,4 +106,35 @@
   margin: 0;
   font-size: 13px;
   color: var(--color-neutral-500);
+}
+
+/* Entrance only. The dialog goes display:none -> block on showModal() and the
+   subtree gets its first style resolution then, which is exactly what
+   @starting-style needs. There is deliberately no exit: close() unmounts the
+   component synchronously, so an exit transition would need the mount contract
+   restructured. Verified to survive Turbopack + Lightning CSS, including the
+   CSS-Modules class hashing inside the at-rule. */
+.root .panel {
+  transition:
+    opacity var(--motion-base) var(--motion-ease),
+    translate var(--motion-base) var(--motion-ease),
+    scale var(--motion-base) var(--motion-ease);
+}
+
+@starting-style {
+  .root .panel {
+    opacity: 0;
+    translate: 0 -6px;
+    scale: 0.98;
+  }
+}
+
+.root .backdrop {
+  transition: opacity var(--motion-fast) var(--motion-ease);
+}
+
+@starting-style {
+  .root .backdrop {
+    opacity: 0;
+  }
 }

@@ -5,6 +5,7 @@
 }
 
 .docsLink {
+  transition: color var(--motion-fast) var(--motion-ease);
   color: inherit;
   text-decoration: none;
 }

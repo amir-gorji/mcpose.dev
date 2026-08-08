@@ -5,6 +5,7 @@
 }
 
 .side {
+  transition: border-color var(--motion-fast) var(--motion-ease);
   display: block;
   border: 1px solid var(--color-divider);
   border-radius: var(--radius-md);
