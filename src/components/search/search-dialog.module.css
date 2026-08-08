@@ -55,6 +55,20 @@
   background: color-mix(in srgb, var(--color-text) 6%, transparent);
 }
 
+/* Heading-level hits sit under their page row. The rule is the nesting cue;
+   the title also steps down so the page row still reads as the parent. */
+.item[data-kind='section'] {
+  padding-left: var(--space-6);
+  margin-left: var(--space-3);
+  border-left: 1px solid var(--color-divider);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.item[data-kind='section'] .itemTitle {
+  font-size: 13px;
+  font-weight: 400;
+}
+
 .itemTitle {
   font-size: 14px;
   font-weight: 500;
