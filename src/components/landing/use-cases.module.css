@@ -1,0 +1,17 @@
+.kicker {
+  margin-bottom: var(--space-4);
+}
+
+.heading {
+  margin: 0 0 var(--space-3);
+}
+
+.lede {
+  margin: 0 0 var(--space-8);
+  max-width: 62ch;
+  color: var(--text-secondary);
+}
+
+.tabs {
+  margin-top: var(--space-6);
+}

@@ -1,0 +1,56 @@
+.tablist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.tab {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: var(--space-3) var(--space-4);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: var(--font-heading-weight);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition:
+    color var(--motion-fast) var(--motion-ease),
+    border-color var(--motion-fast) var(--motion-ease);
+}
+
+.tab:hover {
+  color: var(--color-text);
+}
+
+.tabActive,
+.tabActive:hover {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}
+
+.panel[hidden] {
+  display: none;
+}
+
+.caption {
+  margin: 0 0 var(--space-4);
+  max-width: 66ch;
+  color: var(--text-secondary);
+}
+
+/* The snippets are authored narrow so the diptych above does not scroll; a
+   full-bleed frame around 56 columns of code reads as dead space, so the panel
+   keeps roughly the rhythm of the two-column block above it. */
+.code {
+  margin-bottom: var(--space-4);
+  max-width: 860px;
+}
+
+.link {
+  font-size: 13px;
+}

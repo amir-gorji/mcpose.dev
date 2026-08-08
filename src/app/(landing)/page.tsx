@@ -1,5 +1,6 @@
 import Hero from '@/components/landing/hero';
-import FeatureGrid from '@/components/landing/feature-grid';
+import Diptych from '@/components/landing/diptych';
+import UseCases from '@/components/landing/use-cases';
 import ConceptDiagram from '@/components/landing/concept-diagram';
 import AuditSection from '@/components/landing/audit-section';
 import PackagesTable from '@/components/landing/packages-table';
@@ -43,7 +44,10 @@ const LandingPage = () => (
       <Hero />
     </section>
     <section aria-label="Why mcpose" className={styles.section}>
-      <FeatureGrid />
+      <Diptych />
+    </section>
+    <section aria-label="Use cases" className={styles.section}>
+      <UseCases />
     </section>
     <section aria-label="Concept" className={styles.section}>
       <ConceptDiagram />
