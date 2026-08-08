@@ -1,0 +1,89 @@
+.kicker {
+  margin-bottom: var(--space-4);
+}
+
+.heading {
+  margin: 0 0 var(--space-3);
+}
+
+.lede {
+  margin: 0 0 var(--space-8);
+  max-width: 62ch;
+  color: var(--text-secondary);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+  align-items: stretch;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.panelLabel {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.panelTitle {
+  font-weight: var(--font-heading-weight);
+  font-size: 14px;
+}
+
+.panelNote {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* The code column stretches so both panels end on the same baseline even
+   though the samples differ in length. */
+.panel > :last-child {
+  flex: 1;
+}
+
+.claims {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-6);
+  margin-top: var(--space-8);
+  padding-top: var(--space-8);
+  border-top: 1px solid var(--color-divider);
+}
+
+.claimTitle {
+  font-weight: var(--font-heading-weight);
+  font-size: 13.5px;
+  margin-bottom: var(--space-2);
+}
+
+.claimBody {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+}
+
+@media (max-width: 960px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .claims {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .claims {
+    grid-template-columns: 1fr;
+  }
+}

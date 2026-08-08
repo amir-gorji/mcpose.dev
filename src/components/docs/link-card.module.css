@@ -7,10 +7,11 @@
   margin-bottom: calc(var(--space-8) * 1.4);
 }
 .cardLink {
+  transition: box-shadow var(--motion-fast) var(--motion-ease);
   text-decoration: none;
 }
 .cardLink:hover {
-  box-shadow: 0 0 0 1px var(--color-accent-700);
+  box-shadow: var(--shadow-accent);
 }
 .title {
   font-size: 14px;

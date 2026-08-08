@@ -8,7 +8,7 @@ import type { ThemeRegistration } from 'shiki';
 const palette = {
   surface: '#232532', // --color-surface
   base: '#e4e7f5', // --color-neutral-200
-  comment: '#75798c', // --color-neutral-600
+  comment: '#8a8ea2', // --text-muted (neutral-600 failed AA at 12.5px on the code surface)
   keyword: '#b5abfc', // --color-accent-400
   fn: '#e7e5fe', // --color-accent-200
   string: '#9690c9', // --color-accent-2-500

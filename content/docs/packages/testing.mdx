@@ -3,6 +3,16 @@ title: "@mcpose/testing"
 description: "Runner-agnostic compliance assertions for the audit chain."
 ---
 
+<Note kicker="Note · documents 3.0.0">
+This page documents `@mcpose/testing` 3.0.0, which is on `main` but not yet published.
+The current npm release is **2.0.3**, and its assertions are materially weaker.
+`assertAuditChainIntegrity` returns cleanly on an empty chain instead of throwing.
+`assertPiiRedacted` does nothing at all for `sensitivityTier: 'high'`.
+`assertDelegationHonored` takes an `Identity[]` rather than an `AuditEvent`, so passing an event to it silently passes no matter what the event contains.
+`@mcpose/audit` 2.0.3 also does not export `verifyAuditChain` or `verifyManifestSignature`.
+Pin `@mcpose/testing@2` only if you are verifying v1-format archives.
+</Note>
+
 Compliance assertions for [`@mcpose/audit`](/docs/packages/audit/) audit chains.
 A small set of assertion functions that verify the tamper-evidence guarantees of an mcpose audit trail: chain integrity, Merkle-proof validity, PII redaction, and delegation handling.
 Each throws a descriptive `Error` on failure and returns `void` on success.
@@ -10,7 +20,9 @@ Each throws a descriptive `Error` on failure and returns `void` on success.
 ## Keyless by design [#keyless]
 
 These assertions are deliberately keyless: the signing secret is not available to tests.
-They catch structural tampering (reordering, renumbering, duplicated or missing entries, doctored roots), but a key-holder forging a consistent chain can only be caught by the keyed verifiers in `@mcpose/audit`: `verifyAuditChain` and `verifyManifestSignature`.
+They prove the artifact is **internally consistent**. They do not prove it is **authentic**, and the gap between those is wider than it sounds: a forger who rewrites every event and regenerates the Merkle root and proofs produces a document these assertions accept, and does not need the signing secret to do it.
+Authenticity is a keyed question, answered by `verifyAuditChain` and `verifyManifestSignature` in `@mcpose/audit`.
+The split is deliberate: a test suite holding the production signing secret would be a larger liability than the tampering it was checking for.
 See [ADR-0003](https://github.com/amir-gorji/mcpose/blob/main/docs/adr/0003-audit-subkeys-derived-from-signing-oracle.md) and [ADR-0004](https://github.com/amir-gorji/mcpose/blob/main/docs/adr/0004-audit-format-v2-canonical-serialization.md) for the signing and canonical-serialization rationale.
 
 ## Runner-agnostic [#runner-agnostic]
@@ -45,7 +57,7 @@ test('transfer flow produces a verifiable audit trail', async () => {
   const events = await captureAuditEvents(/* run your scenario */);
   const manifest = await auditHandle.closeSession('session-123');
 
-  assertAuditChainIntegrity(events);            // no insert/delete/reorder
+  assertAuditChainIntegrity(events);            // positions sequential, hashes distinct, non-empty
   assertReplayManifestValid(events, manifest!); // every Merkle proof verifies
   assertPiiRedacted(events[0], [/\d{16}/]);     // no card numbers in plaintext
   assertDelegationHonored(events[0]);           // delegated call carries its chain
@@ -56,7 +68,7 @@ test('transfer flow produces a verifiable audit trail', async () => {
 
 | Function | Proves | Does NOT prove |
 |---|---|---|
-| `assertAuditChainIntegrity(events)` | Positions sequential; `chainHash`es distinct and non-empty; non-empty log | HMAC validity (no key): a key-consistent forgery passes |
+| `assertAuditChainIntegrity(events)` | Positions sequential; `chainHash`es distinct and non-empty; non-empty log | Authenticity. No HMAC is recomputed, so any self-consistent rewrite passes, as does truncation of the tail |
 | `assertReplayManifestValid(events, manifest)` | Root recomputes from the events; one proof per event; every proof verifies at its index | The manifest signature: use `verifyManifestSignature` |
 | `assertPiiRedacted(event, patterns)` | low/medium: no pattern matches plaintext; high: no plaintext fields, encrypted payloads present | Anything about what is inside high-tier ciphertext |
 | `assertDelegationHonored(event)` | `delegatedFrom` present, non-empty, entries have a `sub` | Delegation signatures or chain continuity (v3) |
@@ -67,6 +79,15 @@ Re-exports `AuditEvent` and `ReplayManifest` types from `@mcpose/audit` for conv
 
 `assertAuditChainIntegrity` throws on an empty chain.
 A log truncated to zero events must not pass.
+
+## What truncation this does and does not catch [#truncation]
+
+Deleting from the head or the middle renumbers everything after it, so `replayManifestPosition` stops matching the array index and the assertion throws.
+Deleting from the **tail** leaves a valid prefix: positions `0…n-1` are still sequential, so `assertAuditChainIntegrity` on its own accepts it.
+
+What catches tail truncation is the manifest.
+`assertReplayManifestValid(events, manifest)` compares `manifest.eventCount` against the event list and recomputes the Merkle root from the events under test, so a truncated log fails against the manifest that was signed at session close.
+Keep the manifest: it is the record of how long the log was supposed to be.
 
 ## `mcpose/testing` vs `@mcpose/testing` [#subpath-disambiguation]
 

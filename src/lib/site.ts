@@ -1,5 +1,20 @@
 /* Single source of truth for site-wide strings, URLs, and version copy. */
 
+/* The three versions that exist on npm, and nothing else. Every version string
+   the site renders is derived from these, so the site cannot claim a release
+   the registry does not have. The previous copy came verbatim from the design
+   mock and advertised "@mcpose/audit 3.0" in the announcement bar; 3.0 has
+   never been published, and the comment that used to sit here licensed the
+   discrepancy instead of fixing it. Bump these in the same commit as a
+   release. */
+const PUBLISHED = {
+  core: '2.1.1',
+  audit: '2.0.3',
+  testing: '2.0.3',
+} as const;
+
+const majorLine = (version: string): string => `${version.split('.')[0]}.x`;
+
 export const SITE = {
   url: 'https://mcpose.dev',
   name: 'mcpose',
@@ -13,16 +28,15 @@ export const SITE = {
     audit: 'https://www.npmjs.com/package/@mcpose/audit',
     testing: 'https://www.npmjs.com/package/@mcpose/testing',
   },
-  /* Version copy is design-final (kept verbatim from the mock even where npm
-     currently publishes older versions); bump here when releases land. */
-  versions: {
-    core: 'v2.x',
-    coreTag: '2.x',
-    audit: 'v3.0 · format v2',
-    auditAnnouncement: '@mcpose/audit 3.0',
-    testing: 'devDependency',
-  },
+  published: PUBLISHED,
   installCommand: 'npm install mcpose',
+  /* Display strings, derived so they cannot drift from PUBLISHED. */
+  versions: {
+    core: `v${PUBLISHED.core}`,
+    coreTag: majorLine(PUBLISHED.core),
+    audit: `v${PUBLISHED.audit}`,
+    testing: `v${PUBLISHED.testing}`,
+  },
   keywords: [
     'mcpose',
     'MCP',

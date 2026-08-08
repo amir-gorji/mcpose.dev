@@ -2,8 +2,10 @@
   "title": "Project",
   "pages": [
     "roadmap",
+    "changelog",
     "adrs",
     "contributing",
+    "removing-mcpose",
     "security"
   ]
 }

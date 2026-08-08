@@ -30,7 +30,7 @@ This is a pnpm + Turborepo monorepo.
 
 Clone the repository and install dependencies from the root:
 
-```bash
+```bash title="terminal" copy="commands"
 git clone git@github.com:amir-gorji/mcpose.git
 cd mcpose
 pnpm install
@@ -43,7 +43,7 @@ The install is workspace-aware and wires the local packages together via `worksp
 All commands run from the repository root.
 Turborepo caches results and only re-runs what changed.
 
-```bash
+```bash title="terminal" copy="commands"
 pnpm build      # Build every package (tsc) into dist/
 pnpm test       # Run the vitest suite across every package
 pnpm ts:ci      # Type-check every package with --noEmit
@@ -51,7 +51,7 @@ pnpm ts:ci      # Type-check every package with --noEmit
 
 To run a command for one package only:
 
-```bash
+```bash title="terminal" copy="commands"
 pnpm --filter mcpose test
 pnpm --filter @mcpose/audit build
 ```

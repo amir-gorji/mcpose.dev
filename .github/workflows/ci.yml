@@ -155,6 +155,7 @@ jobs:
       base-url: ${{ needs.preview.outputs.url }}
       pr-number: ${{ github.event.number }}
       label: preview
+      lighthouserc: .lighthouserc.preview.json
 
   audit-production:
     name: Audit production

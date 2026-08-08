@@ -81,7 +81,7 @@ const AuditSection = () => (
           <tbody>
             <tr>
               <td>
-                <span className={`tag tag-neutral ${styles.tierTag}`}>low</span>
+                <span className={`tag tag-tier-low ${styles.tierTag}`}>low</span>
               </td>
               <td className={styles.fieldsCell}>
                 inputRaw, outputRaw{' '}
@@ -90,7 +90,7 @@ const AuditSection = () => (
             </tr>
             <tr>
               <td>
-                <span className={`tag tag-accent-2 ${styles.tierTag}`}>
+                <span className={`tag tag-tier-medium ${styles.tierTag}`}>
                   medium
                 </span>
               </td>
@@ -101,7 +101,7 @@ const AuditSection = () => (
             </tr>
             <tr>
               <td>
-                <span className={`tag tag-accent ${styles.tierTag}`}>high</span>
+                <span className={`tag tag-tier-high ${styles.tierTag}`}>high</span>
               </td>
               <td className={styles.fieldsCell}>
                 inputEncrypted, outputEncrypted{' '}

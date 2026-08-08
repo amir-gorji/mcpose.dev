@@ -49,7 +49,7 @@
 
 .codeLang {
   font-size: 10.5px;
-  color: var(--color-neutral-600);
+  color: var(--text-muted);
 }
 
 @media (max-width: 960px) {

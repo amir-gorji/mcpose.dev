@@ -1,5 +1,5 @@
 import { findNeighbour } from 'fumadocs-core/page-tree';
-import type { Metadata } from 'next';
+import type { Metadata, ResolvingMetadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import Breadcrumb from '@/components/docs/breadcrumb';
@@ -55,10 +55,21 @@ const breadcrumbListFor = (page: DocsPageData): JsonLdObject => ({
   ),
 });
 
-export const generateMetadata = async ({ params }: PageProps): Promise<Metadata> => {
+export const generateMetadata = async (
+  { params }: PageProps,
+  parent: ResolvingMetadata,
+): Promise<Metadata> => {
   const { slug } = await params;
   const page = source.getPage(slug);
   if (!page) notFound();
+  /* A page-level openGraph object *replaces* the resolved parent rather than
+     merging with it, and resolveOpenGraph unconditionally reassigns images from
+     whatever this object carries. The root card comes from the
+     src/app/opengraph-image.tsx file convention, which only attaches to the
+     root segment, so every docs page was shipping with no og:image — and the
+     twitter autofill, which copies openGraph.images when twitter.images is
+     absent, then had nothing to copy either. Hand the parent's card forward. */
+  const socialCard = (await parent).openGraph?.images ?? [];
   return {
     title: page.data.title,
     description: page.data.description,
@@ -71,6 +82,18 @@ export const generateMetadata = async ({ params }: PageProps): Promise<Metadata>
       title: page.data.title,
       description: page.data.description,
       url: canonicalUrl(page),
+      images: socialCard,
+    },
+    /* The root layout sets twitter.title and .description explicitly, so the
+       autofill never overrode them and every docs page announced the *site*
+       title on X instead of its own. Restating them here means resolveTwitter
+       recomputes `card` from the images it sees, so `card` has to be restated
+       too. */
+    twitter: {
+      card: 'summary_large_image',
+      title: page.data.title,
+      description: page.data.description,
+      images: socialCard,
     },
     ...(page.data.stub ? { robots: { index: false } } : {}),
   };
@@ -85,7 +108,10 @@ const DocsPage = async ({ params }: PageProps) => {
   const neighbours = findNeighbour(source.pageTree, page.url);
   const prevUrl = page.data.prev ?? neighbours.previous?.url;
   const nextUrl = page.data.next ?? neighbours.next?.url;
-  const tocItems = page.data.toc.filter((item) => item.depth <= 2);
+  /* Depth 3 is indented via data-depth. Filtering at 2 made all 13 H3s on the
+     package and contributing pages unreachable from navigation. Nothing in
+     content/ goes deeper than H3, so this is the complete range. */
+  const tocItems = page.data.toc.filter((item) => item.depth <= 3);
 
   return (
     <>

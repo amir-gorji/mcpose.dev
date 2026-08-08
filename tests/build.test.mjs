@@ -226,3 +226,125 @@ test('the accent never becomes a solid fill', () => {
      Flip this to a hard fail once every reported line is confirmed benign. */
   assert.equal(solid.length, solid.length);
 });
+
+/* — regression guards for the delivery defects fixed in this branch —
+   Each of these shipped to production once. None of them is visible in a
+   diff, and none of them would fail a typecheck, a lint, or a render. */
+
+test('docs code blocks ship literal colours, not unmapped CSS variables', () => {
+  const html = read(`${QUICK_START}index.html`);
+  assert.ok(
+    html.includes('style="color:#'),
+    'shiki emitted no literal token colours on a docs page',
+  );
+  assert.ok(
+    !html.includes('--shiki-'),
+    'shiki fell back to --shiki-* custom properties, which no stylesheet in this repo maps',
+  );
+  assert.ok(
+    !html.includes('icon="&lt;svg'),
+    'fumadocs transformerIcon is stamping unused inline SVG onto <pre>',
+  );
+  /* The landing page uses a separate highlighter call; both must agree. */
+  assert.ok(read('index.html').includes('style="color:#'), 'landing lost its highlighting');
+});
+
+test('every docs page carries a social card', async () => {
+  for (const rel of await walk('docs')) {
+    const html = read(rel);
+    assert.ok(html.includes('property="og:image"'), `${rel} emits no og:image`);
+    assert.ok(html.includes('name="twitter:image"'), `${rel} emits no twitter:image`);
+  }
+});
+
+test('the extensionless opengraph route is typed for the CDN', () => {
+  const headers = read('_headers');
+  assert.match(headers, /^\/opengraph-image$/m, '_headers has no /opengraph-image rule');
+  assert.match(headers, /Content-Type:\s*image\/png/i, 'the rule sets no PNG content type');
+  /* Cloudflare infers the type from the extension and there is none, so the
+     rule has to describe the real bytes. */
+  const magic = readFileSync(join(OUT, 'opengraph-image')).subarray(0, 8).toString('hex');
+  assert.equal(magic, '89504e470d0a1a0a', 'opengraph-image is not a PNG');
+});
+
+test('headings stay addressable: anchors are indexed and rendered', async () => {
+  const { gunzipSync } = await import('node:zlib');
+  const dir = join(OUT, 'pagefind/fragment');
+  const fragments = readdirSync(dir).filter((f) => f.endsWith('.pf_fragment'));
+  assert.ok(fragments.length > 0, 'pagefind emitted no fragments');
+
+  const GZIP_MAGIC = Buffer.from([0x1f, 0x8b]);
+  let checked = 0;
+
+  for (const file of fragments) {
+    const raw = readFileSync(join(dir, file));
+    /* pagefind prefixes the gzip stream with a short "pagefind_dcd" marker. */
+    const body = gunzipSync(raw.subarray(raw.indexOf(GZIP_MAGIC))).toString('utf8');
+    const doc = JSON.parse(body.slice(body.indexOf('{')));
+    if (!doc.url.startsWith('/docs/')) continue;
+    const page = read(join(doc.url.replace(/^\//, ''), 'index.html'));
+    for (const anchor of doc.anchors) {
+      if (!/^h\d$/i.test(anchor.element)) continue;
+      assert.ok(
+        page.includes(`id="${anchor.id}"`),
+        `${doc.url} indexes anchor #${anchor.id} that the page does not render`,
+      );
+      checked += 1;
+    }
+  }
+
+  /* Guard the guard: if the fragment format changes and the loop silently
+     stops matching, this test would otherwise pass by doing nothing. */
+  assert.ok(checked > 100, `only ${checked} heading anchors cross-checked; expected 150+`);
+});
+
+test('the motion convention is in the shipped CSS, and nothing animates on its own', async () => {
+  const cssDir = join(OUT, '_next/static/chunks');
+  const css = readdirSync(cssDir)
+    .filter((f) => f.endsWith('.css'))
+    .map((f) => readFileSync(join(cssDir, f), 'utf8'))
+    .join('\n');
+  assert.match(css, /prefers-reduced-motion/, 'no reduced-motion block reached the build');
+  assert.ok(
+    !css.includes('@keyframes'),
+    'a keyframe animation appeared; the convention is state-feedback motion only',
+  );
+});
+
+test('every internal href is already canonical', async () => {
+  const pages = await walk('.');
+  for (const rel of pages) {
+    for (const [, href] of read(rel).matchAll(/href="(\/[^"]*)"/g)) {
+      const path = href.split('#')[0];
+      if (path === '' || /\.[a-z0-9]+$/i.test(path)) continue;
+      assert.ok(
+        path.endsWith('/'),
+        `${rel} links to ${href}, which redirects under trailingSlash: true`,
+      );
+    }
+  }
+});
+
+test('the preview Lighthouse gates differ from production only where they must', () => {
+  const ROOT = new URL('../', import.meta.url).pathname;
+  const load = (name) =>
+    JSON.parse(readFileSync(join(ROOT, name), 'utf8')).ci.assert.assertions;
+  const prod = load('.lighthouserc.json');
+  const preview = load('.lighthouserc.preview.json');
+
+  /* Cloudflare adds x-robots-tag: noindex to preview URLs, so is-crawlable
+     correctly fails there and the SEO floor cannot be met. That is the only
+     legitimate difference: audit-production runs AFTER the deploy, so any
+     other gate that is looser on preview lets a regression ship first and
+     fail second. */
+  const allowed = new Set(['categories:seo']);
+  const differing = [...new Set([...Object.keys(prod), ...Object.keys(preview)])].filter(
+    (key) => JSON.stringify(prod[key]) !== JSON.stringify(preview[key]),
+  );
+
+  assert.deepEqual(
+    differing.filter((key) => !allowed.has(key)),
+    [],
+    'a preview Lighthouse gate drifted from production; preview must not be the looser environment',
+  );
+});

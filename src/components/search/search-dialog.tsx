@@ -6,10 +6,30 @@ import styles from './search-dialog.module.css';
 
 // Minimal typing of the Pagefind browser runtime (loaded from the static
 // export at /pagefind/pagefind.js, emitted by the postbuild step).
+type PagefindAnchor = {
+  element: string;
+  id: string;
+  text: string;
+  location: number;
+};
+
+/* Pagefind derives these from the heading anchors it already indexes — 153 of
+   them across the 19 docs pages. Only sections that actually matched appear.
+   The first entry, when present, is the region before the first heading: it
+   carries the page title, the page URL with no fragment, and no `anchor`. */
+type PagefindSubResult = {
+  title: string;
+  url: string;
+  excerpt: string;
+  anchor?: PagefindAnchor;
+};
+
 type PagefindResultData = {
   url: string;
   excerpt: string;
   meta: { title: string };
+  anchors: PagefindAnchor[];
+  sub_results: PagefindSubResult[];
 };
 
 type PagefindResult = {
@@ -39,22 +59,89 @@ const loadPagefind = (): Promise<Pagefind> => {
   return pagefindPromise;
 };
 
-type ResultItem = {
+/* Pages and the sections inside them are flattened into one list so the
+   keyboard model stays a single integer index: arrow keys walk section rows
+   exactly like page rows, and Enter needs no special case. `pageIndex` only
+   groups rows for rendering. */
+type ResultRow = {
+  kind: 'page' | 'section';
+  pageIndex: number;
+  pageTitle: string;
   url: string;
   title: string;
   excerpt: string;
 };
 
+type ResultGroup = {
+  pageIndex: number;
+  pageTitle: string;
+  rows: readonly (ResultRow & { flatIndex: number })[];
+};
+
 type SearchResult = {
   query: string;
-  items: readonly ResultItem[];
+  items: readonly ResultRow[];
 };
 
 type SearchDialogProps = {
   onClose: () => void;
 };
 
-const MAX_RESULTS = 8;
+/* 5 pages x (1 page row + up to 3 sections) = at most 20 rows. The results
+   pane scrolls and moveSelection already scrolls the active row into view. */
+const MAX_PAGES = 5;
+const MAX_SECTIONS_PER_PAGE = 3;
+
+const toRows = (data: readonly PagefindResultData[]): ResultRow[] => {
+  const rows: ResultRow[] = [];
+  data.forEach((entry, pageIndex) => {
+    /* The lead sub-result is the pre-heading region: same URL as the page, no
+       anchor. Rendering it alongside the page row would repeat the same href
+       twice, so absorb its excerpt (which is the more precise one) instead. */
+    const lead = entry.sub_results.find((sub) => sub.anchor === undefined);
+    rows.push({
+      kind: 'page',
+      pageIndex,
+      pageTitle: entry.meta.title,
+      url: entry.url,
+      title: entry.meta.title,
+      excerpt: lead?.excerpt ?? entry.excerpt,
+    });
+    for (const sub of entry.sub_results
+      .filter((candidate) => candidate.anchor !== undefined)
+      .slice(0, MAX_SECTIONS_PER_PAGE)) {
+      rows.push({
+        kind: 'section',
+        pageIndex,
+        pageTitle: entry.meta.title,
+        url: sub.url,
+        title: sub.title,
+        excerpt: sub.excerpt,
+      });
+    }
+  });
+  return rows;
+};
+
+const toGroups = (rows: readonly ResultRow[]): ResultGroup[] => {
+  const groups: ResultGroup[] = [];
+  rows.forEach((row, flatIndex) => {
+    const last = groups[groups.length - 1];
+    if (last !== undefined && last.pageIndex === row.pageIndex) {
+      groups[groups.length - 1] = {
+        ...last,
+        rows: [...last.rows, { ...row, flatIndex }],
+      };
+      return;
+    }
+    groups.push({
+      pageIndex: row.pageIndex,
+      pageTitle: row.pageTitle,
+      rows: [{ ...row, flatIndex }],
+    });
+  });
+  return groups;
+};
 const FAILURE_MSG =
   process.env.NODE_ENV === 'development'
     ? 'Search index is built at build time. Run pnpm build && pnpm serve to test locally.'
@@ -100,18 +187,11 @@ const SearchDialog = ({ onClose }: SearchDialogProps) => {
         const response = await pagefind.debouncedSearch(trimmed);
         if (response === null || cancelled) return;
         const data = await Promise.all(
-          response.results.slice(0, MAX_RESULTS).map((entry) => entry.data()),
+          response.results.slice(0, MAX_PAGES).map((entry) => entry.data()),
         );
         if (cancelled) return;
         setLoadFailed(false); // clear a stale failure now that a search succeeded
-        setResult({
-          query: trimmed,
-          items: data.map((entry) => ({
-            url: entry.url,
-            title: entry.meta.title,
-            excerpt: entry.excerpt,
-          })),
-        });
+        setResult({ query: trimmed, items: toRows(data) });
         setSelected(0);
       } catch {
         if (!cancelled) setLoadFailed(true);
@@ -179,24 +259,33 @@ const SearchDialog = ({ onClose }: SearchDialogProps) => {
           {loadFailed ? <p className={styles.note}>{FAILURE_MSG}</p> : null}
           {items.length > 0 ? (
             <div className={styles.results} role="listbox" id={LISTBOX_ID} aria-label="Search results">
-              {items.map((item, index) => (
-                <a
-                  key={item.url}
-                  id={optionId(index)}
-                  role="option"
-                  aria-selected={index === selected}
-                  href={item.url}
-                  className={
-                    index === selected ? `${styles.item} ${styles.itemSelected}` : styles.item
-                  }
-                  onMouseEnter={() => setSelected(index)}
-                >
-                  <span className={styles.itemTitle}>{item.title}</span>
-                  <span
-                    className={styles.itemExcerpt}
-                    dangerouslySetInnerHTML={{ __html: item.excerpt }}
-                  />
-                </a>
+              {/* role="listbox" only admits option and group children, so each
+                  page's rows are wrapped rather than flattened into the DOM. */}
+              {toGroups(items).map((group) => (
+                <div key={group.pageIndex} role="group" aria-label={group.pageTitle}>
+                  {group.rows.map((row) => (
+                    <a
+                      key={row.url}
+                      id={optionId(row.flatIndex)}
+                      role="option"
+                      aria-selected={row.flatIndex === selected}
+                      href={row.url}
+                      data-kind={row.kind}
+                      className={
+                        row.flatIndex === selected
+                          ? `${styles.item} ${styles.itemSelected}`
+                          : styles.item
+                      }
+                      onMouseEnter={() => setSelected(row.flatIndex)}
+                    >
+                      <span className={styles.itemTitle}>{row.title}</span>
+                      <span
+                        className={styles.itemExcerpt}
+                        dangerouslySetInnerHTML={{ __html: row.excerpt }}
+                      />
+                    </a>
+                  ))}
+                </div>
               ))}
             </div>
           ) : null}

@@ -36,6 +36,7 @@
 }
 
 .link {
+  transition: color var(--motion-fast) var(--motion-ease);
   color: var(--color-neutral-400);
   text-decoration: none;
 }

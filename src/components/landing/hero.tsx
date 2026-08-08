@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Fragment } from 'react';
 import CodeBlockFrame from '@/components/code-block';
+import CopyButton from '@/components/copy-button';
 import InstallRow from '@/components/install-row';
 import { highlight } from '@/lib/shiki';
 import { SITE } from '@/lib/site';
@@ -56,7 +57,8 @@ const Hero = async () => {
       <div className={styles.codeColumn}>
         <CodeBlockFrame
           title="proxy.ts"
-          action={<span className={styles.codeLang}>TypeScript</span>}
+          lang="TypeScript"
+          action={<CopyButton text={HERO_SNIPPET} style={{ fontSize: 11 }} />}
           lineHeight={1.7}
           elevation="md"
         >

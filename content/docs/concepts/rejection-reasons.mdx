@@ -7,7 +7,7 @@ Every blocked call carries a structured `RejectionReason` in the MCP error `data
 The top-level error code is unchanged (`MethodNotFound` / `InvalidRequest`), so existing clients that only inspect the code are unaffected.
 Agents and audit middleware can inspect `error.data.rejectionReason` for programmatic handling and compliance logging.
 
-```ts
+```ts title="rejection-reason.ts"
 // shape on the wire
 {
   data: { rejectionReason: 'TOOL_HIDDEN' },
@@ -19,7 +19,7 @@ Agents and audit middleware can inspect `error.data.rejectionReason` for program
 <details>
 <summary>Show the <code>RejectionReason</code> union</summary>
 
-```ts
+```ts title="rejection-data.ts"
 type RejectionReason =
   | 'TOOL_HIDDEN'           // tool exists but is hidden from this caller
   | 'RESOURCE_HIDDEN'       // resource exists but is hidden from this caller

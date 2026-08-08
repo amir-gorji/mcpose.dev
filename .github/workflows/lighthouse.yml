@@ -21,6 +21,11 @@ on:
         required: false
         type: string
         default: deployment
+      lighthouserc:
+        description: Path to the lighthouserc file for assertions.
+        required: false
+        type: string
+        default: .lighthouserc.json
 
 jobs:
   audit:
@@ -82,8 +87,13 @@ jobs:
           } | gh pr comment "$PR" --body-file - --edit-last --create-if-none
 
       # Assert last so the summary and PR comment are published even on a breach.
+      # Preview deployments get a different config because Cloudflare Workers
+      # appends `x-robots-tag: noindex` to workers.dev URLs, which causes the
+      # `is-crawlable` audit to fail — that is correct and intended, not a defect.
       - name: Assert thresholds
-        run: npx --yes @lhci/cli@0.15.1 assert
+        env:
+          LIGHTHOUSE_CONFIG: ${{ inputs.lighthouserc }}
+        run: npx --yes @lhci/cli@0.15.1 assert --config="$LIGHTHOUSE_CONFIG"
 
       - name: Upload full reports
         if: always()

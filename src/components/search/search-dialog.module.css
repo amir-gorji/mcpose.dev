@@ -41,6 +41,7 @@
 }
 
 .item {
+  transition: background-color var(--motion-fast) var(--motion-ease);
   flex: none;
   display: flex;
   flex-direction: column;
@@ -53,6 +54,20 @@
 /* Selection = neutral wash + accent title (hover moves selection too). */
 .itemSelected {
   background: color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+
+/* Heading-level hits sit under their page row. The rule is the nesting cue;
+   the title also steps down so the page row still reads as the parent. */
+.item[data-kind='section'] {
+  padding-left: var(--space-6);
+  margin-left: var(--space-3);
+  border-left: 1px solid var(--color-divider);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.item[data-kind='section'] .itemTitle {
+  font-size: 13px;
+  font-weight: 400;
 }
 
 .itemTitle {
@@ -91,4 +106,35 @@
   margin: 0;
   font-size: 13px;
   color: var(--color-neutral-500);
+}
+
+/* Entrance only. The dialog goes display:none -> block on showModal() and the
+   subtree gets its first style resolution then, which is exactly what
+   @starting-style needs. There is deliberately no exit: close() unmounts the
+   component synchronously, so an exit transition would need the mount contract
+   restructured. Verified to survive Turbopack + Lightning CSS, including the
+   CSS-Modules class hashing inside the at-rule. */
+.root .panel {
+  transition:
+    opacity var(--motion-base) var(--motion-ease),
+    translate var(--motion-base) var(--motion-ease),
+    scale var(--motion-base) var(--motion-ease);
+}
+
+@starting-style {
+  .root .panel {
+    opacity: 0;
+    translate: 0 -6px;
+    scale: 0.98;
+  }
+}
+
+.root .backdrop {
+  transition: opacity var(--motion-fast) var(--motion-ease);
+}
+
+@starting-style {
+  .root .backdrop {
+    opacity: 0;
+  }
 }

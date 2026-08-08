@@ -9,7 +9,7 @@
   --color-text: #e9e9ed;
   --color-accent: #9184d9;
   --color-accent-2: #a7a1db;
-  --color-divider: color-mix(in srgb, #e9e9ed 16%, transparent);
+  --color-divider: color-mix(in srgb, var(--color-text) 16%, transparent);
 
   /* Tonal ramps — generated in OKLCH on one shared lightness scale, so the
      same step of any role matches the others in visual value. */
@@ -43,6 +43,29 @@
   --color-accent-2-800: #423e5d;
   --color-accent-2-900: #2b293a;
 
+  /* Text roles are contrast-solved, not lightness-stepped, so they sit off the
+     ramp on purpose. --color-neutral-600 was being used as small text in eight
+     modules and as the Shiki comment colour; it measures 4.083:1 on --color-bg
+     and 3.524:1 on --color-surface, both under the 4.5:1 WCAG AA needs for
+     normal text, and nothing on this site is large enough to qualify for the
+     3:1 allowance. Moving the ramp step itself would break the shared
+     lightness scale the three ramps are generated on, so the fix is a layer
+     above it. --text-muted is the lowest value that clears 4.5:1 on the darker
+     of the two grounds: 5.426:1 on bg, 4.682:1 on surface. */
+  --text-primary: var(--color-text);
+  --text-secondary: var(--color-neutral-400);
+  --text-tertiary: var(--color-neutral-500);
+  --text-muted: #8a8ea2;
+
+  /* Component boundaries need 3:1 under WCAG 1.4.11. --color-divider composites
+     to 1.561:1, which is right for a hairline rule between blocks but not for
+     the edge of a control you are meant to find. */
+  --border-control: color-mix(in srgb, var(--color-text) 30%, transparent);
+
+  /* --font-heading is deliberately an alias of --font-body today: the design
+     takes its typographic contrast from weight and from the mono face, not
+     from a second sans. The seam is kept so a display face can be introduced
+     in one place; --font-heading-weight is the part actually carrying signal. */
   --font-heading: var(--font-inter), "Inter", system-ui, sans-serif;
   --font-heading-weight: 500;
   --font-body: var(--font-inter), "Inter", system-ui, sans-serif;
@@ -59,10 +82,39 @@
   --radius-md: 8px;
   --radius-lg: 14px;
 
-  /* Elevation — hairline edge + ambient darkness on the dark ground. */
-  --shadow-sm: 0 0 0 1px #3f424d;
-  --shadow-md: 0 0 0 1px #595d6c, 0 6px 18px rgba(0, 0, 0, 0.55);
-  --shadow-lg: 0 0 0 1px #9397ab, 0 16px 40px rgba(0, 0, 0, 0.65);
+  /* Elevation — hairline edge + ambient darkness on the dark ground. The edge
+     colours are ramp steps 800/700/500; spelling them as literals meant a
+     palette change would silently leave the elevation edges behind. */
+  --shadow-sm: 0 0 0 1px var(--color-neutral-800);
+  --shadow-md: 0 0 0 1px var(--color-neutral-700), 0 6px 18px rgb(0 0 0 / 0.55);
+  --shadow-lg: 0 0 0 1px var(--color-neutral-500), 0 16px 40px rgb(0 0 0 / 0.65);
+  /* The accent ring, previously retyped inline in two modules. */
+  --shadow-accent: 0 0 0 1px var(--color-accent-700);
+
+  /* Motion. The policy, in one sentence: motion on this site responds to a
+     user action and then stops. Nothing idle, nothing infinite, nothing that
+     plays without input. Durations are always these tokens, never literals,
+     so the reduce block below is the only place that has to know about them.
+     Both overlays unmount synchronously on close, so entrances animate and
+     exits do not; giving them exit transitions means restructuring the mount
+     contract, which is not worth it for 140ms. */
+  --motion-fast: 90ms;
+  --motion-base: 140ms;
+  --motion-ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0.01ms;
+    --motion-base: 0.01ms;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
 
 *,
@@ -107,6 +159,7 @@ p {
 a {
   color: var(--color-accent);
   text-underline-offset: 3px;
+  transition: color var(--motion-fast) var(--motion-ease);
 }
 a:hover {
   color: var(--color-accent-300);
@@ -177,6 +230,10 @@ strong {
   border: 1px solid transparent;
   padding: var(--space-2) calc(var(--space-3) * 1.2);
   border-radius: var(--radius-md);
+  transition:
+    color var(--motion-fast) var(--motion-ease),
+    background-color var(--motion-fast) var(--motion-ease),
+    border-color var(--motion-fast) var(--motion-ease);
 }
 .btn svg {
   display: block;
@@ -197,7 +254,7 @@ strong {
   background: color-mix(in srgb, var(--color-accent) 22%, transparent);
 }
 .btn-secondary {
-  border-color: var(--color-divider);
+  border-color: var(--border-control);
 }
 .btn-secondary:hover {
   color: var(--color-text);
@@ -217,8 +274,9 @@ strong {
   color: var(--color-text);
   caret-color: var(--color-accent);
   background: var(--color-surface);
-  border: 1px solid var(--color-divider);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-md);
+  transition: border-color var(--motion-fast) var(--motion-ease);
 }
 .input:hover {
   border-color: color-mix(in srgb, var(--color-text) 45%, transparent);
@@ -279,6 +337,35 @@ strong {
 .tag-neutral {
   background: var(--color-neutral-800);
   color: var(--color-neutral-100);
+}
+
+/* — severity tiers —
+   These three encode whether a payload is stored in plaintext or encrypted, so
+   the reader has to be able to tell them apart. The previous encoding used
+   tag-neutral / tag-accent-2 / tag-accent, which are three fills at the *same*
+   OKLCH lightness (38.0 / 38.2 / 38.0) and, for the top two, the same hue to
+   within 0.1 degrees. The entire signal was a chroma difference of about 0.03
+   on an 11px chip: invisible at that size, invisible to a deuteranope, and
+   gone entirely in greyscale.
+
+   Nocturne is a single-hue palette by design, so a second hue is not available
+   as an axis. Lightness is. Measured on the rendered fills, the ladder now runs
+   L 26.8 (no fill, on surface) -> 38.0 -> 48.0, so consecutive tiers differ by
+   about 10, which is unambiguous at any size. Fill weight steps with it
+   (outline, then dim, then bright), so the ordering survives greyscale and CVD
+   as well. Label contrast on all three clears AA: 5.25, 8.33, 6.22. */
+.tag-tier-low {
+  background: transparent;
+  color: var(--text-tertiary);
+  box-shadow: inset 0 0 0 1px var(--color-neutral-700);
+}
+.tag-tier-medium {
+  background: var(--color-accent-800);
+  color: var(--color-accent-200);
+}
+.tag-tier-high {
+  background: var(--color-accent-700);
+  color: var(--color-accent-100);
 }
 .tag-outline {
   border: 1px solid var(--color-accent);

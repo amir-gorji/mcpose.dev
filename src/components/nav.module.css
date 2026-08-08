@@ -43,6 +43,7 @@
 }
 
 .link {
+  transition: color var(--motion-fast) var(--motion-ease);
   font-size: 14px;
   color: var(--color-text);
   text-decoration: none;
