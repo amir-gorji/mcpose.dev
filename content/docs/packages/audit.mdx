@@ -125,7 +125,7 @@ The base record every event shares (hashes, chain link, outcome, identity).
 <details>
 <summary>Show the <code>AuditEvent</code> schema</summary>
 
-```ts
+```ts title="audit-event.ts"
 // Discriminated union on sensitivityTier
 type AuditEvent = LowAuditEvent | MediumAuditEvent | HighAuditEvent;
 
@@ -162,7 +162,7 @@ Any third party can verify a single event without access to the full log.
 <details>
 <summary>Show the <code>ReplayManifest</code> interface</summary>
 
-```ts
+```ts title="replay-manifest.ts"
 interface ReplayManifest {
   sessionId: string;
   identity: Identity;
@@ -216,7 +216,7 @@ The returned `middleware` is already marked as a pass-through observer, so tools
 
 ### AuditOptions [#auditoptions]
 
-```ts
+```ts title="audit-options.ts"
 interface AuditOptions {
   signingKey: SigningKeyProvider;
   sensitivityResolver: SensitivityResolverFn;

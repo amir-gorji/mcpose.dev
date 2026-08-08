@@ -14,7 +14,7 @@ The `Identity` interface is the contract between your `resolveIdentity` hook and
 <details>
 <summary>Show the <code>Identity</code> interface</summary>
 
-```ts
+```ts title="identity.ts"
 interface Identity {
   sub: string;                       // Stable unique identifier (e.g. OIDC sub claim)
   type: 'human' | 'agent' | 'service';
@@ -51,7 +51,7 @@ Middleware and audit see the same identity on the first request and on every rou
 HTTP sessions are keyed by `mcp-session-id`, and a client that holds the id can route requests into the session.
 To make sure the id alone is not enough, pass `validateSession`:
 
-```ts
+```ts title="session.ts"
 validateSession: async (req, session) => {
   const token = parseBearer(req.headers.authorization);
   return token !== null && (await tokenStillValid(token));

@@ -32,7 +32,7 @@ The response passes back through the layers in reverse order, so each layer's ex
 
 Each middleware is a plain async function with the signature `(req, next, ctx) => Promise<Res>`.
 
-```ts
+```ts title="signature.ts"
 type Middleware<Req, Res> = (
   req: Req,
   next: (req: Req) => Promise<Res>,
@@ -52,7 +52,7 @@ The middleware arrays in `ProxyOptions` are in **response-processing order**: th
 
 The dominant use case places PII redaction ahead of audit:
 
-```ts
+```ts title="order.ts"
 toolMiddleware: [piiMW, auditMW]
 ```
 
@@ -79,7 +79,7 @@ The decision is recorded in [ADR-0002](/docs/project/adrs/#adr-0002).
 Tools listed in `passThroughTools` skip transforming middleware and are forwarded upstream as-is.
 Middleware that must observe every call regardless of pass-through status (audit, telemetry) can be wrapped in `markPassThroughObserver(mw)`.
 
-```ts
+```ts title="trace.ts"
 import { markPassThroughObserver } from 'mcpose';
 
 toolMiddleware: [piiMW, markPassThroughObserver(metricsMW)]
@@ -94,7 +94,7 @@ The middleware returned by `createAuditMiddleware` in `@mcpose/audit` is already
 <details>
 <summary>Show middleware type definitions</summary>
 
-```ts
+```ts title="pass-through.ts"
 interface ProxyContext {
   requestId: string;
   transport: 'stdio' | 'http';

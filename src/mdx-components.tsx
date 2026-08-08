@@ -24,7 +24,7 @@ type PreProps = ComponentPropsWithoutRef<'pre'> & {
 const Pre = ({ 'data-title': title, 'data-copy': copy, title: nativeTitle, ...rest }: PreProps) => (
   <div className={styles.codeFrame}>
     <CodeBlockFrame
-      title={title ?? nativeTitle ?? ''}
+      {...((title ?? nativeTitle) === undefined ? {} : { title: title ?? nativeTitle })}
       action={
         copy === undefined ? undefined : (
           <CopyButton
