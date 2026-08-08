@@ -77,19 +77,16 @@ The PR comment always prints the raw number against the 2500ms marker, so the ga
 Once the page is under 2500ms, tighten this assertion.
 
 `color-contrast` is asserted as a warning rather than an error.
-It currently fails on both the landing page and the docs pages, which is why accessibility sits at 95/96 instead of 100.
+It currently fails on the docs index (`.card-body`).
 See "Known issues" below.
 
 ## Known issues
 
-Lighthouse reports insufficient colour contrast on these elements:
+Lighthouse reports insufficient colour contrast on one element:
 
-- `.search-trigger-module__*__keycap` (the ⌘K keycap in the search trigger), on every page.
-- `.hero-module__*__codeLang` and inline `<span style="color:#75798C">` on the landing page.
-- `.card-body` on the docs index.
+- `.card-body` on the docs index (inherits `--color-text` at `opacity: 0.8` on `--color-surface`).
 
-These are design-token choices, not deployment problems, so the pipeline reports them rather than blocking on them.
-Fixing them would take accessibility to 100 and let the `color-contrast` assertion be promoted from `warn` to `error`.
+Three previous contrast failures were resolved when `--text-muted` replaced `--color-neutral-600` in small-text CSS classes and in the Shiki code theme. `color-contrast` is still asserted as a warning rather than an error because `.card-body` still trips it.
 
 ## Real-user metrics
 
