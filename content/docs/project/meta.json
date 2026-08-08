@@ -2,6 +2,7 @@
   "title": "Project",
   "pages": [
     "roadmap",
+    "changelog",
     "adrs",
     "contributing",
     "security"

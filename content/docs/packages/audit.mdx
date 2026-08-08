@@ -3,6 +3,13 @@ title: "@mcpose/audit"
 description: "Tamper-evident HMAC audit chain + Merkle replay manifest."
 ---
 
+<Note kicker="Note · documents 3.0.0">
+This page documents `@mcpose/audit` 3.0.0 and the v2 audit format, which are on `main` but not yet published.
+The current npm release is **2.0.3**, which writes format v1 and does not export `verifyAuditChain`, `verifyManifestSignature`, `canonicalJson`, or `stableStringify`.
+Its `AuditEventBase` carries a single `timestamp` rather than `startedAt`/`endedAt`, and its `AuditOptions` has no `onAuditError`.
+The working tree also declares a peer dependency on `mcpose >= 2.2.0`, which is itself unpublished, so 3.0.0 is not installable today.
+</Note>
+
 `@mcpose/audit` turns every tool call flowing through an mcpose proxy into a tamper-evident **audit event**: HMAC-chained to its predecessor, hashed, and, for high-sensitivity calls, encrypted at rest.
 When a **session** closes, it emits a signed **replay manifest** with a Merkle root and per-event proofs, so any third party can verify that a single event happened without access to the full log.
 
