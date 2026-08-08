@@ -62,6 +62,10 @@
      the edge of a control you are meant to find. */
   --border-control: color-mix(in srgb, var(--color-text) 30%, transparent);
 
+  /* --font-heading is deliberately an alias of --font-body today: the design
+     takes its typographic contrast from weight and from the mono face, not
+     from a second sans. The seam is kept so a display face can be introduced
+     in one place; --font-heading-weight is the part actually carrying signal. */
   --font-heading: var(--font-inter), "Inter", system-ui, sans-serif;
   --font-heading-weight: 500;
   --font-body: var(--font-inter), "Inter", system-ui, sans-serif;
@@ -333,6 +337,35 @@ strong {
 .tag-neutral {
   background: var(--color-neutral-800);
   color: var(--color-neutral-100);
+}
+
+/* — severity tiers —
+   These three encode whether a payload is stored in plaintext or encrypted, so
+   the reader has to be able to tell them apart. The previous encoding used
+   tag-neutral / tag-accent-2 / tag-accent, which are three fills at the *same*
+   OKLCH lightness (38.0 / 38.2 / 38.0) and, for the top two, the same hue to
+   within 0.1 degrees. The entire signal was a chroma difference of about 0.03
+   on an 11px chip: invisible at that size, invisible to a deuteranope, and
+   gone entirely in greyscale.
+
+   Nocturne is a single-hue palette by design, so a second hue is not available
+   as an axis. Lightness is. Measured on the rendered fills, the ladder now runs
+   L 26.8 (no fill, on surface) -> 38.0 -> 48.0, so consecutive tiers differ by
+   about 10, which is unambiguous at any size. Fill weight steps with it
+   (outline, then dim, then bright), so the ordering survives greyscale and CVD
+   as well. Label contrast on all three clears AA: 5.25, 8.33, 6.22. */
+.tag-tier-low {
+  background: transparent;
+  color: var(--text-tertiary);
+  box-shadow: inset 0 0 0 1px var(--color-neutral-700);
+}
+.tag-tier-medium {
+  background: var(--color-accent-800);
+  color: var(--color-accent-200);
+}
+.tag-tier-high {
+  background: var(--color-accent-700);
+  color: var(--color-accent-100);
 }
 .tag-outline {
   border: 1px solid var(--color-accent);
