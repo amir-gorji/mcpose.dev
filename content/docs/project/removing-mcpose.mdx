@@ -1,0 +1,63 @@
+---
+title: "Removing mcpose"
+description: "What it takes to take mcpose out, what happens to your audit archives, and the one dependency that genuinely follows you."
+---
+
+Every governance component you put in the request path is a component you have to be able to take out.
+This page is the honest version of that answer, including the part that is not flattering.
+
+## What comes out, and what never went in [#what-comes-out]
+
+mcpose is a transparent proxy.
+The client sees an ordinary MCP server, the upstream sees an ordinary MCP client, and the upstream server is never modified.
+That is not marketing phrasing, it is the removal story: there is nothing upstream to unwind because nothing upstream was wound.
+
+1. **Point the client back at the upstream.** Whatever you passed to `createBackendClient` as `command`/`args` or `url` is the thing your client should now talk to directly. Swap it back in your client config.
+2. **Delete the proxy entry point.** Your `startProxy` or `startHttpProxy` call and your middleware functions. Middleware here is a plain `(req, next, ctx) => Promise<Result>` function with no framework registration, so there is nothing to unwire.
+3. **Uninstall.** `npm uninstall mcpose @mcpose/audit @mcpose/testing`.
+
+There is no database to migrate, no config format to export, and no state to drain.
+
+## Your audit archive was never ours [#audit-archive]
+
+This is a deliberate architectural decision, not a convenience.
+[ADR-0001](/docs/project/adrs/) rejected building a managed audit substrate: no write-once storage, no query API, no report generator.
+Events go to the `onEvent` sink you supply and manifests to your `onManifest` sink, which means they were already in your Splunk, your Elasticsearch, or your S3 bucket the whole time.
+mcpose held them in memory only for the life of a session.
+
+The reasoning in that ADR is worth restating because it is what makes this page short: the trust comes from producing cryptographically provable events, not from owning the store.
+A vendor that owns your compliance archive is a vendor you cannot leave.
+
+## What you lose, and have to rebuild [#what-you-lose]
+
+Removing the proxy removes real behaviour. Be explicit about it:
+
+- The structured `RejectionReason` on every blocked call.
+- Per-session identity resolution, and the `Identity` stamped on each request.
+- `hiddenTools` and `passThroughTools` gating.
+- SSE reconnect replay on the HTTP transport.
+- The audit chain itself.
+
+If any of these are load-bearing for a control you have attested to, removal is a control change, not a refactor.
+
+## The one thing that follows you [#the-lock-in]
+
+Verifying an archive you already wrote needs the verifier that matches its format, and that is where the honest caveat lives.
+
+**On npm today**, `@mcpose/audit` 2.0.3 exports `verifyMerkleProof` and nothing else.
+There is no shipped chain verifier, so verifying a v1 archive after removal means reimplementing the chain hash yourself.
+
+**On `main`**, `verifyAuditChain` and `verifyManifestSignature` exist, but `@mcpose/audit` imports from `mcpose` at runtime, so a verifier-only install still pulls in the proxy core.
+That is a packaging defect, not a design one, and it is worth knowing before you plan an exit.
+
+The counterweight is that the format is specified rather than implied.
+Canonical serialization, the domain labels, the Merkle construction, and the manifest signature payload are all written down in [ADR-0003 and ADR-0004](/docs/project/adrs/).
+A third party can write a verifier in any language from those documents without reading the TypeScript.
+
+That is the difference between a lock-in and a dependency of convenience.
+Keeping `@mcpose/audit` installed as a dev-time verifier is the easy path; writing your own from the spec is the available one.
+
+## If you are evaluating rather than leaving [#evaluating]
+
+The question behind this page is usually asked before adoption, not after.
+If that is where you are, [Alternatives and trade-offs](/docs/getting-started/alternatives/) is the more direct answer.

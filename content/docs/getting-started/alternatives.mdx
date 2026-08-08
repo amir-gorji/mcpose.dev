@@ -1,0 +1,60 @@
+---
+title: "Alternatives and trade-offs"
+description: "Four honest ways to get cross-cutting concerns onto MCP tool calls, including the cases where mcpose is the wrong one."
+---
+
+MCP has no dominant governance vendor to compare against, so the comparison that matters is against what you are probably already doing.
+Every option below is a real thing teams ship. Each row says when to pick it.
+
+## Write it into the MCP server you already own [#hardcode]
+
+Put the redaction, the logging, and the auth check directly in your tool handlers.
+
+**Pick this when** you control the server, you have one of them, and the concerns are not going to be reused anywhere else.
+It is the fastest path to working code, it adds no hop, no process, and no dependency, and it is exactly how mcpose started life: the pattern was extracted from a financial Elasticsearch MCP server where it had been hardcoded first.
+
+**What it costs** is that the logic is welded to one server. A second server means a second copy. And a log written by `console.log` in a handler is a log, not an audit trail: nothing chains the entries, so nothing detects that one was edited or removed.
+
+## Fork the upstream server [#fork]
+
+Vendor the upstream, patch the handlers, run your build.
+
+**Pick this when** the change you need is genuinely about the server's own behaviour rather than a cross-cutting concern, and the upstream is unmaintained or you were going to fork it anyway.
+
+**What it costs** is that you now own every upstream release forever, and it is not available at all for a server you do not control. That last case is common: much of the point of MCP is consuming servers somebody else ships.
+
+## Put an API gateway in front [#gateway]
+
+Terminate HTTP at Kong, Envoy, or an AI gateway and apply policy there.
+
+**Pick this when** what you need is rate limiting, TLS termination, WAF, multi-tenant quota, or anything else that is genuinely an HTTP concern. A gateway is better at those than mcpose will ever be, and you probably already run one.
+
+**What it costs** is that a gateway sees HTTP bodies, not MCP semantics. It cannot read `req.params.name`, cannot resolve a sensitivity tier per tool, and cannot record a structured rejection reason, because at that layer none of those exist. It also does not apply to stdio at all, and stdio is how most MCP servers are run locally today.
+
+## mcpose [#mcpose]
+
+A transparent proxy between the client and the upstream, with the concerns as composable middleware.
+
+**Pick this when** you have more than one upstream, or you do not control the upstream, or the audit trail has to survive somebody disputing it. The tamper-evident chain is the part that is hard to retrofit: it is what makes the log evidence rather than a record.
+
+**What it costs**, stated plainly:
+
+- An extra process or socket hop on every tool call.
+- A child process spawn for stdio backends.
+- A synchronous HMAC per audit event on the response path, plus AES-256-GCM on high-tier payloads.
+- A new in-path failure domain: if the proxy is down, the tool call is down.
+- A peer dependency on the MCP SDK, and a second place where identity is resolved.
+
+<Note kicker="Note · no benchmark">
+We do not publish a latency figure for the proxy hop, because there is no benchmark suite in the repository and a number produced by a hand-run would be marketing rather than engineering.
+If the overhead matters for your workload, measure it: wrap a no-op middleware, drive your own tool mix, and compare against the upstream directly. That is the only number that describes your deployment.
+</Note>
+
+## When not to use mcpose [#when-not]
+
+The short version, expanded from [the introduction](/docs/getting-started/introduction/):
+
+- **One server, no cross-cutting concerns.** A plain proxy, or nothing at all, is simpler.
+- **The concern is an HTTP concern.** Use the gateway you already run.
+- **Node older than 20.** Not supported.
+- **You need a managed compliance archive.** mcpose deliberately does not own storage; see [ADR-0001](/docs/project/adrs/) and [Removing mcpose](/docs/project/removing-mcpose/).
