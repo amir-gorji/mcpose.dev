@@ -128,7 +128,10 @@ const toGroups = (rows: readonly ResultRow[]): ResultGroup[] => {
   rows.forEach((row, flatIndex) => {
     const last = groups[groups.length - 1];
     if (last !== undefined && last.pageIndex === row.pageIndex) {
-      (last.rows as (ResultRow & { flatIndex: number })[]).push({ ...row, flatIndex });
+      groups[groups.length - 1] = {
+        ...last,
+        rows: [...last.rows, { ...row, flatIndex }],
+      };
       return;
     }
     groups.push({
