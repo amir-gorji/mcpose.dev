@@ -108,7 +108,10 @@ const DocsPage = async ({ params }: PageProps) => {
   const neighbours = findNeighbour(source.pageTree, page.url);
   const prevUrl = page.data.prev ?? neighbours.previous?.url;
   const nextUrl = page.data.next ?? neighbours.next?.url;
-  const tocItems = page.data.toc.filter((item) => item.depth <= 2);
+  /* Depth 3 is indented via data-depth. Filtering at 2 made all 13 H3s on the
+     package and contributing pages unreachable from navigation. Nothing in
+     content/ goes deeper than H3, so this is the complete range. */
+  const tocItems = page.data.toc.filter((item) => item.depth <= 3);
 
   return (
     <>

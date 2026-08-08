@@ -17,7 +17,12 @@ const Toc = ({ items }: TocProps) => {
       <AnchorProvider toc={items} single>
         <div className={styles.list}>
           {items.map((item) => (
-            <TOCItem key={item.url} href={item.url} className={styles.item}>
+            <TOCItem
+              key={item.url}
+              href={item.url}
+              className={styles.item}
+              data-depth={item.depth}
+            >
               {item.title}
             </TOCItem>
           ))}

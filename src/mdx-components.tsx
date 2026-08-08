@@ -1,10 +1,12 @@
 import type { MDXComponents } from 'mdx/types';
+import Link from 'next/link';
 import type { ComponentPropsWithoutRef } from 'react';
 import CodeBlockFrame from '@/components/code-block';
 import CopyButton from '@/components/copy-button';
 import LinkCard, { LinkCards } from '@/components/docs/link-card';
 import Note from '@/components/docs/note-card';
 import styles from '@/components/docs/docs-article.module.css';
+import { withTrailingSlash } from '@/lib/docs-tree';
 
 const cx = (...classes: ReadonlyArray<string | undefined>): string =>
   classes.filter(Boolean).join(' ');
@@ -37,6 +39,44 @@ const Pre = ({ 'data-title': title, 'data-copy': copy, title: nativeTitle, ...re
   </div>
 );
 
+/* Prose anchors. LinkCard already routes through next/link; markdown-syntax
+   links did not, so every in-prose hop between docs pages was a full document
+   load. Three shapes, three behaviours:
+     "#id"   in-page anchor, plain <a>, never normalised
+     "http…" external, plain <a> with rel
+     "/…"    internal, next/link, normalised to the trailing-slash canonical
+             form that next.config's trailingSlash: true expects
+   Path and fragment are normalised separately, or /docs/x/#y would become
+   /docs/x/#y/ — two of the internal links are exactly that shape. */
+const Anchor = ({ href, className, children, ...rest }: ComponentPropsWithoutRef<'a'>) => {
+  const cls = cx(styles.link, className);
+
+  if (href === undefined || href.startsWith('#')) {
+    return (
+      <a {...rest} href={href} className={cls}>
+        {children}
+      </a>
+    );
+  }
+  if (!href.startsWith('/')) {
+    return (
+      <a {...rest} href={href} className={cls} rel="noreferrer">
+        {children}
+      </a>
+    );
+  }
+
+  const hashAt = href.indexOf('#');
+  const path = hashAt === -1 ? href : href.slice(0, hashAt);
+  const hash = hashAt === -1 ? '' : href.slice(hashAt);
+
+  return (
+    <Link {...rest} href={`${withTrailingSlash(path)}${hash}`} className={cls}>
+      {children}
+    </Link>
+  );
+};
+
 export const getMDXComponents = (overrides: MDXComponents = {}): MDXComponents => ({
   pre: Pre,
   h2: (props: ComponentPropsWithoutRef<'h2'>) => (
@@ -51,9 +91,7 @@ export const getMDXComponents = (overrides: MDXComponents = {}): MDXComponents =
   li: (props: ComponentPropsWithoutRef<'li'>) => (
     <li {...props} className={cx(styles.listItem, props.className)} />
   ),
-  a: (props: ComponentPropsWithoutRef<'a'>) => (
-    <a {...props} className={cx(styles.link, props.className)} />
-  ),
+  a: Anchor,
   code: (props: ComponentPropsWithoutRef<'code'>) => (
     <code {...props} className={cx(styles.inlineCode, props.className)} />
   ),
