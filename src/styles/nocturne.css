@@ -43,6 +43,25 @@
   --color-accent-2-800: #423e5d;
   --color-accent-2-900: #2b293a;
 
+  /* Text roles are contrast-solved, not lightness-stepped, so they sit off the
+     ramp on purpose. --color-neutral-600 was being used as small text in eight
+     modules and as the Shiki comment colour; it measures 4.083:1 on --color-bg
+     and 3.524:1 on --color-surface, both under the 4.5:1 WCAG AA needs for
+     normal text, and nothing on this site is large enough to qualify for the
+     3:1 allowance. Moving the ramp step itself would break the shared
+     lightness scale the three ramps are generated on, so the fix is a layer
+     above it. --text-muted is the lowest value that clears 4.5:1 on the darker
+     of the two grounds: 5.426:1 on bg, 4.682:1 on surface. */
+  --text-primary: var(--color-text);
+  --text-secondary: var(--color-neutral-400);
+  --text-tertiary: var(--color-neutral-500);
+  --text-muted: #8a8ea2;
+
+  /* Component boundaries need 3:1 under WCAG 1.4.11. --color-divider composites
+     to 1.561:1, which is right for a hairline rule between blocks but not for
+     the edge of a control you are meant to find. */
+  --border-control: color-mix(in srgb, var(--color-text) 30%, transparent);
+
   --font-heading: var(--font-inter), "Inter", system-ui, sans-serif;
   --font-heading-weight: 500;
   --font-body: var(--font-inter), "Inter", system-ui, sans-serif;
@@ -197,7 +216,7 @@ strong {
   background: color-mix(in srgb, var(--color-accent) 22%, transparent);
 }
 .btn-secondary {
-  border-color: var(--color-divider);
+  border-color: var(--border-control);
 }
 .btn-secondary:hover {
   color: var(--color-text);
@@ -217,7 +236,7 @@ strong {
   color: var(--color-text);
   caret-color: var(--color-accent);
   background: var(--color-surface);
-  border: 1px solid var(--color-divider);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-md);
 }
 .input:hover {
