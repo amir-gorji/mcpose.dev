@@ -28,7 +28,7 @@ const NotFound = () => (
   >
     <Logo />
     <h1 style={{ margin: 0 }}>Page not found</h1>
-    <p style={{ margin: 0, fontSize: 14, color: 'var(--color-neutral-400)', maxWidth: 420 }}>
+    <p style={{ margin: 0, fontSize: 14, color: 'var(--color-muted)', maxWidth: 420 }}>
       The page you are looking for does not exist or has moved.
     </p>
     <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>

@@ -1,9 +1,52 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
-import { GeistSans } from 'geist/font/sans';
-import { GeistMono } from 'geist/font/mono';
+import localFont from 'next/font/local';
 import { SITE } from '@/lib/site';
 import '@/styles/nocturne.css';
+
+// Same Geist variable fonts the `geist` package ships, declared locally so we
+// control `display`. With `swap`, the text repaints when the font arrives and
+// Chrome updates the LCP candidate — the single biggest LCP cost on every page
+// (LCP measured 2.1–3.0s, ~84% render delay). `optional` gives the font a
+// 100ms block period and then commits to the fallback for that page view, so
+// LCP lands at FCP. Repeat visits serve the font from cache instantly.
+const GeistSans = localFont({
+  src: '../../node_modules/geist/dist/fonts/geist-sans/Geist-Variable.woff2',
+  variable: '--font-geist-sans',
+  display: 'optional',
+  fallback: [
+    'ui-sans-serif',
+    'system-ui',
+    '-apple-system',
+    'BlinkMacSystemFont',
+    'Inter',
+    'Segoe UI',
+    'Roboto',
+    'sans-serif',
+    'Apple Color Emoji',
+    'Segoe UI Emoji',
+    'Segoe UI Symbol',
+    'Noto Color Emoji',
+  ],
+});
+
+const GeistMono = localFont({
+  src: '../../node_modules/geist/dist/fonts/geist-mono/GeistMono-Variable.woff2',
+  variable: '--font-geist-mono',
+  display: 'optional',
+  adjustFontFallback: false,
+  fallback: [
+    'ui-monospace',
+    'SFMono-Regular',
+    'Roboto Mono',
+    'Menlo',
+    'Monaco',
+    'Liberation Mono',
+    'DejaVu Sans Mono',
+    'Courier New',
+    'monospace',
+  ],
+});
 
 export const viewport: Viewport = {
   width: 'device-width',

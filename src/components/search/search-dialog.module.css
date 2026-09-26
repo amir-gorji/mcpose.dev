@@ -202,7 +202,7 @@
 
 .input:focus-visible {
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 2px var(--color-accent-subtle);
+  box-shadow: 0 0 0 2px var(--color-tint);
 }
 
 /* Status message row (reserved 22px) */

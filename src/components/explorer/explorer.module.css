@@ -65,7 +65,7 @@
 
 .tabSelected {
   background: var(--color-accent) !important;
-  color: #FFFFFF !important;
+  color: var(--color-on-accent) !important;
   font-weight: 600;
 }
 
@@ -149,7 +149,7 @@
 
 .nodeActive {
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 2px var(--color-accent-subtle);
+  box-shadow: 0 0 0 2px var(--color-tint);
   color: var(--color-accent);
 }
 

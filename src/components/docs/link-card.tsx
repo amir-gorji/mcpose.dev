@@ -3,8 +3,7 @@ import Link from 'next/link';
 import styles from './link-card.module.css';
 
 /* "Next steps" cards — a 2-up grid of surface cards that link onward.
-   Card text colors follow the mock: the title carries accent-300; the body
-   inherits the anchor's nocturne accent through .card-body's opacity. */
+   Paint comes from the global .card: accent title, muted body. */
 
 export const LinkCards = ({ children }: { children: ReactNode }) => (
   <div className={styles.cards}>{children}</div>

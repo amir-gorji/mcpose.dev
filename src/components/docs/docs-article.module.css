@@ -24,7 +24,7 @@
   margin: 0 0 var(--space-6);
   font-size: 14px;
   line-height: 1.7;
-  color: var(--color-neutral-400);
+  color: var(--color-muted);
 }
 /* Lede — the first paragraph after the h1. Covers both page shapes: the
    MDX body as h1's sibling, or wrapped in its own container. */
@@ -46,14 +46,14 @@ h1 + .paragraph {
 .listItem {
   font-size: 14px;
   line-height: 1.65;
-  color: var(--color-neutral-400);
+  color: var(--color-muted);
 }
 
 /* — inline code in prose — */
 .inlineCode {
   font-family: var(--font-mono);
   font-size: 12.5px;
-  color: var(--color-neutral-200);
+  color: var(--color-text);
   /* Package specifiers are longer than a phone's line box. */
   overflow-wrap: anywhere;
 }
@@ -84,12 +84,12 @@ h1 + .paragraph {
 }
 .note strong {
   font-weight: 500;
-  color: var(--color-neutral-200);
+  color: var(--color-text);
 }
 .note code {
   font-family: var(--font-mono);
   font-size: 11.5px;
-  color: var(--color-neutral-200);
+  color: var(--color-text);
 }
 
 /* — routing-paths table — (composed with the global .table) */
@@ -109,11 +109,11 @@ h1 + .paragraph {
 .docsTable td:nth-child(2) {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: var(--color-neutral-400);
+  color: var(--color-muted);
 }
 .docsTable td:nth-child(3) {
   font-size: 13px;
-  color: var(--color-neutral-400);
+  color: var(--color-muted);
 }
 .docsTable code {
   font-size: 11px;
@@ -123,5 +123,5 @@ h1 + .paragraph {
   margin: 0 0 calc(var(--space-8) * 1.4);
   font-size: 13px;
   line-height: 1.65;
-  color: var(--color-neutral-500);
+  color: var(--color-muted);
 }

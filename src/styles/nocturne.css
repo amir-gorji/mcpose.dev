@@ -60,6 +60,13 @@
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --duration-hover: 150ms;
+
+  /* Aliases for transition shorthands used across component modules */
+  --duration-fast: var(--duration-hover);
+  --ease-default: var(--ease-standard);
+  --motion-fast: var(--duration-hover);
+  --motion-base: var(--duration-hover);
+  --motion-ease: var(--ease-standard);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -209,10 +216,12 @@ h3, .h3 {
   font-weight: 400;
 }
 
-/* Skip Link */
+/* Skip Link — stays inside the viewport and toggles opacity instead of
+   sliding in from off-screen, so its focus rect is always measurable
+   (Lighthouse's skip-link audit reads the bounding box, not the :focus paint). */
 .skipLink {
   position: absolute;
-  left: -9999px;
+  left: 16px;
   top: 16px;
   z-index: 100;
   padding: 12px 16px;
@@ -222,16 +231,22 @@ h3, .h3 {
   border-radius: var(--radius-md);
   font-weight: 500;
   text-decoration: none;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .skipLink:focus {
-  left: 16px;
+  opacity: 1;
+  pointer-events: auto;
   outline: 2px solid var(--color-accent);
   outline-offset: 3px;
 }
 
 /* Buttons */
-.btn, button.btn, a.btn {
+.btn {
+  /* Keep this selector at a single class so the .btn-primary/.btn-secondary
+     variants below can override background/color without a specificity fight
+     (an `a.btn` form would outrank them and strip the accent fill). */
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -319,6 +334,60 @@ h3, .h3 {
   background-color: var(--color-surface);
   color: var(--color-muted);
   border-color: var(--color-border);
+}
+
+/* Cards — global surface card composed by CSS modules (docs link cards, the
+   article note callout). Modules own layout and interaction; this owns paint. */
+.card {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+}
+
+.card-kicker {
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: var(--space-2);
+}
+
+.card-body {
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--color-muted);
+}
+
+/* Tables — docs MDX tables (composed with docs-article's .docsTable). */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table th {
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+/* Elevations — utility classes referenced by CodeBlockFrame. */
+.elev-sm {
+  box-shadow: var(--shadow-sm);
+}
+
+.elev-md {
+  box-shadow: var(--shadow-md);
 }
 
 /* Code frame container */
