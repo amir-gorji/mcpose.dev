@@ -1,19 +1,23 @@
 import Link from 'next/link';
-
-import InstallRow from '@/components/install-row';
 import styles from './cta-card.module.css';
 
-const CtaCard = () => (
-  <div className={`elev-sm ${styles.card}`}>
-    <h3 className={styles.heading}>Drop it in front of any MCP server.</h3>
-    <p className={styles.subline}>Ten lines of glue. Nothing upstream changes.</p>
-    <div className={styles.installRow}>
-      <InstallRow variant="cta" />
-    </div>
-    <Link className="btn btn-primary" href="/docs/getting-started/quick-start/">
-      Read the docs →
-    </Link>
-  </div>
-);
-
-export default CtaCard;
+export default function CtaCard() {
+  return (
+    <section aria-label="Get started" className={styles.section}>
+      <div className={styles.card}>
+        <h2 className={styles.heading}>The next layer is yours.</h2>
+        <p className={styles.lede}>
+          Start with one proxy and one function. See where it takes you.
+        </p>
+        <div className={styles.action}>
+          <Link
+            href="/docs/v3/getting-started/quick-start/"
+            className="btn btn-primary"
+          >
+            Build your first proxy
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}

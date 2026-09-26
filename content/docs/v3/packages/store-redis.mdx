@@ -1,0 +1,45 @@
+---
+title: "@mcpose/store-redis"
+description: Redis-backed EventStore and SessionRegistry for mcpose to enable persistent SSE replay across restarts.
+topicId: packages-store-redis
+---
+
+# @mcpose/store-redis
+
+The `@mcpose/store-redis` package provides Redis storage adapters for mcpose.
+It implements the `PersistentEventStore` and `SessionRegistry` interfaces for multi-instance deployments.
+
+## Installation
+
+```bash
+npm install @mcpose/store-redis
+```
+
+Peer requirement: `mcpose >= 3.0.0 < 4`.
+
+## Features
+
+- Persistent SSE event storage surviving process restarts.
+- Session registry supporting distributed multi-process HTTP gateways.
+- Automatic TTL expiration for inactive streams.
+
+## Example
+
+```ts
+import { startHttpProxy } from 'mcpose';
+import { createRedisEventStore, createRedisSessionRegistry } from '@mcpose/store-redis';
+import { createClient } from 'redis';
+
+const redis = createClient({ url: process.env.REDIS_URL });
+await redis.connect();
+
+const eventStore = createRedisEventStore(redis);
+const sessionRegistry = createRedisSessionRegistry(redis);
+
+await startHttpProxy(upstream, {
+  name: 'cluster-gateway',
+  port: 8080,
+  eventStore,
+  sessionRegistry,
+});
+```

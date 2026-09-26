@@ -1,0 +1,44 @@
+---
+title: "@mcpose/store-postgres"
+description: Postgres-backed EventStore and SessionRegistry for mcpose to enable persistent SSE replay across restarts.
+topicId: packages-store-postgres
+---
+
+# @mcpose/store-postgres
+
+The `@mcpose/store-postgres` package provides PostgreSQL storage adapters for mcpose.
+It implements durable transactional event storage and session tracking.
+
+## Installation
+
+```bash
+npm install @mcpose/store-postgres
+```
+
+Peer requirement: `mcpose >= 3.0.0 < 4`.
+
+## Features
+
+- Transactional SSE notification storage.
+- Schema migrations included for session and event tables.
+- Robust restart durability for compliance-driven infrastructures.
+
+## Example
+
+```ts
+import { startHttpProxy } from 'mcpose';
+import { createPostgresEventStore, createPostgresSessionRegistry } from '@mcpose/store-postgres';
+import pg from 'pg';
+
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+
+const eventStore = await createPostgresEventStore(pool);
+const sessionRegistry = await createPostgresSessionRegistry(pool);
+
+await startHttpProxy(upstream, {
+  name: 'postgres-gateway',
+  port: 8080,
+  eventStore,
+  sessionRegistry,
+});
+```

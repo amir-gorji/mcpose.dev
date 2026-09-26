@@ -1,72 +1,189 @@
-.grid {
+.hero {
+  max-width: 1248px;
+  margin: 0 auto;
+  padding: 80px 0;
   display: grid;
-  grid-template-columns: 1.02fr 1fr;
-  gap: calc(var(--space-8) * 2.5);
+  grid-template-columns: 600px 1fr;
   align-items: center;
+  gap: 64px;
 }
 
-.kicker {
-  margin-bottom: var(--space-6);
+.copyCol {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+  max-width: 100%;
 }
 
-.heading {
-  margin: 0 0 var(--space-6);
-  text-wrap: pretty;
+.eyebrow {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.lede {
-  margin: 0 0 var(--space-8);
-  font-size: 16px;
-  line-height: 1.65;
-  color: var(--color-neutral-400);
-  max-width: 520px;
-  text-wrap: pretty;
+.headline {
+  font-size: 76px;
+  line-height: 78px;
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  color: var(--color-text);
+  margin: 0;
 }
 
-.installRow {
-  margin-bottom: var(--space-6);
+.headlineAccent {
+  color: var(--color-accent);
 }
 
-.buttonRow {
+.lead {
+  font-size: 20px;
+  line-height: 30px;
+  color: var(--color-muted);
+  margin: 0;
+}
+
+.actions {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  margin-bottom: var(--space-6);
-}
-
-.metaRow {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--color-neutral-500);
-  display: flex;
-  gap: var(--space-2);
+  gap: 16px;
   flex-wrap: wrap;
 }
 
-.metaDot {
-  color: var(--color-neutral-700);
+.installBlock {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  max-width: 100%;
+  min-width: 0;
 }
 
-.codeLang {
-  font-size: 10.5px;
-  color: var(--text-muted);
+.installCode {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--color-text);
+  overflow-x: auto;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
-@media (max-width: 960px) {
-  .grid {
+.installCode:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.metadata {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.visualCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.caption {
+  font-size: 13px;
+  color: var(--color-muted);
+  text-align: center;
+}
+
+.mobileDiagram {
+  display: none;
+}
+
+@media (max-width: 1439px) and (min-width: 1024px) {
+  .hero {
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+
+  .headline {
+    font-size: 64px;
+    line-height: 66px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .hero {
     grid-template-columns: 1fr;
-    gap: calc(var(--space-8) * 1.6);
+    gap: 48px;
+    padding: 64px 0;
   }
 
-  /* Stacked, the code window must yield to the viewport instead of sizing
-     to its longest line; the <pre> takes over with its own scroll. */
-  .codeColumn {
-    min-width: 0;
+  .headline {
+    font-size: 56px;
+    line-height: 60px;
   }
 }
 
-@media (max-width: 560px) {
-  .heading {
-    font-size: 34px;
+@media (max-width: 767px) {
+  .hero {
+    padding: 48px 0;
+    gap: 36px;
+  }
+
+  .headline {
+    font-size: 44px;
+    line-height: 46px;
+  }
+
+  .desktopArtwork {
+    display: none;
+  }
+
+  .mobileDiagram {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    margin-top: 16px;
+  }
+
+  .mobileCard {
+    width: 100%;
+    max-width: 320px;
+    padding: 16px;
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    text-align: center;
+    font-weight: 500;
+    font-size: 14px;
+  }
+
+  .mobileCardAccent {
+    background: #2456E8;
+    color: #FFFFFF;
+    border-color: #2456E8;
+  }
+
+  .mobileConnector {
+    font-size: 18px;
+    color: var(--color-accent);
+  }
+}
+
+@media (max-width: 380px) {
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .actions .btn {
+    width: 100%;
   }
 }

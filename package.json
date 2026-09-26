@@ -9,6 +9,7 @@
     "serve": "npx serve out -l 4000",
     "postinstall": "fumadocs-mdx",
     "test": "pnpm build && node --test \"tests/*.test.mjs\"",
+    "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "cf:deploy": "wrangler deploy",
@@ -18,6 +19,7 @@
   "dependencies": {
     "fumadocs-core": "16.14.0",
     "fumadocs-mdx": "15.2.2",
+    "geist": "^1.7.2",
     "next": "16.3.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -25,6 +27,8 @@
     "zod": "^4.0.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.1",
+    "@playwright/test": "^1.50.0",
     "@types/mdx": "^2.0.13",
     "@types/node": "^25.0.0",
     "@types/react": "^19.0.0",

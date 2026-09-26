@@ -1,10 +1,6 @@
 {
   "pages": [
-    "index",
-    "getting-started",
-    "concepts",
-    "packages",
-    "recipes",
-    "project"
+    "v3",
+    "v2"
   ]
 }

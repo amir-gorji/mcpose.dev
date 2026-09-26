@@ -1,23 +1,17 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
-import { Inter } from 'next/font/google';
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
 import { SITE } from '@/lib/site';
 import '@/styles/nocturne.css';
 
-const inter = Inter({
-  subsets: ['latin'],
-  weight: ['400', '500'],
-  display: 'swap',
-  variable: '--font-inter',
-});
-
-/* Viewport is a separate export in Next.js 16: it controls the meta viewport tag,
-   theme-color, and color scheme. Values mirror the nocturne palette. */
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#161826',
-  colorScheme: 'dark',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#F8F9F5' },
+    { media: '(prefers-color-scheme: dark)', color: '#101814' },
+  ],
 };
 
 export const metadata: Metadata = {
@@ -35,7 +29,6 @@ export const metadata: Metadata = {
     icon: '/favicon.svg',
     apple: '/apple-touch-icon.png',
   },
-  /* './' resolves against each route's own path, self-canonicalizing every page. */
   alternates: { canonical: './' },
   openGraph: {
     type: 'website',
@@ -52,8 +45,20 @@ export const metadata: Metadata = {
 };
 
 const RootLayout = ({ children }: { children: ReactNode }) => (
-  <html lang="en" className={inter.variable}>
-    <body>{children}</body>
+  <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
+    <head>
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `(function(){try{var t=localStorage.getItem('mcpose.theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t);}else if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.setAttribute('data-theme','dark');}else{document.documentElement.setAttribute('data-theme','light');}}catch(e){}})()`,
+        }}
+      />
+    </head>
+    <body>
+      <a href="#main-content" className="skipLink">
+        Skip to main content
+      </a>
+      {children}
+    </body>
   </html>
 );
 

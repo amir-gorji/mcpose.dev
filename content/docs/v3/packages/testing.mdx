@@ -1,0 +1,58 @@
+---
+title: "@mcpose/testing"
+description: "Runner-agnostic compliance assertions for the mcpose audit chain."
+topicId: packages-testing
+---
+
+# @mcpose/testing
+
+The `@mcpose/testing` package provides runner-agnostic compliance assertions for `@mcpose/audit` chains.
+It verifies internal consistency, Merkle-proof validity, PII redaction, and delegation chains.
+
+> [!NOTE]
+> Distinguish `@mcpose/testing` from `mcpose/testing`.
+> The `mcpose/testing` export in core provides test harnesses for proxies and transports.
+> `@mcpose/testing` provides audit-chain consistency assertions.
+
+## Keyless by Design
+
+These assertions are keyless: they verify that an audit artifact is internally consistent without requiring signing secrets.
+They prove structural integrity, but do not prove cryptographic authenticity against an adversary who rewrote the entire log.
+To prove authenticity, use `verifyAuditChain` and `verifyManifestSignature` from `@mcpose/audit`.
+
+## Installation
+
+```bash
+npm install --save-dev @mcpose/testing
+```
+
+Peers: `mcpose >= 3.0.0 < 4`, `@mcpose/audit >= 3.0.0 < 4`.
+
+## Available Assertions
+
+- `assertAuditChainIntegrity(events)`: Throws if the chain is empty, has duplicate hashes, or non-sequential replay manifest positions.
+- `assertReplayManifestValid(events, manifest)`: Recomputes the Merkle root from the events and verifies each proof against the manifest root.
+- `assertPiiRedacted(event, patterns)`: Asserts no plaintext field matches forbidden patterns; structurally verifies high-tier encrypted payloads.
+- `assertDelegationHonored(event)`: Verifies that delegation metadata exists and every hop identifies a valid subject.
+
+## Example
+
+```ts
+import { test } from 'vitest';
+import {
+  assertAuditChainIntegrity,
+  assertReplayManifestValid,
+  assertPiiRedacted,
+} from '@mcpose/testing';
+
+test('audit log matches replay manifest', async () => {
+  const events = await getRecordedEvents();
+  const manifest = await getSessionManifest();
+
+  assertAuditChainIntegrity(events);
+  assertReplayManifestValid(events, manifest);
+  for (const event of events) {
+    assertPiiRedacted(event, [/\b\d{3}-\d{2}-\d{4}\b/]);
+  }
+});
+```

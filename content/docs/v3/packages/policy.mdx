@@ -1,0 +1,49 @@
+---
+title: "@mcpose/policy"
+description: Deny-by-default RBAC policy middleware for mcpose with role rules, sensitivity tiers, and call budgets.
+topicId: packages-policy
+---
+
+# @mcpose/policy
+
+The `@mcpose/policy` package provides fine-grained authorization for tool calls.
+It operates on a deny-by-default model, ensuring tools are only accessible when an active policy explicitly permits them.
+
+## Installation
+
+```bash
+npm install @mcpose/policy
+```
+
+Peer requirement: `mcpose >= 3.0.0 < 4`.
+
+## Features
+
+- Role-based access control (RBAC) evaluated against session identity.
+- Sensitivity tiers (`low`, `medium`, `high`) with configurable execution rules.
+- Per-session invocation budgets to prevent runaway loops.
+- Structured rejection reasons (`POLICY_DENIED`, `BUDGET_EXCEEDED`) returned on blocked calls.
+
+## Example
+
+```ts
+import { startProxy } from 'mcpose';
+import { createPolicyMiddleware } from '@mcpose/policy';
+
+const policy = createPolicyMiddleware({
+  roles: {
+    analyst: {
+      allow: ['search', 'query_metrics'],
+      budget: { maxCalls: 50 },
+    },
+    admin: {
+      allow: ['*'],
+    },
+  },
+});
+
+await startProxy(upstream, {
+  name: 'secure-proxy',
+  toolMiddleware: [policy],
+});
+```

@@ -2,12 +2,15 @@ import Link from 'next/link';
 import type * as PageTree from 'fumadocs-core/page-tree';
 
 import { nodeName, withTrailingSlash } from '@/lib/docs-tree';
+import VersionMenu from '@/components/docs/version-menu';
+import type { DocsVersionId } from '@/lib/docs-versions';
 
 import styles from './sidebar.module.css';
 
 type SidebarProps = {
   tree: PageTree.Root;
   activeUrl: string;
+  version?: DocsVersionId;
   /* The drawer reuses the same tree without the sticky column's
      positioning or its fading right border. */
   variant?: 'aside' | 'drawer';
@@ -21,7 +24,6 @@ type SidebarItem = {
 };
 
 type SidebarGroup = {
-  /* React key. A loose group has no label, so the label cannot serve as one. */
   readonly key: string;
   readonly label: string | undefined;
   readonly items: readonly SidebarItem[];
@@ -34,16 +36,6 @@ const pageItem = (node: PageTree.Item, isMono: boolean): SidebarItem => ({
   external: node.external ?? /^https?:/.test(node.url),
 });
 
-/* A page tree root holds three node kinds, and the previous reduction dropped
-   two of them on the floor: anything that was not a folder returned []. That
-   silently hid content/docs/index.mdx — the very page the nav bar's "Docs" link
-   points at — from every sidebar, reachable only through the breadcrumb.
-
-     folder    a labelled group; its own index page, if any, leads
-     page      a loose entry (the docs hub, or an external link from meta.json)
-     separator starts a new loose group and names it
-
-   Loose entries appearing before any separator form one unlabelled group. */
 const toGroups = (tree: PageTree.Root): readonly SidebarGroup[] => {
   const groups: SidebarGroup[] = [];
   let loose: SidebarItem[] = [];
@@ -89,9 +81,10 @@ const itemClassName = (item: SidebarItem, active: boolean): string =>
     .filter(Boolean)
     .join(' ');
 
-const Sidebar = ({ tree, activeUrl, variant = 'aside' }: SidebarProps) => (
+const Sidebar = ({ tree, activeUrl, version = 'v3', variant = 'aside' }: SidebarProps) => (
   <aside className={variant === 'drawer' ? styles.sidebarDrawer : styles.sidebar}>
     <div className={styles.inner}>
+      <VersionMenu currentVersion={version} />
       {toGroups(tree).map((group) => (
         <div key={group.key}>
           {group.label === undefined ? null : (
@@ -100,8 +93,6 @@ const Sidebar = ({ tree, activeUrl, variant = 'aside' }: SidebarProps) => (
           <div className={styles.items}>
             {group.items.map((item) => {
               const active = item.url === activeUrl;
-              /* External entries are absolute URLs; they must not be routed
-                 through next/link or normalised to a trailing slash. */
               return item.external ? (
                 <a
                   key={item.url}

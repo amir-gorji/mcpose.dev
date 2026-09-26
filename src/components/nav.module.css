@@ -2,49 +2,56 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: color-mix(in srgb, var(--color-bg) 85%, transparent);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--color-divider);
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .inner {
+  position: relative;
+  z-index: 60;
+  background: var(--color-bg);
   margin: 0 auto;
-  padding: 0 var(--space-8);
-  height: 56px;
+  padding: 0 64px;
+  height: 88px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-4);
 }
 
 .brandGroup {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 12px;
 }
 
 .brand {
-  font-family: var(--font-mono);
-  font-weight: 500;
-  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 18px;
   color: var(--color-text);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   text-decoration: none;
 }
 
-.versionTag {
-  font-family: var(--font-mono);
-  font-size: 10px;
+.brand:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
 }
 
 .linkGroup {
   display: flex;
   align-items: center;
-  gap: var(--space-6);
+  gap: var(--space-5);
 }
 
 .link {
-  transition: color var(--motion-fast) var(--motion-ease);
+  transition: color var(--duration-hover) var(--ease-standard);
   font-size: 14px;
+  font-weight: 500;
   color: var(--color-text);
   text-decoration: none;
 }
@@ -53,12 +60,55 @@
   color: var(--color-accent);
 }
 
+.link:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
 .linkCurrent {
   color: var(--color-accent);
 }
 
-@media (max-width: 768px) {
-  .linkGroup {
-    gap: var(--space-4);
+.mobileMenuBtn {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .inner {
+    height: 72px;
+    padding: 0 32px;
+  }
+
+  .desktopOnly {
+    display: none !important;
+  }
+
+  .mobileMenuBtn {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 767px) {
+  .inner {
+    padding: 0 24px;
+  }
+}
+
+.mobileDrawer {
+  position: fixed;
+  inset: 0;
+  top: 0;
+  z-index: 45;
+  background: var(--color-bg);
+  padding: 104px 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+@media (max-width: 1023px) {
+  .mobileDrawer {
+    padding-top: 88px;
   }
 }

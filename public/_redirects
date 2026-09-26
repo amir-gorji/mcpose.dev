@@ -1,0 +1,67 @@
+# Explicit permanent 301 redirects from legacy unversioned routes to canonical v3 routes
+
+/docs /docs/v3/ 301
+/docs/ /docs/v3/ 301
+
+/docs/getting-started/introduction /docs/v3/getting-started/introduction/ 301
+/docs/getting-started/introduction/ /docs/v3/getting-started/introduction/ 301
+
+/docs/getting-started/install /docs/v3/getting-started/install/ 301
+/docs/getting-started/install/ /docs/v3/getting-started/install/ 301
+
+/docs/getting-started/quick-start /docs/v3/getting-started/quick-start/ 301
+/docs/getting-started/quick-start/ /docs/v3/getting-started/quick-start/ 301
+
+/docs/getting-started/examples /docs/v3/getting-started/examples/ 301
+/docs/getting-started/examples/ /docs/v3/getting-started/examples/ 301
+
+/docs/getting-started/alternatives /docs/v3/getting-started/alternatives/ 301
+/docs/getting-started/alternatives/ /docs/v3/getting-started/alternatives/ 301
+
+/docs/concepts/proxy-model /docs/v3/concepts/proxy-model/ 301
+/docs/concepts/proxy-model/ /docs/v3/concepts/proxy-model/ 301
+
+/docs/concepts/middleware-model /docs/v3/concepts/middleware-model/ 301
+/docs/concepts/middleware-model/ /docs/v3/concepts/middleware-model/ 301
+
+/docs/concepts/identity-and-sessions /docs/v3/concepts/identity-and-sessions/ 301
+/docs/concepts/identity-and-sessions/ /docs/v3/concepts/identity-and-sessions/ 301
+
+/docs/concepts/rejection-reasons /docs/v3/concepts/rejection-reasons/ 301
+/docs/concepts/rejection-reasons/ /docs/v3/concepts/rejection-reasons/ 301
+
+/docs/packages/mcpose /docs/v3/packages/mcpose/ 301
+/docs/packages/mcpose/ /docs/v3/packages/mcpose/ 301
+
+/docs/packages/audit /docs/v3/packages/audit/ 301
+/docs/packages/audit/ /docs/v3/packages/audit/ 301
+
+/docs/packages/testing /docs/v3/packages/testing/ 301
+/docs/packages/testing/ /docs/v3/packages/testing/ 301
+
+/docs/recipes/list-tools-rewriting /docs/v3/recipes/list-tools-rewriting/ 301
+/docs/recipes/list-tools-rewriting/ /docs/v3/recipes/list-tools-rewriting/ 301
+
+/docs/recipes/pii-redaction-audit /docs/v3/recipes/pii-redaction-audit/ 301
+/docs/recipes/pii-redaction-audit/ /docs/v3/recipes/pii-redaction-audit/ 301
+
+/docs/recipes/oauth-upstream /docs/v3/recipes/oauth-upstream/ 301
+/docs/recipes/oauth-upstream/ /docs/v3/recipes/oauth-upstream/ 301
+
+/docs/project/security /docs/v3/project/security/ 301
+/docs/project/security/ /docs/v3/project/security/ 301
+
+/docs/project/roadmap /docs/v3/project/roadmap/ 301
+/docs/project/roadmap/ /docs/v3/project/roadmap/ 301
+
+/docs/project/contributing /docs/v3/project/contributing/ 301
+/docs/project/contributing/ /docs/v3/project/contributing/ 301
+
+/docs/project/adrs /docs/v3/project/adrs/ 301
+/docs/project/adrs/ /docs/v3/project/adrs/ 301
+
+/docs/project/changelog /docs/v3/project/changelog/ 301
+/docs/project/changelog/ /docs/v3/project/changelog/ 301
+
+/docs/project/removing-mcpose /docs/v3/project/removing-mcpose/ 301
+/docs/project/removing-mcpose/ /docs/v3/project/removing-mcpose/ 301

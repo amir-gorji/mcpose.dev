@@ -1,0 +1,39 @@
+---
+title: "@mcpose/otel"
+description: OpenTelemetry span adapter for the mcpose onTelemetry hook.
+topicId: packages-otel
+---
+
+# @mcpose/otel
+
+The `@mcpose/otel` package bridges the `onTelemetry` hook in mcpose with OpenTelemetry tracers.
+It creates structured spans for every tool call with timing, outcome status, and caller identity.
+
+## Installation
+
+```bash
+npm install @mcpose/otel
+```
+
+Peer requirement: `mcpose >= 3.0.0 < 4`.
+
+## Features
+
+- Automatic span creation per tool call.
+- Semantic attributes for tool name, duration, session ID, and identity subject.
+- Standard OpenTelemetry exporter compatibility (Jaeger, Prometheus, OTLP collectors).
+
+## Example
+
+```ts
+import { startProxy } from 'mcpose';
+import { createOtelHook } from '@mcpose/otel';
+import { trace } from '@opentelemetry/api';
+
+const tracer = trace.getTracer('mcpose-tracer');
+
+await startProxy(upstream, {
+  name: 'monitored-proxy',
+  onTelemetry: createOtelHook(tracer),
+});
+```

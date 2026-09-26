@@ -1,64 +1,30 @@
-type LogoProps = {
-  size?: 'nav' | 'footer';
+import type { SVGProps } from 'react';
+
+type LogoProps = SVGProps<SVGSVGElement> & {
+  size?: 'nav' | 'footer' | number;
 };
 
-const Logo = ({ size = 'nav' }: LogoProps) =>
-  size === 'nav' ? (
-    <div
+const Logo = ({ size = 'nav', className, ...props }: LogoProps) => {
+  const dimension = typeof size === 'number' ? size : size === 'nav' ? 24 : 20;
+
+  return (
+    <svg
+      width={dimension}
+      height={dimension}
+      viewBox="0 0 30 30"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
-      style={{
-        width: 20,
-        height: 20,
-        border: '1.5px solid var(--color-neutral-700)',
-        borderRadius: 5,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
+      className={className}
+      style={{ display: 'inline-block', flexShrink: 0, color: 'var(--color-accent)' }}
+      {...props}
     >
-      <div
-        style={{
-          width: 11,
-          height: 11,
-          border: '1.5px solid var(--color-accent)',
-          borderRadius: 3,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <div
-          style={{
-            width: 3,
-            height: 3,
-            background: 'var(--color-accent)',
-            borderRadius: 1,
-          }}
-        />
-      </div>
-    </div>
-  ) : (
-    <div
-      aria-hidden="true"
-      style={{
-        width: 16,
-        height: 16,
-        border: '1.5px solid var(--color-neutral-700)',
-        borderRadius: 4,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <div
-        style={{
-          width: 8,
-          height: 8,
-          border: '1.5px solid var(--color-accent)',
-          borderRadius: 2,
-        }}
+      <path
+        d="M2.8125 6.5625H10.3125L15 15L10.3125 23.4375H2.8125L7.5 15L2.8125 6.5625ZM19.6875 6.5625H27.1875L22.5 15L27.1875 23.4375H19.6875L15 15L19.6875 6.5625Z"
+        fill="currentColor"
       />
-    </div>
+    </svg>
   );
+};
 
 export default Logo;

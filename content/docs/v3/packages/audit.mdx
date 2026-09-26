@@ -1,0 +1,83 @@
+---
+title: "@mcpose/audit"
+description: "Tamper-evident HMAC audit chain, Merkle proofs, and signed session manifests for mcpose v3."
+topicId: packages-audit
+---
+
+# @mcpose/audit
+
+`@mcpose/audit` turns every tool call flowing through an mcpose proxy into a tamper-evident audit event: HMAC-chained to its predecessor, hashed, and, for high-sensitivity calls, encrypted at rest.
+When an HTTP session closes, it emits a signed replay manifest with a Merkle root and per-event proofs, allowing third parties to verify individual events without accessing the entire log.
+
+## Installation
+
+```bash
+npm install @mcpose/audit mcpose
+```
+
+`mcpose` (>= 3.0.0) is a peer dependency.
+Requires Node.js 20+ (uses `node:crypto`).
+
+## Audit Format v2
+
+Version 3.0.0 writes the v2 audit format (`mcpose/v2/*` domain labels).
+Chains and manifests written by 2.x do not verify under 3.x.
+Keep a pinned 2.x verifier for verifying old archives.
+See [ADR-0004](/docs/v3/project/adrs/) for the rationale.
+
+Key v2 format guarantees:
+
+- Deterministic canonical preimages via `canonicalJson`.
+- Signatures covering the full `ReplayManifest` document, not merely the root.
+- Domain-separated Merkle leaf and node hashes (`mcpose/v2/leaf`, `mcpose/v2/node`).
+- Per-event ciphertext keys bound to session and position with AES-GCM AAD.
+
+## Usage
+
+```ts
+import {
+  createAuditMiddleware,
+  createDefaultSigningKeyProvider,
+  createSensitivityResolver,
+} from '@mcpose/audit';
+import { startHttpProxy } from 'mcpose';
+
+const signingKey = createDefaultSigningKeyProvider(process.env.AUDIT_SECRET!);
+
+const sensitivityResolver = createSensitivityResolver({
+  get_balance: 'low',
+  search_trades: 'medium',
+  execute_transfer: 'high',
+});
+
+const audit = createAuditMiddleware({
+  signingKey,
+  sensitivityResolver,
+  onEvent: async (event) => {
+    await auditLog.append(event);
+  },
+  onManifest: async (manifest) => {
+    await manifestStore.save(manifest);
+  },
+});
+
+const proxy = await startHttpProxy(backend, {
+  name: 'audit-gateway',
+  toolMiddleware: [audit.middleware],
+  onSessionClosed: async (sessionId) => {
+    await audit.closeSession(sessionId);
+  },
+});
+```
+
+## Offline Verification
+
+`@mcpose/audit` exports both keyed authenticity verifiers and keyless structural assertions:
+
+```ts
+import { verifyAuditChain, verifyManifestSignature } from '@mcpose/audit';
+
+// Keyed verifiers prove authenticity against the known signing key:
+const isChainAuthentic = await verifyAuditChain(events, signingKey);
+const isManifestAuthentic = await verifyManifestSignature(manifest, signingKey);
+```

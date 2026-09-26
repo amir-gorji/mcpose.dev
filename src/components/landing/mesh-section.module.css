@@ -1,0 +1,115 @@
+.section {
+  max-width: 1248px;
+  margin: 0 auto;
+  padding: 80px 0;
+}
+
+.card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+  padding: 48px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.copyCol {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.heading {
+  font-size: 36px;
+  line-height: 42px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.subheading {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--color-accent);
+  margin: 0;
+}
+
+.description {
+  font-size: 16px;
+  line-height: 26px;
+  color: var(--color-muted);
+  margin: 0;
+}
+
+.actionRow {
+  margin-top: 8px;
+}
+
+.tableCol {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.meshRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.toolName {
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
+.arrow {
+  color: var(--color-muted);
+  padding: 0 8px;
+}
+
+.upstreamTarget {
+  color: var(--color-text);
+}
+
+@media (max-width: 1023px) {
+  .card {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 32px;
+  }
+
+  .heading {
+    font-size: 30px;
+    line-height: 36px;
+  }
+}
+
+@media (max-width: 767px) {
+  .section {
+    padding: 48px 0;
+  }
+
+  .card {
+    padding: 24px;
+  }
+
+  .meshRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 12px 16px;
+  }
+
+  .arrow {
+    display: none;
+  }
+}

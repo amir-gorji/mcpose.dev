@@ -1,0 +1,76 @@
+---
+title: "@mcpose/audit"
+description: "Tamper-evident HMAC audit chain and Merkle replay manifest for mcpose v2."
+topicId: packages-audit
+provenance:
+  tag: v2.1.1
+  path: packages/audit/README.md
+---
+
+# @mcpose/audit (v2)
+
+`@mcpose/audit` turns every tool call flowing through an mcpose proxy into a tamper-evident audit event: HMAC-chained to its predecessor, hashed, and, for high-sensitivity calls, encrypted at rest.
+When an HTTP session closes, it emits a signed replay manifest with a Merkle root and per-event proofs, allowing third parties to verify individual events without accessing the entire log.
+
+## Installation
+
+```bash
+npm install @mcpose/audit@2.0.3 mcpose@2.1.1
+```
+
+`mcpose` is a peer dependency.
+Requires Node.js 20+ (uses `node:crypto`).
+
+## Audit Format v1
+
+Version 2.x of `@mcpose/audit` generates audit events in format v1.
+In format v1, events carry a single timestamp property, and the event structure does not declare a `formatVersion` field.
+Chains use HMAC-SHA256 derived keys (`mcpose/v1/chain`) and high-tier AES-GCM encryption (`mcpose/v1/enc`).
+If you need to verify archives generated under v2, use the verifier utilities from `@mcpose/audit` 2.x.
+
+## Usage
+
+```ts
+import {
+  createAuditMiddleware,
+  createDefaultSigningKeyProvider,
+  createSensitivityResolver,
+} from '@mcpose/audit';
+import { startHttpProxy } from 'mcpose';
+
+const signingKey = createDefaultSigningKeyProvider(process.env.AUDIT_SECRET!);
+
+const sensitivityResolver = createSensitivityResolver({
+  get_balance: 'low',
+  search_trades: 'medium',
+  execute_transfer: 'high',
+});
+
+const audit = createAuditMiddleware({
+  signingKey,
+  sensitivityResolver,
+  onEvent: async (event) => {
+    await auditLog.append(event);
+  },
+  onManifest: async (manifest) => {
+    await manifestStore.save(manifest);
+  },
+});
+
+const proxy = await startHttpProxy(backend, {
+  toolMiddleware: [audit.middleware],
+  onSessionClosed: async (sessionId) => {
+    await audit.closeSession(sessionId);
+  },
+});
+```
+
+## Merkle Proof Verification
+
+In format v1, `verifyMerkleProof` verifies that an individual `AuditEvent` leaf belongs to the signed manifest root:
+
+```ts
+import { verifyMerkleProof } from '@mcpose/audit';
+
+const isValid = verifyMerkleProof(event.chainHash, proof, manifest.merkleRoot);
+```

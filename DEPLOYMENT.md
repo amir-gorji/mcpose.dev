@@ -38,6 +38,29 @@ Next.js copies `public/` into `out/`, which is where Cloudflare looks for the fi
 Only content-hashed paths (`/_next/static/*`, `/pagefind/index/*`, `/pagefind/fragment/*`) are cached immutably.
 `pagefind-entry.json` is deliberately excluded from that list: it is the stable manifest pointing at the hashed index, so caching it forever would strand search on a stale index after a content change.
 
+## Documentation Versioning and Routing
+
+mcpose.dev serves versioned documentation under canonical roots: `/docs/v3/` for current documentation and `/docs/v2/` for legacy documentation.
+The root `/docs/` and unversioned paths redirect permanently via `public/_redirects` to their `/docs/v3/` counterparts.
+Both documentation versions are statically exported into `out/docs/v3/` and `out/docs/v2/`.
+Topics exclusive to v3 return an explanatory fallback landing page under `/docs/v2/unavailable/[topicId]/` with a 200 status when reached from a v2 context.
+Internal documentation links are always fully resolved to their canonical versioned path.
+
+## Redirects
+
+Cloudflare Pages and Workers static assets interpret `public/_redirects` directly.
+Next.js copies `public/_redirects` directly into `out/_redirects` during static generation.
+Legacy unversioned documentation routes (such as `/docs/concepts/proxy-model/`) issue permanent 301 redirects to the canonical v3 path (`/docs/v3/concepts/proxy-model/`).
+The root path `/docs` and `/docs/` redirect to `/docs/v3/`.
+
+## Branch Strategy and Release Workflow
+
+Production deployment is triggered exclusively by commits merged into the `main` branch.
+Active development and staging integration for upcoming releases (such as v3) must be merged to the `staging` branch.
+Do not merge pre-release branches directly into `main` because merges to `main` immediately deploy to the live `mcpose.dev` domain.
+Pull requests targeting `staging` run full automated static validation (`pnpm test`), linting, and Playwright end-to-end tests across Chromium and Mobile Chromium.
+When v3 is officially released, merge `staging` into `main` to trigger the production deployment workflow.
+
 ## SEO and Web Vitals gate
 
 `.github/workflows/lighthouse.yml` is a reusable workflow, called once against the PR preview and once against production.

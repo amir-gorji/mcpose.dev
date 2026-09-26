@@ -1,0 +1,9 @@
+{
+  "title": "Recipes",
+  "pages": [
+    "transform-responses",
+    "pii-redaction-audit",
+    "list-tools-rewriting",
+    "oauth-upstream"
+  ]
+}

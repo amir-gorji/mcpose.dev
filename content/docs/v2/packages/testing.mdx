@@ -1,0 +1,50 @@
+---
+title: "@mcpose/testing"
+description: "Compliance testing assertions for mcpose v2 audit chains."
+topicId: packages-testing
+provenance:
+  tag: v2.1.1
+  path: packages/testing/README.md
+---
+
+# @mcpose/testing (v2)
+
+The `@mcpose/testing` package provides compliance assertion helpers for audit chains produced by `@mcpose/audit` 2.x.
+
+> [!NOTE]
+> Distinguish `@mcpose/testing` from `mcpose/testing`.
+> The `mcpose/testing` export in core provides test utilities for proxy transports.
+> `@mcpose/testing` provides audit-chain validation helpers.
+
+## Installation
+
+```bash
+npm install --save-dev @mcpose/testing@2.0.3
+```
+
+Peers: `mcpose@2.1.1`, `@mcpose/audit@2.0.3`.
+
+## Available Assertions in v2
+
+- `assertAuditChainIntegrity(events)`: Verifies sequential `replayManifestPosition` and that no duplicate `chainHash` values exist.
+- `assertReplayManifestValid(events, manifest)`: Checks event count and validates Merkle proofs against the manifest root.
+- `assertPiiRedacted(event, patterns)`: Asserts regex patterns do not match plaintext fields; skips encrypted high-tier payloads.
+- `assertDelegationHonored(chain)`: Asserts the delegation chain is non-empty and every entry has a `sub`.
+
+## Example
+
+```ts
+import { test } from 'vitest';
+import {
+  assertAuditChainIntegrity,
+  assertReplayManifestValid,
+} from '@mcpose/testing';
+
+test('verifies v2 audit chain consistency', async () => {
+  const events = await getLoggedEvents();
+  const manifest = await getSessionManifest();
+
+  assertAuditChainIntegrity(events);
+  assertReplayManifestValid(events, manifest);
+});
+```

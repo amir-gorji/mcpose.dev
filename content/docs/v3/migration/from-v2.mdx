@@ -1,0 +1,100 @@
+---
+title: Migration from v2 to v3
+description: Upgrade guide and breaking changes when migrating from mcpose v2 to v3.
+topicId: migration-from-v2
+---
+
+# Migration from v2 to v3
+
+mcpose v3 introduces multi-server mesh composition, dedicated packages for policy, consent, and telemetry, and audit format v2 with canonical JSON and signed manifests.
+This guide details breaking changes and required upgrades.
+
+## Package Structure
+
+In v2, middleware and audit were provided by `mcpose`, `@mcpose/audit`, and `@mcpose/testing`.
+In v3, capability packages are split into focused modules:
+
+- `mcpose@3.0.0`: Core proxy, stdio and HTTP transports, and middleware runtime.
+- `@mcpose/policy@1.0.0`: Deny-by-default role rules, sensitivity tiers, and call budgets.
+- `@mcpose/consent@1.0.0`: Host-resolved GDPR and CCPA consent gate.
+- `@mcpose/audit@3.0.0`: Tamper-evident HMAC chains, Merkle proofs, and signed session manifests (Audit format v2).
+- `@mcpose/testing@3.0.0`: Strict compliance and integrity assertions.
+- `@mcpose/otel@0.1.0`: OpenTelemetry span adapter for `onTelemetry`.
+- `@mcpose/store-redis@0.1.0`: Redis-backed event store and session registry for multi-instance restarts.
+- `@mcpose/store-postgres@0.1.0`: Postgres-backed event store and session registry.
+
+## Installation Upgrade
+
+Update package dependencies in your `package.json`:
+
+```bash
+npm install mcpose@^3.0.0 @modelcontextprotocol/sdk@^1.17.0
+```
+
+If you use audit and policy:
+
+```bash
+npm install @mcpose/audit@^3.0.0 @mcpose/policy@^1.0.0
+```
+
+## Required Proxy Name
+
+In v3, `ProxyOptions` requires an explicit, nonblank `name` property.
+This identifier identifies your proxy in client handshakes and audit manifests:
+
+```ts
+await startProxy(backend, {
+  name: 'production-proxy',
+  version: '1.0.0',
+  toolMiddleware: [withLogging],
+});
+```
+
+## Middleware Execution Order
+
+`ProxyOptions.toolMiddleware` remains in response-processing order.
+The final entry in the array is outermost on incoming requests and executes its response hook last:
+
+```ts
+// Incoming request: audit -> redact -> upstream
+// Outgoing response: upstream -> redact -> audit
+toolMiddleware: [redact, audit.middleware]
+```
+
+## Audit Format v2
+
+`@mcpose/audit` 3.0 writes audit format v2 (ADR-0004).
+Key format changes:
+
+- Canonical preimages generated via deterministic JSON serialization.
+- Signatures cover the complete `ReplayManifest` document, not merely the Merkle root.
+- Domain-separated Merkle leaf and node hashes (`mcpose/v2/leaf`, `mcpose/v2/node`).
+- Per-event ciphertext keys bound to session and sequence position with AES-GCM AAD.
+
+> [!IMPORTANT]
+> Audit format v1 archives cannot be verified by `@mcpose/audit@3.0.0`.
+> Maintain a pinned `@mcpose/audit@2.x` verifier to validate historical format v1 session logs.
+
+## Lifecycle and Shutdown
+
+In v3, `HttpProxyOptions.onSessionClosed` may return a Promise.
+The proxy awaits `onSessionClosed` on every session termination path:
+
+```ts
+const proxy = await startHttpProxy(backend, {
+  name: 'gateway',
+  port: 8080,
+  onSessionClosed: async (sessionId) => {
+    await audit.closeSession(sessionId);
+  },
+});
+```
+
+Calling `proxy.close()` holds the server open until all pending session hooks settle.
+This prevents lost audit manifests during container shutdowns.
+
+## SSE Reconnect Isolation
+
+SSE reconnect replay in v3 is strictly scoped per session ID (library issue #154).
+Stream IDs reach the store prefixed with `<sessionId>:<streamId>`.
+Replay requests providing a `Last-Event-ID` from another session are rejected with HTTP 400.

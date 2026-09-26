@@ -1,18 +1,16 @@
 import type { ThemeRegistration } from 'shiki';
 
-/* The nocturne code palette, mapped from the mock's hand-tinted spans:
-   base neutral-200, comments neutral-600, keywords accent-400, function
-   names + JSON keys accent-200, strings accent-2-500, types accent-300.
-   Deliberately minimal: anything unmatched falls to the base foreground,
-   exactly like the mock. */
+/* mcpose v3 code palette matching D01 foundations:
+   code-bg: #14241D, code-text: #E4EFDF, code-muted: #A7BBA9
+   Accents: #9FB9FF, #C3D7FF, #A7D4B6 */
 const palette = {
-  surface: '#232532', // --color-surface
-  base: '#e4e7f5', // --color-neutral-200
-  comment: '#8a8ea2', // --text-muted (neutral-600 failed AA at 12.5px on the code surface)
-  keyword: '#b5abfc', // --color-accent-400
-  fn: '#e7e5fe', // --color-accent-200
-  string: '#9690c9', // --color-accent-2-500
-  type: '#d2cefd', // --color-accent-300
+  surface: '#14241D',
+  base: '#E4EFDF',
+  comment: '#A7BBA9',
+  keyword: '#9FB9FF',
+  fn: '#C3D7FF',
+  string: '#A7D4B6',
+  type: '#C3D7FF',
 } as const;
 
 export const nocturneTheme: ThemeRegistration = {
@@ -55,7 +53,6 @@ export const nocturneTheme: ThemeRegistration = {
       scope: ['string', 'punctuation.definition.string'],
       settings: { foreground: palette.string },
     },
-    /* The mock renders template literals entirely untinted (base). */
     {
       scope: [
         'string.template',
@@ -69,7 +66,6 @@ export const nocturneTheme: ThemeRegistration = {
       scope: ['entity.name.type', 'support.type'],
       settings: { foreground: palette.type },
     },
-    /* JSON keys read as accent-200 (function tint); values stay strings. */
     {
       scope: ['support.type.property-name.json'],
       settings: { foreground: palette.fn },

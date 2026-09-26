@@ -1,24 +1,40 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useCallback, useEffect, useRef, useState } from 'react';
-
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import styles from './search-trigger.module.css';
 
 // Loaded on first open, so no dialog/pagefind JS ships until the user shows intent.
 const SearchDialog = dynamic(() => import('./search-dialog'), { ssr: false });
 
-const SearchTrigger = () => {
+const emptySubscribe = () => () => {};
+const getIsMacSnapshot = () =>
+  typeof navigator !== 'undefined' && /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform || '');
+const getServerSnapshot = () => true;
+
+export default function SearchTrigger() {
   const [open, setOpen] = useState(false);
+  const isMac = useSyncExternalStore(emptySubscribe, getIsMacSnapshot, getServerSnapshot);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'k' && (event.metaKey || event.ctrlKey)) {
+        const target = event.target as HTMLElement | null;
+        if (
+          target &&
+          (target.tagName === 'INPUT' ||
+            target.tagName === 'TEXTAREA' ||
+            target.tagName === 'SELECT' ||
+            target.isContentEditable)
+        ) {
+          return;
+        }
         event.preventDefault();
         setOpen(true);
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
@@ -52,11 +68,9 @@ const SearchTrigger = () => {
           <path d="M10.2 10.2 14 14" strokeLinecap="round" />
         </svg>
         <span className={styles.label}>Search docs…</span>
-        <span className={styles.keycap}>⌘K</span>
+        <span className={styles.keycap}>{isMac ? '⌘K' : 'Ctrl K'}</span>
       </button>
       {open ? <SearchDialog onClose={handleClose} /> : null}
     </>
   );
-};
-
-export default SearchTrigger;
+}

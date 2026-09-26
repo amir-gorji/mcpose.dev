@@ -1,0 +1,44 @@
+---
+title: "@mcpose/consent"
+description: Fail-closed GDPR/CCPA consent gate middleware for mcpose with host-resolved consent.
+topicId: packages-consent
+---
+
+# @mcpose/consent
+
+The `@mcpose/consent` package enforces user consent before tools processing personal data execute.
+It uses a fail-closed architecture, blocking requests when consent cannot be confirmed.
+
+## Installation
+
+```bash
+npm install @mcpose/consent
+```
+
+Peer requirement: `mcpose >= 3.0.0 < 4`.
+
+## Features
+
+- Host-resolved consent evaluation per session and purpose.
+- Structured rejections (`CONSENT_MISSING`) when required approvals are absent.
+- Full compatibility with `@mcpose/audit` to record consent evaluations.
+
+## Example
+
+```ts
+import { startProxy } from 'mcpose';
+import { createConsentMiddleware } from '@mcpose/consent';
+
+const consent = createConsentMiddleware({
+  resolveConsent: async (ctx, toolName) => {
+    // Check user consent preferences stored in your application database
+    const granted = await checkUserConsent(ctx.identity?.sub, toolName);
+    return granted;
+  },
+});
+
+await startProxy(upstream, {
+  name: 'consent-proxy',
+  toolMiddleware: [consent],
+});
+```

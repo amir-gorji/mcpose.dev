@@ -1,8 +1,7 @@
 import Hero from '@/components/landing/hero';
-import Diptych from '@/components/landing/diptych';
-import UseCases from '@/components/landing/use-cases';
-import ConceptDiagram from '@/components/landing/concept-diagram';
-import AuditSection from '@/components/landing/audit-section';
+import Explorer from '@/components/explorer';
+import MeshSection from '@/components/landing/mesh-section';
+import Capabilities from '@/components/landing/capabilities';
 import PackagesTable from '@/components/landing/packages-table';
 import CtaCard from '@/components/landing/cta-card';
 import JsonLd, { type JsonLdObject } from '@/components/seo/json-ld';
@@ -30,38 +29,24 @@ const webSite: JsonLdObject = {
     '@type': 'SearchAction',
     target: {
       '@type': 'EntryPoint',
-      urlTemplate: `${SITE.url}/docs/?q={search_term_string}`,
+      urlTemplate: `${SITE.url}/docs/v3/?q={search_term_string}`,
     },
     'query-input': 'required name=search_term_string',
   },
 };
 
-const LandingPage = () => (
-  <main>
-    <JsonLd data={softwareSourceCode} />
-    <JsonLd data={webSite} />
-    <section aria-label="Hero" className={styles.heroSection}>
-      <Hero />
-    </section>
-    <section aria-label="Why mcpose" className={styles.section}>
-      <Diptych />
-    </section>
-    <section aria-label="Use cases" className={styles.section}>
-      <UseCases />
-    </section>
-    <section aria-label="Concept" className={styles.section}>
-      <ConceptDiagram />
-    </section>
-    <section aria-label="Audit" className={styles.section}>
-      <AuditSection />
-    </section>
-    <section aria-label="Packages" className={styles.section}>
-      <PackagesTable />
-    </section>
-    <section aria-label="Get started" className={styles.section}>
-      <CtaCard />
-    </section>
-  </main>
-);
+export default function LandingPage() {
+  return (
+    <main className={styles.container}>
+      <JsonLd data={softwareSourceCode} />
+      <JsonLd data={webSite} />
 
-export default LandingPage;
+      <Hero />
+      <Explorer />
+      <MeshSection />
+      <Capabilities />
+      <PackagesTable />
+      <CtaCard />
+    </main>
+  );
+}
