@@ -4,14 +4,18 @@ import localFont from 'next/font/local';
 import { SITE } from '@/lib/site';
 import '@/styles/nocturne.css';
 
-// Same Geist variable fonts the `geist` package ships, declared locally so we
-// control `display`. With `swap`, the text repaints when the font arrives and
-// Chrome updates the LCP candidate — the single biggest LCP cost on every page
-// (LCP measured 2.1–3.0s, ~84% render delay). `optional` gives the font a
-// 100ms block period and then commits to the fallback for that page view, so
-// LCP lands at FCP. Repeat visits serve the font from cache instantly.
+// Same Geist variable fonts the `geist` package ships, latin-subset by
+// scripts/subset-fonts.mjs (68-70KB -> 34-38KB, run `pnpm fonts` after
+// bumping geist and commit), declared locally so we control `display`. With
+// `swap`, the text repaints when the font arrives and Chrome updates the LCP
+// candidate — the single biggest LCP cost on every page (LCP measured 2.1–3.0s,
+// ~84% render delay). `optional` gives the font a 100ms block period and then
+// commits to the fallback for that page view, so LCP lands at FCP. The halved
+// transfer pulls the font inside the 100ms block far more often on mobile, so
+// first-time visitors see the real font instead of the fallback. Repeat visits
+// serve the font from cache instantly.
 const GeistSans = localFont({
-  src: '../../node_modules/geist/dist/fonts/geist-sans/Geist-Variable.woff2',
+  src: '../fonts/Geist-Variable-latin.woff2',
   variable: '--font-geist-sans',
   display: 'optional',
   fallback: [
@@ -31,7 +35,7 @@ const GeistSans = localFont({
 });
 
 const GeistMono = localFont({
-  src: '../../node_modules/geist/dist/fonts/geist-mono/GeistMono-Variable.woff2',
+  src: '../fonts/GeistMono-Variable-latin.woff2',
   variable: '--font-geist-mono',
   display: 'optional',
   adjustFontFallback: false,

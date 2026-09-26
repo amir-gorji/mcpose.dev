@@ -11,6 +11,7 @@
     "test": "pnpm build && node --test \"tests/*.test.mjs\"",
     "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit",
+    "fonts": "node scripts/subset-fonts.mjs",
     "lint": "eslint .",
     "cf:deploy": "wrangler deploy",
     "cf:preview": "wrangler versions upload"
@@ -36,6 +37,7 @@
     "eslint": "^9.0.0",
     "eslint-config-next": "16.3.0",
     "pagefind": "1.5.2",
+    "subset-font": "^2.9.0",
     "typescript": "^5.7.0",
     "wrangler": "4.119.0"
   }
