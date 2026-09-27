@@ -78,7 +78,8 @@ Thresholds live in `.lighthouserc.json` and were calibrated against measured bas
 Preview deployments use `.lighthouserc.preview.json`, which relaxes only the SEO floor — Cloudflare adds `x-robots-tag: noindex` to preview URLs, so `is-crawlable` correctly fails there. Every other threshold is identical to production; a build test enforces this.
 They were recalibrated against **production** once the site went live, because the real Cloudflare edge is measurably slower than a local server — LCP rose by roughly 250ms across the board once real network latency was in play.
 
-Measured on `https://mcpose.dev` (mobile, 3 runs, median / worst run):
+Measured on `https://mcpose.dev` (mobile, 3 runs, median / worst run).
+**Stale**: this baseline predates the latin font-subsetting fix that halved the font payload specifically to pull LCP under 2500ms; treat it as historical calibration data for the thresholds below, not the current state, until production is re-measured:
 
 | Page | Perf | A11y | Best practices | SEO | LCP | CLS | TBT |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -95,10 +96,9 @@ An intermittently red gate gets ignored, which is worse than no gate at all.
 So performance is gated at 90 against a measured 96, `largest-contentful-paint` at 3500ms against a measured worst of 2792ms, and `first-contentful-paint` at 2200ms against a measured worst of 1689ms.
 Each still catches a genuine regression, because a real one moves these numbers far more than runner noise does.
 
-`largest-contentful-paint` therefore sits above Google's 2500ms "good" boundary, though still well inside the 4000ms "poor" line.
-**The landing page LCP is worth optimising** — at 2.79s it is currently outside "good" on mobile.
-The PR comment always prints the raw number against the 2500ms marker, so the gap stays visible on every run even though the gate tolerates it.
-Once the page is under 2500ms, tighten this assertion.
+`largest-contentful-paint` therefore sat above Google's 2500ms "good" boundary in this baseline, though still well inside the 4000ms "poor" line.
+The PR comment always prints the raw number against the 2500ms marker, so any gap stays visible on every run even though the gate tolerates it.
+Once a fresh production measurement confirms the page is under 2500ms, tighten this assertion.
 
 `color-contrast` is asserted as a warning rather than an error, kept as a defensive floor rather than tightened to an error.
 
