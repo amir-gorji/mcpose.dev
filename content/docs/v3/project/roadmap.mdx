@@ -1,0 +1,26 @@
+---
+title: "Roadmap"
+description: "What shipped in v3 and which boundaries remain."
+---
+
+## Shipped in v3 [#near-term]
+
+The v3 release is available now.
+It includes named meshes with tools, prompts, and resources; local tools; request/result metadata stripping; catalog sanitization; and dispatcher-aware hiding.
+Policy, consent, OpenTelemetry, Redis, and Postgres are released companion packages.
+Audit format v2 supports tool/prompt evidence, keyed verification, subject erasure, and awaited session sealing.
+HTTP sessions can resume through persistent session and event adapters.
+
+## Remaining boundaries [#long-term]
+
+- Full session re-execution is not SSE reconnect replay and is not implemented in v3.
+- Mesh resource templates and subscriptions remain unavailable.
+- Prompt catalog middleware, prompt hiding, and prompt pass-through options remain deferred.
+- Delegation is unsigned attribution; interoperable signed hops require a trust and key-distribution design.
+- Persistent adapters do not make policy counters or audit chains distributed.
+- Compliance reports and managed audit storage are outside the current library contract.
+
+There is no released `@mcpose/fintech-identity` package; the host resolves its own identity profile (ADR-0020).
+No additional audit label rotation ships merely because the core version is v3 (ADR-0019).
+These boundaries are not dated delivery promises.
+Track active work in the [library issues](https://github.com/amir-gorji/mcpose/issues) and [architecture records](/docs/v3/project/adrs/).

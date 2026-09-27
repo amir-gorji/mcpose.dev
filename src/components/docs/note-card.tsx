@@ -15,9 +15,7 @@ type NoteProps = {
 const Note = ({ kicker, title, body, children }: NoteProps) => (
   <div className={`card ${styles.note}`}>
     <div className="card-kicker">{kicker ?? title}</div>
-    <p className="card-body" style={{ opacity: 1, color: 'var(--color-neutral-400)' }}>
-      {body ?? children}
-    </p>
+    <p className="card-body">{body ?? children}</p>
   </div>
 );
 

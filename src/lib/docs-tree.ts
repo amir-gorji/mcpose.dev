@@ -1,10 +1,6 @@
 import type * as PageTree from 'fumadocs-core/page-tree';
 import type { ReactNode } from 'react';
 
-export const DOCS_ROOT_URL = '/docs/';
-
-/* Canonical URLs carry the trailing slash (next.config trailingSlash: true);
-   fumadocs page.url does not, so normalize at the boundary. */
 export const withTrailingSlash = (url: string): string => (url.endsWith('/') ? url : `${url}/`);
 
 export const nodeName = (name: ReactNode): string =>
@@ -32,20 +28,24 @@ const folderCrumb = (folder: PageTree.Folder): Crumb => {
   };
 };
 
-/* The visible breadcrumb and the JSON-LD BreadcrumbList both derive their
-   trail from here, so the two can never drift apart. */
 export const breadcrumbTrail = (
   tree: PageTree.Root,
   pageUrl: string,
   pageTitle: string,
+  version: 'v3' | 'v2' = 'v3',
 ): readonly Crumb[] => {
-  const current: Crumb = { name: pageTitle, url: withTrailingSlash(pageUrl) };
-  if (current.url === DOCS_ROOT_URL) return [current];
+  const normalizedUrl = withTrailingSlash(pageUrl);
+  const versionRootUrl = `/docs/${version}/`;
+  const current: Crumb = { name: pageTitle, url: normalizedUrl };
+
+  if (normalizedUrl === versionRootUrl) return [current];
+
   const folder = tree.children.find(
     (node): node is PageTree.Folder => node.type === 'folder' && containsUrl(node, pageUrl),
   );
+
   return [
-    { name: 'Docs', url: DOCS_ROOT_URL },
+    { name: `Docs (${version})`, url: versionRootUrl },
     ...(folder !== undefined ? [folderCrumb(folder)] : []),
     current,
   ];

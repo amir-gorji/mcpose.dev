@@ -38,6 +38,29 @@ Next.js copies `public/` into `out/`, which is where Cloudflare looks for the fi
 Only content-hashed paths (`/_next/static/*`, `/pagefind/index/*`, `/pagefind/fragment/*`) are cached immutably.
 `pagefind-entry.json` is deliberately excluded from that list: it is the stable manifest pointing at the hashed index, so caching it forever would strand search on a stale index after a content change.
 
+## Documentation Versioning and Routing
+
+mcpose.dev serves versioned documentation under canonical roots: `/docs/v3/` for current documentation and `/docs/v2/` for legacy documentation.
+The root `/docs/` and unversioned paths redirect permanently via `public/_redirects` to their `/docs/v3/` counterparts.
+Both documentation versions are statically exported into `out/docs/v3/` and `out/docs/v2/`.
+Topics exclusive to v3 return an explanatory fallback landing page under `/docs/v2/unavailable/[topicId]/` with a 200 status when reached from a v2 context.
+Internal documentation links are always fully resolved to their canonical versioned path.
+
+## Redirects
+
+Cloudflare Pages and Workers static assets interpret `public/_redirects` directly.
+Next.js copies `public/_redirects` directly into `out/_redirects` during static generation.
+Legacy unversioned documentation routes (such as `/docs/concepts/proxy-model/`) issue permanent 301 redirects to the canonical v3 path (`/docs/v3/concepts/proxy-model/`).
+The root path `/docs` and `/docs/` redirect to `/docs/v3/`.
+
+## Branch Strategy and Release Workflow
+
+Production deployment is triggered exclusively by commits merged into the `main` branch.
+Active development and staging integration for upcoming releases (such as v3) must be merged to the `staging` branch.
+Do not merge pre-release branches directly into `main` because merges to `main` immediately deploy to the live `mcpose.dev` domain.
+Pull requests targeting `staging` run full automated static validation (`pnpm test`), linting, and Playwright end-to-end tests across Chromium and Mobile Chromium.
+When v3 is officially released, merge `staging` into `main` to trigger the production deployment workflow.
+
 ## SEO and Web Vitals gate
 
 `.github/workflows/lighthouse.yml` is a reusable workflow, called once against the PR preview and once against production.
@@ -55,7 +78,8 @@ Thresholds live in `.lighthouserc.json` and were calibrated against measured bas
 Preview deployments use `.lighthouserc.preview.json`, which relaxes only the SEO floor — Cloudflare adds `x-robots-tag: noindex` to preview URLs, so `is-crawlable` correctly fails there. Every other threshold is identical to production; a build test enforces this.
 They were recalibrated against **production** once the site went live, because the real Cloudflare edge is measurably slower than a local server — LCP rose by roughly 250ms across the board once real network latency was in play.
 
-Measured on `https://mcpose.dev` (mobile, 3 runs, median / worst run):
+Measured on `https://mcpose.dev` (mobile, 3 runs, median / worst run).
+**Stale**: this baseline predates the latin font-subsetting fix that halved the font payload specifically to pull LCP under 2500ms; treat it as historical calibration data for the thresholds below, not the current state, until production is re-measured:
 
 | Page | Perf | A11y | Best practices | SEO | LCP | CLS | TBT |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -72,22 +96,15 @@ An intermittently red gate gets ignored, which is worse than no gate at all.
 So performance is gated at 90 against a measured 96, `largest-contentful-paint` at 3500ms against a measured worst of 2792ms, and `first-contentful-paint` at 2200ms against a measured worst of 1689ms.
 Each still catches a genuine regression, because a real one moves these numbers far more than runner noise does.
 
-`largest-contentful-paint` therefore sits above Google's 2500ms "good" boundary, though still well inside the 4000ms "poor" line.
-**The landing page LCP is worth optimising** — at 2.79s it is currently outside "good" on mobile.
-The PR comment always prints the raw number against the 2500ms marker, so the gap stays visible on every run even though the gate tolerates it.
-Once the page is under 2500ms, tighten this assertion.
+`largest-contentful-paint` therefore sat above Google's 2500ms "good" boundary in this baseline, though still well inside the 4000ms "poor" line.
+The PR comment always prints the raw number against the 2500ms marker, so any gap stays visible on every run even though the gate tolerates it.
+Once a fresh production measurement confirms the page is under 2500ms, tighten this assertion.
 
-`color-contrast` is asserted as a warning rather than an error.
-It currently fails on the docs index (`.card-body`).
-See "Known issues" below.
+`color-contrast` is asserted as a warning rather than an error, kept as a defensive floor rather than tightened to an error.
 
 ## Known issues
 
-Lighthouse reports insufficient colour contrast on one element:
-
-- `.card-body` on the docs index (inherits `--color-text` at `opacity: 0.8` on `--color-surface`).
-
-Three previous contrast failures were resolved when `--text-muted` replaced `--color-neutral-600` in small-text CSS classes and in the Shiki code theme. `color-contrast` is still asserted as a warning rather than an error because `.card-body` still trips it.
+None currently tracked. The last two contrast failures — `.card-body` inheriting `--color-text` at `opacity: 0.8`, and `--color-neutral-600` in small-text CSS classes and the Shiki code theme — were resolved by giving `.card-body` its own `--color-muted` color and replacing `--color-neutral-600` with `--text-muted`.
 
 ## Real-user metrics
 

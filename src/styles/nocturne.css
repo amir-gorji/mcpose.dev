@@ -1,120 +1,122 @@
-/* Nocturne — design-system tokens and component classes.
-   Ported verbatim from design_handoff/nocturne.css (source of truth), pruned
-   to the classes this site uses. Inter loads via next/font (--font-inter);
-   the deck-only --color-section* fills are dropped. */
+/* mcpose v3 design system tokens and component classes.
+   Exact semantic colors, typography, spacing, and interaction contracts
+   per D01-foundations.md and design-tokens.json. */
 
 :root {
-  --color-bg: #161826;
-  --color-surface: #232532;
-  --color-text: #e9e9ed;
-  --color-accent: #9184d9;
-  --color-accent-2: #a7a1db;
-  --color-divider: color-mix(in srgb, var(--color-text) 16%, transparent);
+  --color-bg: #F8F9F5;
+  --color-surface: #FFFFFF;
+  --color-text: #18231F;
+  --color-muted: #58665E;
+  --color-border: #D8DED7;
+  --color-accent: #2456E8;
+  --color-accent-hover: #1844C7;
+  --color-tint: #E9EFFF;
+  --color-on-accent: #FFFFFF;
+  --color-success: #28724F;
+  --color-code-bg: #14241D;
+  --color-code-text: #E4EFDF;
+  --color-code-muted: #A7BBA9;
+  --color-hero-plate: #2456E8;
+  --color-hero-plate-text: #FFFFFF;
 
-  /* Tonal ramps — generated in OKLCH on one shared lightness scale, so the
-     same step of any role matches the others in visual value. */
-  --color-neutral-100: #f3f5fe;
-  --color-neutral-200: #e4e7f5;
-  --color-neutral-300: #cfd3e5;
-  --color-neutral-400: #b2b6ca;
-  --color-neutral-500: #9397ab;
-  --color-neutral-600: #75798c;
-  --color-neutral-700: #595d6c;
-  --color-neutral-800: #3f424d;
-  --color-neutral-900: #292b31;
-
-  --color-accent-100: #f5f4ff;
-  --color-accent-200: #e7e5fe;
-  --color-accent-300: #d2cefd;
-  --color-accent-400: #b5abfc;
-  --color-accent-500: #968ae0;
-  --color-accent-600: #796cbf;
-  --color-accent-700: #5d5294;
-  --color-accent-800: #423a6a;
-  --color-accent-900: #2b2741;
-
-  --color-accent-2-100: #f5f4ff;
-  --color-accent-2-200: #e7e5fe;
-  --color-accent-2-300: #d2cefd;
-  --color-accent-2-400: #b5afe8;
-  --color-accent-2-500: #9690c9;
-  --color-accent-2-600: #7972a9;
-  --color-accent-2-700: #5c5783;
-  --color-accent-2-800: #423e5d;
-  --color-accent-2-900: #2b293a;
-
-  /* Text roles are contrast-solved, not lightness-stepped, so they sit off the
-     ramp on purpose. --color-neutral-600 was being used as small text in eight
-     modules and as the Shiki comment colour; it measures 4.083:1 on --color-bg
-     and 3.524:1 on --color-surface, both under the 4.5:1 WCAG AA needs for
-     normal text, and nothing on this site is large enough to qualify for the
-     3:1 allowance. Moving the ramp step itself would break the shared
-     lightness scale the three ramps are generated on, so the fix is a layer
-     above it. --text-muted is the lowest value that clears 4.5:1 on the darker
-     of the two grounds: 5.426:1 on bg, 4.682:1 on surface. */
+  /* Aliases for backwards compatibility */
   --text-primary: var(--color-text);
-  --text-secondary: var(--color-neutral-400);
-  --text-tertiary: var(--color-neutral-500);
-  --text-muted: #8a8ea2;
+  --text-secondary: var(--color-muted);
+  --text-tertiary: var(--color-muted);
+  --text-muted: var(--color-muted);
+  --border-control: var(--color-border);
+  --color-divider: var(--color-border);
 
-  /* Component boundaries need 3:1 under WCAG 1.4.11. --color-divider composites
-     to 1.561:1, which is right for a hairline rule between blocks but not for
-     the edge of a control you are meant to find. */
-  --border-control: color-mix(in srgb, var(--color-text) 30%, transparent);
-
-  /* --font-heading is deliberately an alias of --font-body today: the design
-     takes its typographic contrast from weight and from the mono face, not
-     from a second sans. The seam is kept so a display face can be introduced
-     in one place; --font-heading-weight is the part actually carrying signal. */
-  --font-heading: var(--font-inter), "Inter", system-ui, sans-serif;
+  /* Fonts */
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  --font-body: var(--font-sans);
+  --font-heading: var(--font-sans);
   --font-heading-weight: 500;
-  --font-body: var(--font-inter), "Inter", system-ui, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
-  --space-1: 2.8px;
-  --space-2: 5.6px;
-  --space-3: 8.4px;
-  --space-4: 11.2px;
-  --space-6: 16.8px;
-  --space-8: 22.4px;
+  /* Spacing Scale (px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 80px;
+  --space-10: 96px;
 
+  /* Radii Scale (px) */
   --radius-sm: 4px;
   --radius-md: 8px;
-  --radius-lg: 14px;
+  --radius-lg: 16px;
 
-  /* Elevation — hairline edge + ambient darkness on the dark ground. The edge
-     colours are ramp steps 800/700/500; spelling them as literals meant a
-     palette change would silently leave the elevation edges behind. */
-  --shadow-sm: 0 0 0 1px var(--color-neutral-800);
-  --shadow-md: 0 0 0 1px var(--color-neutral-700), 0 6px 18px rgb(0 0 0 / 0.55);
-  --shadow-lg: 0 0 0 1px var(--color-neutral-500), 0 16px 40px rgb(0 0 0 / 0.65);
-  /* The accent ring, previously retyped inline in two modules. */
-  --shadow-accent: 0 0 0 1px var(--color-accent-700);
+  /* Elevations */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.16);
 
-  /* Motion. The policy, in one sentence: motion on this site responds to a
-     user action and then stops. Nothing idle, nothing infinite, nothing that
-     plays without input. Durations are always these tokens, never literals,
-     so the reduce block below is the only place that has to know about them.
-     Both overlays unmount synchronously on close, so entrances animate and
-     exits do not; giving them exit transitions means restructuring the mount
-     contract, which is not worth it for 140ms. */
-  --motion-fast: 90ms;
-  --motion-base: 140ms;
-  --motion-ease: cubic-bezier(0.2, 0, 0, 1);
+  /* Easing & Durations */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-hover: 150ms;
+
+  /* Aliases for transition shorthands used across component modules */
+  --duration-fast: var(--duration-hover);
+  --ease-default: var(--ease-standard);
+  --motion-fast: var(--duration-hover);
+  --motion-base: var(--duration-hover);
+  --motion-ease: var(--ease-standard);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  :root {
-    --motion-fast: 0.01ms;
-    --motion-base: 0.01ms;
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg: #101814;
+    --color-surface: #18231E;
+    --color-text: #EAF0E8;
+    --color-muted: #A7B6AA;
+    --color-border: #34473A;
+    --color-accent: #9FB9FF;
+    --color-accent-hover: #9FB9FF;
+    --color-tint: #26385B;
+    --color-on-accent: #101814;
+    --color-success: #A7B6AA;
+    --color-code-bg: #14241D;
+    --color-code-text: #E4EFDF;
+    --color-code-muted: #A7BBA9;
   }
-  *,
-  *::before,
-  *::after {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-  }
+}
+
+[data-theme="dark"] {
+  --color-bg: #101814;
+  --color-surface: #18231E;
+  --color-text: #EAF0E8;
+  --color-muted: #A7B6AA;
+  --color-border: #34473A;
+  --color-accent: #9FB9FF;
+  --color-accent-hover: #9FB9FF;
+  --color-tint: #26385B;
+  --color-on-accent: #101814;
+  --color-success: #A7B6AA;
+  --color-code-bg: #14241D;
+  --color-code-text: #E4EFDF;
+  --color-code-muted: #A7BBA9;
+}
+
+[data-theme="light"] {
+  --color-bg: #F8F9F5;
+  --color-surface: #FFFFFF;
+  --color-text: #18231F;
+  --color-muted: #58665E;
+  --color-border: #D8DED7;
+  --color-accent: #2456E8;
+  --color-accent-hover: #1844C7;
+  --color-tint: #E9EFFF;
+  --color-on-accent: #FFFFFF;
+  --color-success: #28724F;
+  --color-code-bg: #14241D;
+  --color-code-text: #E4EFDF;
+  --color-code-muted: #A7BBA9;
 }
 
 *,
@@ -122,345 +124,317 @@
 *::after {
   box-sizing: border-box;
 }
+
+html {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.625;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
+}
+
 body {
   margin: 0;
-  background: var(--color-bg);
+  padding: 0;
+  background-color: var(--color-bg);
   color: var(--color-text);
-  font-family: var(--font-body);
-  font-size: 15px;
-  line-height: 1.55;
+  min-height: 100vh;
+  overflow-x: clip;
+}
+
+/* Typography styles */
+.displayDesktop {
+  font-size: 76px;
+  line-height: 78px;
+  font-weight: 500;
+  letter-spacing: -0.05em;
+}
+
+.displayMobile {
+  font-size: 44px;
+  line-height: 46px;
+  font-weight: 500;
+  letter-spacing: -0.05em;
+}
+
+h1, .h1 {
+  font-size: 48px;
+  line-height: 54px;
+  font-weight: 500;
+  margin: 0;
+  letter-spacing: 0;
+}
+
+h2, .h2 {
+  font-size: 32px;
+  line-height: 38px;
+  font-weight: 500;
+  margin: 0;
+  letter-spacing: 0;
+}
+
+h3, .h3 {
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 500;
+  margin: 0;
+  letter-spacing: 0;
+}
+
+.lead {
+  font-size: 20px;
+  line-height: 30px;
   font-weight: 400;
 }
-h1,
-h2,
-h3,
-h4 {
-  font-family: var(--font-heading);
-  font-weight: var(--font-heading-weight);
-  line-height: 1.12;
-  letter-spacing: -0.015em;
-  margin: 0 0 var(--space-2);
-}
-h1 {
-  font-size: 42px;
-}
-h2 {
-  font-size: 32px;
-}
-h3 {
-  font-size: 25px;
-}
-h4 {
-  font-size: 20px;
-}
-p {
-  margin: 0 0 var(--space-3);
-}
-a {
-  color: var(--color-accent);
-  text-underline-offset: 3px;
-  transition: color var(--motion-fast) var(--motion-ease);
-}
-a:hover {
-  color: var(--color-accent-300);
-}
-/* Only Inter 400/500 ship; keep <strong> from synthesizing a faux bold. */
-strong {
-  font-weight: 500;
-}
-:focus {
-  outline: none;
-}
-:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-}
-::selection {
-  background: color-mix(in srgb, var(--color-accent) 30%, transparent);
+
+.body, p {
+  font-size: 16px;
+  line-height: 26px;
+  font-weight: 400;
+  margin: 0;
 }
 
-/* — kickers — the uppercase accent eyebrows above sections (10.5px) and
-   feature items (10px). Margins are set at each usage site. */
-.kicker {
-  font-size: 10.5px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--color-accent);
-  font-weight: 500;
-}
-.kicker-sm {
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--color-accent);
-  font-weight: 500;
+.small {
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 400;
 }
 
-/* — rules — */
-/* Rules fade to transparent at both ends instead of stopping cleanly — a
-   Nocturne signature. The ramp is 48px an end. Freestanding rules fade; box
-   outlines, in-control separators, and short accent marks stay solid. */
-.hr {
+.labelMono {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 400;
+}
+
+.codeMono, code, pre {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 23px;
+  font-weight: 400;
+}
+
+/* Visually hidden but accessible to screen readers (aria-live status regions) */
+.sr-only {
+  position: absolute;
+  width: 1px;
   height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
   border: 0;
-  margin: var(--space-4) 0;
-  background: linear-gradient(
-    to right,
-    transparent,
-    var(--color-divider) 48px,
-    var(--color-divider) calc(100% - 48px),
-    transparent
-  );
 }
 
-/* — buttons — */
+/* Skip Link — stays inside the viewport and toggles opacity instead of
+   sliding in from off-screen, so its focus rect is always measurable
+   (Lighthouse's skip-link audit reads the bounding box, not the :focus paint). */
+.skipLink {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  z-index: 100;
+  padding: 12px 16px;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  text-decoration: none;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.skipLink:focus {
+  opacity: 1;
+  pointer-events: auto;
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+/* Buttons */
 .btn {
+  /* Keep this selector at a single class so the .btn-primary/.btn-secondary
+     variants below can override background/color without a specificity fight
+     (an `a.btn` form would outrank them and strip the accent fill). */
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  cursor: pointer;
-  text-decoration: none;
-  font-family: var(--font-heading);
-  font-weight: var(--font-heading-weight);
-  font-size: 14px;
-  line-height: 1.2;
-  color: var(--color-text);
-  background: transparent;
-  border: 1px solid transparent;
-  padding: var(--space-2) calc(var(--space-3) * 1.2);
+  min-height: 44px;
+  padding: 12px 16px;
   border-radius: var(--radius-md);
-  transition:
-    color var(--motion-fast) var(--motion-ease),
-    background-color var(--motion-fast) var(--motion-ease),
-    border-color var(--motion-fast) var(--motion-ease);
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  text-decoration: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  background: transparent;
+  transition: background-color var(--duration-hover) var(--ease-standard),
+              border-color var(--duration-hover) var(--ease-standard),
+              color var(--duration-hover) var(--ease-standard);
+  user-select: none;
+  white-space: nowrap;
 }
-.btn svg {
-  display: block;
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
 }
-.btn:disabled {
+
+.btn:disabled, .btn[aria-disabled="true"] {
   opacity: 0.45;
   cursor: not-allowed;
+  pointer-events: none;
 }
-.btn-primary {
-  color: var(--color-accent);
-  border-color: var(--color-accent);
+
+.btnPrimary, .btn-primary {
+  background-color: var(--color-accent);
+  color: var(--color-on-accent);
+  border-color: transparent;
 }
-.btn-primary:hover {
-  color: var(--color-accent);
-  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+
+.btnPrimary:hover, .btn-primary:hover {
+  background-color: var(--color-accent-hover);
 }
-.btn-primary:active {
-  background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+
+[data-theme="dark"] .btnPrimary:hover,
+[data-theme="dark"] .btn-primary:hover {
+  outline: 1px inset var(--color-text);
 }
-.btn-secondary {
-  border-color: var(--border-control);
-}
-.btn-secondary:hover {
+
+.btnSecondary, .btn-secondary {
+  background-color: var(--color-surface);
   color: var(--color-text);
-  background: color-mix(in srgb, var(--color-text) 7%, transparent);
-}
-.btn-secondary:active {
-  background: color-mix(in srgb, var(--color-text) 14%, transparent);
+  border-color: var(--color-border);
 }
 
-/* — forms (search field only) — */
-.input {
-  width: 100%;
-  min-height: 36px;
-  padding: 6px 10px;
-  font: inherit;
-  font-size: 14px;
+.btnSecondary:hover, .btn-secondary:hover {
+  background-color: var(--color-tint);
+  border-color: var(--color-border);
+}
+
+.btnGhost, .btn-ghost {
+  background-color: transparent;
   color: var(--color-text);
-  caret-color: var(--color-accent);
-  background: var(--color-surface);
-  border: 1px solid var(--border-control);
-  border-radius: var(--radius-md);
-  transition: border-color var(--motion-fast) var(--motion-ease);
-}
-.input:hover {
-  border-color: color-mix(in srgb, var(--color-text) 45%, transparent);
-}
-.input:focus-visible {
-  border-color: var(--color-accent);
-  outline-offset: 0;
+  border-color: transparent;
 }
 
-/* — cards — */
-.card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-}
-.card-kicker {
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--color-accent);
-}
-.card-body {
-  margin: 0;
-  font-size: 13px;
-  opacity: 0.8;
-  flex: 1;
-}
-.elev-sm {
-  box-shadow: var(--shadow-sm);
-}
-.elev-md {
-  box-shadow: var(--shadow-md);
-}
-.elev-lg {
-  box-shadow: var(--shadow-lg);
+.btnGhost:hover, .btn-ghost:hover {
+  background-color: var(--color-tint);
 }
 
-/* — tags — */
-.tag {
+/* Badges / Tags */
+.tag, .badge {
   display: inline-flex;
   align-items: center;
-  font-size: 11px;
-  letter-spacing: 0.02em;
-  padding: 3px 10px;
-  border-radius: calc(var(--radius-md) * 0.75);
-}
-.tag-accent {
-  background: var(--color-accent-800);
-  color: var(--color-accent-100);
-}
-.tag-accent-2 {
-  background: var(--color-accent-2-800);
-  color: var(--color-accent-2-100);
-}
-.tag-neutral {
-  background: var(--color-neutral-800);
-  color: var(--color-neutral-100);
-}
-
-/* — severity tiers —
-   These three encode whether a payload is stored in plaintext or encrypted, so
-   the reader has to be able to tell them apart. The previous encoding used
-   tag-neutral / tag-accent-2 / tag-accent, which are three fills at the *same*
-   OKLCH lightness (38.0 / 38.2 / 38.0) and, for the top two, the same hue to
-   within 0.1 degrees. The entire signal was a chroma difference of about 0.03
-   on an 11px chip: invisible at that size, invisible to a deuteranope, and
-   gone entirely in greyscale.
-
-   Nocturne is a single-hue palette by design, so a second hue is not available
-   as an axis. Lightness is. Measured on the rendered fills, the ladder now runs
-   L 26.8 (no fill, on surface) -> 38.0 -> 48.0, so consecutive tiers differ by
-   about 10, which is unambiguous at any size. Fill weight steps with it
-   (outline, then dim, then bright), so the ordering survives greyscale and CVD
-   as well. Label contrast on all three clears AA: 5.25, 8.33, 6.22. */
-.tag-tier-low {
-  background: transparent;
-  color: var(--text-tertiary);
-  box-shadow: inset 0 0 0 1px var(--color-neutral-700);
-}
-.tag-tier-medium {
-  background: var(--color-accent-800);
-  color: var(--color-accent-200);
-}
-.tag-tier-high {
-  background: var(--color-accent-700);
-  color: var(--color-accent-100);
-}
-.tag-outline {
-  border: 1px solid var(--color-accent);
+  padding: 2px 8px;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-tint);
   color: var(--color-accent);
+  border: 1px solid var(--color-border);
 }
 
-/* — tables — */
+.tagNeutral {
+  background-color: var(--color-surface);
+  color: var(--color-muted);
+  border-color: var(--color-border);
+}
+
+/* Cards — global surface card composed by CSS modules (docs link cards, the
+   article note callout). Modules own layout and interaction; this owns paint. */
+.card {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+}
+
+.card-kicker {
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: var(--space-2);
+}
+
+.card-body {
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--color-muted);
+}
+
+/* Tables — docs MDX tables (composed with docs-article's .docsTable). */
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
-}
-.table th {
-  text-align: left;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-text) 60%, transparent);
-  padding: var(--space-2);
-  border-bottom: 1px solid transparent; /* keeps layout; the row paints the fading rule */
-}
-.table td {
-  padding: var(--space-2);
-  border-bottom: 1px solid transparent;
-}
-/* Row rules as row-level strips so the end-fade spans the row, not each cell. */
-.table thead tr {
-  background: linear-gradient(
-      to right,
-      transparent,
-      var(--color-divider) 48px,
-      var(--color-divider) calc(100% - 48px),
-      transparent
-    )
-    no-repeat bottom / 100% 1px;
-}
-.table tbody tr {
-  background: linear-gradient(
-      to right,
-      transparent,
-      color-mix(in srgb, var(--color-text) 8%, transparent) 48px,
-      color-mix(in srgb, var(--color-text) 8%, transparent) calc(100% - 48px),
-      transparent
-    )
-    no-repeat bottom / 100% 1px;
-}
-.table tbody tr:hover {
-  /* the hover tint layers over the row rule, which keeps painting */
-  background:
-    linear-gradient(
-        color-mix(in srgb, var(--color-text) 4%, transparent),
-        color-mix(in srgb, var(--color-text) 4%, transparent)
-      )
-      no-repeat 0 0 / 100% 100%,
-    linear-gradient(
-        to right,
-        transparent,
-        color-mix(in srgb, var(--color-text) 8%, transparent) 48px,
-        color-mix(in srgb, var(--color-text) 8%, transparent) calc(100% - 48px),
-        transparent
-      )
-      no-repeat bottom / 100% 1px;
+  font-size: 13.5px;
 }
 
-/* — dialog (search) — */
-.dialog-backdrop {
-  position: fixed;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: var(--space-4);
-  background: color-mix(in srgb, var(--color-neutral-900) 50%, transparent);
+.table th,
+.table td {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
 }
-.dialog {
-  width: min(440px, 100%);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-4);
+
+.table th {
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+/* Elevations — utility classes referenced by CodeBlockFrame. */
+.elev-sm {
+  box-shadow: var(--shadow-sm);
+}
+
+.elev-md {
+  box-shadow: var(--shadow-md);
+}
+
+/* Code frame container */
+.codeFrame {
+  background-color: var(--color-code-bg);
+  color: var(--color-code-text);
   border-radius: var(--radius-lg);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-lg);
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  overflow-x: auto;
 }
-.dialog-title {
-  font-family: var(--font-heading);
-  font-weight: var(--font-heading-weight);
-  font-size: 20px;
+
+.codeFrame pre {
+  margin: 0;
+  padding: 0;
+  background: transparent;
 }
-.dialog-body {
-  font-size: 14px;
-  opacity: 0.85;
+
+/* Dividers */
+.hr {
+  height: 1px;
+  background-color: var(--color-border);
+  border: none;
+  margin: 0;
 }
-.dialog-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

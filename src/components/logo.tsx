@@ -1,64 +1,28 @@
-type LogoProps = {
-  size?: 'nav' | 'footer';
+import type { SVGProps } from 'react';
+
+type LogoProps = SVGProps<SVGSVGElement> & {
+  size?: 'nav' | 'footer' | number;
 };
 
-const Logo = ({ size = 'nav' }: LogoProps) =>
-  size === 'nav' ? (
-    <div
+const Logo = ({ size = 'nav', className, ...props }: LogoProps) => {
+  const dimension = typeof size === 'number' ? size : size === 'nav' ? 24 : 20;
+
+  return (
+    <svg
+      width={dimension}
+      height={dimension}
+      viewBox="0 0 32 32"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
-      style={{
-        width: 20,
-        height: 20,
-        border: '1.5px solid var(--color-neutral-700)',
-        borderRadius: 5,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
+      className={className}
+      style={{ display: 'inline-block', flexShrink: 0, color: 'var(--color-accent)' }}
+      {...props}
     >
-      <div
-        style={{
-          width: 11,
-          height: 11,
-          border: '1.5px solid var(--color-accent)',
-          borderRadius: 3,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <div
-          style={{
-            width: 3,
-            height: 3,
-            background: 'var(--color-accent)',
-            borderRadius: 1,
-          }}
-        />
-      </div>
-    </div>
-  ) : (
-    <div
-      aria-hidden="true"
-      style={{
-        width: 16,
-        height: 16,
-        border: '1.5px solid var(--color-neutral-700)',
-        borderRadius: 4,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <div
-        style={{
-          width: 8,
-          height: 8,
-          border: '1.5px solid var(--color-accent)',
-          borderRadius: 2,
-        }}
-      />
-    </div>
+      <path d="M4 12V8Q4 4 8 4H24Q28 4 28 8V24Q28 28 24 28H12 M20 10H12Q10 10 10 12V20Q10 22 12 22H20Q22 22 22 20V16" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="14" y="14" width="4" height="4" rx="1" fill="currentColor" />
+    </svg>
   );
+};
 
 export default Logo;

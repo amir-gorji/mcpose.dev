@@ -1,20 +1,24 @@
-.section {
-  max-width: 1160px;
+.container {
+  width: 100%;
+  max-width: 1248px;
   margin: 0 auto;
-  padding: calc(var(--space-8) * 4) var(--space-8) 0;
+  padding: 0 96px;
 }
 
-.heroSection {
-  composes: section;
-  padding-top: calc(var(--space-8) * 3.5);
-}
-
-@media (max-width: 768px) {
-  .section {
-    padding-top: calc(var(--space-8) * 2.5);
+@media (max-width: 1439px) {
+  .container {
+    padding: 0 48px;
   }
+}
 
-  .heroSection {
-    padding-top: calc(var(--space-8) * 2.5);
+@media (max-width: 1199px) {
+  .container {
+    padding: 0 32px;
+  }
+}
+
+@media (max-width: 767px) {
+  .container {
+    padding: 0 24px;
   }
 }

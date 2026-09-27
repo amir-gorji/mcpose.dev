@@ -1,0 +1,39 @@
+---
+title: "Changelog"
+description: "The v3 release and its compatibility boundaries."
+---
+
+## v3 release [#published]
+
+These docs describe the release tagged [`v3.0.0`](https://github.com/amir-gorji/mcpose/tree/v3.0.0), commit `72e42dc58774f671a27c8d5fc8fb8bbb7d5faa26`.
+All eight packages are published on npm.
+
+| Package | Version |
+| --- | --- |
+| `mcpose` | 3.0.0 |
+| `@mcpose/audit` | 3.0.0 |
+| `@mcpose/testing` | 3.0.0 |
+| `@mcpose/policy` | 1.0.0 |
+| `@mcpose/consent` | 1.0.0 |
+| `@mcpose/otel` | 0.1.0 |
+| `@mcpose/store-redis` | 0.1.0 |
+| `@mcpose/store-postgres` | 0.1.0 |
+
+## What changed
+
+V3 adds named meshes, including resource URIs; local tools; prompt middleware and audit; metadata stripping; catalog sanitization; and dispatcher-aware tool blocking.
+Proxy names are required and recorded as provenance.
+Delegation crosses the wire as validated, unsigned attribution.
+Policy, consent, telemetry, persistent sessions, and event replay are available through the companion packages.
+
+Audit 3.0 writes format v2, adds keyed verifiers and erasable subject keys, and drains pending events before signing the complete manifest.
+Session-close hooks are awaited, including shutdown; SSE replay is isolated per session.
+Testing assertions reject empty chains, recompute manifest roots, inspect encrypted structure, and validate delegation continuity on an event.
+
+See the [migration guide](/docs/v3/migration/from-v2/) for upgrade steps, the [package reference](/docs/v3/packages/mcpose/) for the API, and the [release changelog](https://github.com/amir-gorji/mcpose/blob/v3.0.0/CHANGELOG.md) for the original release notes.
+
+## Historical audit archives [#v1-to-v2]
+
+Format-v1 and format-v2 records do not verify interchangeably.
+Keep the verifier matching the format of each retained archive; do not treat an upgrade as an archive conversion.
+[Previous-version documentation](/docs/v2/project/changelog/) preserves the v2 context.

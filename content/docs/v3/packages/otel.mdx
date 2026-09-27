@@ -1,0 +1,36 @@
+---
+title: "@mcpose/otel"
+description: "Post-hoc OpenTelemetry spans from the proxy telemetry hook."
+---
+
+`@mcpose/otel@0.1.0` adapts `onTelemetry` to an OpenTelemetry tracer.
+Your application installs and configures the SDK, exporter, and sampler.
+
+## Install
+
+```bash
+npm install mcpose@^3 @modelcontextprotocol/sdk@^1.17.0 @mcpose/otel@0.1.0 @opentelemetry/api@^1
+```
+
+## Connect a tracer
+
+```ts title="telemetry.ts" check
+import { createBackendClient, startProxy } from 'mcpose';
+import { createOtelTelemetry } from '@mcpose/otel';
+import { trace } from '@opentelemetry/api';
+
+const upstream = await createBackendClient({ command: 'node', args: ['./server.mjs'] });
+await startProxy(upstream, {
+  name: 'monitored-proxy',
+  onTelemetry: createOtelTelemetry(trace.getTracer('mcpose-gateway')),
+});
+```
+
+## Span semantics
+
+One completed span is emitted per `TelemetryEvent`.
+A `tool_call` span is backdated using `duration_ms` and ended immediately; a `backend_degraded` span is a zero-duration marker.
+Spans are unparented and never enter the active context.
+Correlate through `mcpose.request.id`, `mcpose.session.id`, `mcpose.identity.sub`, and `mcpose.proxy.*` attributes rather than expecting a nested upstream trace.
+A throwing telemetry sink does not fail the proxied call.
+The adapter exports traces, not a metrics pipeline, and it does not automatically instrument prompt fetches.

@@ -11,7 +11,7 @@
   font: inherit;
   font-size: 12px;
   text-align: left;
-  color: var(--color-neutral-500);
+  color: var(--color-muted);
   min-width: 170px;
   cursor: pointer;
 }

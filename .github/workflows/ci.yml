@@ -49,6 +49,12 @@ jobs:
       - name: Build and test
         run: pnpm test
 
+      - name: Install browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Browser and accessibility tests
+        run: pnpm test:e2e
+
       - id: wrangler
         run: |
           version="$(node -p "require('./package.json').devDependencies.wrangler")"

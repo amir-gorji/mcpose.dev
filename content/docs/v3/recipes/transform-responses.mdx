@@ -1,0 +1,51 @@
+---
+title: "Transform Responses"
+description: "Transform tool content safely, including compatibility results and structured data."
+---
+
+Middleware can inspect the upstream response and return a new value.
+Check the compatibility result shape before spreading `content`.
+
+## Add source context
+
+```ts title="with-source.ts" check
+import { hasToolContent } from 'mcpose';
+import type { ToolMiddleware } from 'mcpose';
+
+export const withSource: ToolMiddleware = async (req, next) => {
+  const result = await next(req);
+  if (!hasToolContent(result)) return result;
+  return {
+    ...result,
+    content: [...result.content, { type: 'text', text: 'Source: internal docs' }],
+  };
+};
+```
+
+Configure a named proxy with `toolMiddleware: [withSource]`.
+The source annotation is a transformation, not a security filter.
+
+## Make every content decision explicit
+
+For sanitization, text is only one channel: tool results can also contain images, embedded resources, and structured JSON.
+`mapToolResult` requires a handler for every channel.
+This example redacts text and deliberately drops non-text blocks and structured content.
+
+```ts title="redact.ts" check
+import { mapToolResult } from 'mcpose';
+import type { ToolMiddleware } from 'mcpose';
+
+export const redact: ToolMiddleware = async (req, next) =>
+  mapToolResult(await next(req), {
+    onText: block => ({ ...block, text: block.text.replace(/demo@example\.test/g, '[REDACTED]') }),
+    onOther: () => null,
+    onStructured: () => undefined,
+  });
+```
+
+Legacy `{ toolResult }` compatibility responses and unknown extra fields pass through unchanged.
+Decide separately whether to reject or sanitize those shapes at your boundary.
+The demonstration pattern is not a general PII detector.
+Define your own data classification and transformation rules, and verify their behavior with representative payloads.
+To audit transformed responses, place audit outside the transformer: `[redact, audit.middleware]`.
+Audit captures request arguments on entry, so response ordering alone does not sanitize input arguments.

@@ -1,0 +1,448 @@
+.section {
+  max-width: 1248px;
+  margin: 0 auto;
+  padding: 80px 0;
+  scroll-margin-top: 112px;
+}
+
+.header {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto 48px auto;
+}
+
+.heading {
+  font-size: 44px;
+  line-height: 48px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--color-text);
+  margin: 0 0 12px 0;
+}
+
+.lede {
+  font-size: 18px;
+  line-height: 28px;
+  color: var(--color-muted);
+  margin: 0;
+}
+
+.tabList {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 32px;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 16px;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 20px;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.tab:hover {
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.tabSelected {
+  background: var(--color-accent) !important;
+  color: var(--color-on-accent) !important;
+  font-weight: 600;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+}
+
+.leftCol {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.panelTitle {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.requestBadge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-accent);
+}
+
+/* Diagram visualization */
+.diagramBox {
+  padding: 24px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  position: relative;
+  overflow: hidden;
+  transition: border-color var(--duration-fast) var(--ease-default);
+}
+
+.diagramBoxAccent {
+  border-color: var(--color-accent);
+}
+
+.nodesRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 2;
+}
+
+.node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 100px;
+  padding: 12px 16px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.nodeActive {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-tint);
+  color: var(--color-accent);
+}
+
+.nodeBlocked {
+  border-color: #E5484D;
+  color: #E5484D;
+  background: #FFF0F0;
+}
+
+.nodeSubtext {
+  font-size: 11px;
+  color: var(--color-muted);
+  margin-top: 2px;
+}
+
+.tracePath {
+  flex: 1;
+  height: 2px;
+  background: var(--color-border);
+  margin: 0 12px;
+  position: relative;
+}
+
+.traceMarker {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  position: absolute;
+  top: -3px;
+  transform: translateX(-50%);
+  transition: left 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+/* Results box */
+.resultsBox {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  min-height: 180px;
+}
+
+.resultsGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.resultCol {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.resultHeading {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+  margin: 0;
+}
+
+.resultItem {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  word-break: break-word;
+}
+
+.resultItemHighlight {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
+.resultItemBlocked {
+  border-color: #E5484D;
+  color: #E5484D;
+  font-weight: 500;
+}
+
+.explanation {
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--color-muted);
+  margin: 0;
+  border-top: 1px solid var(--color-border);
+  padding-top: 12px;
+}
+
+/* Actions & secondary controls */
+.actionsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.controlsGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.simBadge {
+  font-size: 12px;
+  color: var(--color-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.simDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+.secondaryBtn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.secondaryBtn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.secondaryBtnActive {
+  background: #FFF0F0;
+  border-color: #E5484D;
+  color: #E5484D;
+}
+
+.guideLink {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-accent);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  gap: 4px;
+}
+
+.guideLink:hover {
+  text-decoration: underline;
+}
+
+/* Code column */
+.rightCol {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.codeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--color-muted);
+  padding: 0 4px;
+}
+
+.codeFrame {
+  background: #14241D;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.codeFrameHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #A7BBA9;
+}
+
+.codeContent {
+  padding: 16px;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  color: #E4EFDF;
+}
+
+.codeContent pre {
+  margin: 0;
+  padding: 0;
+  background: transparent !important;
+}
+
+.codeContent code {
+  font-family: inherit;
+  font-size: inherit;
+  background: transparent !important;
+}
+
+/* Mobile & responsive */
+@media (max-width: 1023px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+}
+
+@media (max-width: 767px) {
+  .section {
+    padding: 48px 0;
+  }
+
+  .heading {
+    font-size: 32px;
+    line-height: 38px;
+  }
+
+  .tabList {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .tab {
+    min-height: 48px;
+    padding: 10px 12px;
+    font-size: 14px;
+    border: 1px solid var(--color-border);
+  }
+
+  .resultsGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .actionsRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .controlsGroup {
+    justify-content: space-between;
+  }
+}
+
+/* Grid children must shrink before their scrollable code does. */
+.leftCol,
+.rightCol,
+.resultCol {
+  min-width: 0;
+}
+
+.requestBadge {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 767px) {
+  .diagramBox { padding: 16px 12px; }
+  .node { min-width: 0; flex: 1; padding: 12px 4px; font-size: 12px; }
+  .nodeSubtext { font-size: 10px; }
+  .tracePath { flex: 0 0 12px; margin: 0 4px; }
+  .simBadge { flex-wrap: wrap; }
+}

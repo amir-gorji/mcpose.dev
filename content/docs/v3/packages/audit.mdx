@@ -1,0 +1,108 @@
+---
+title: "@mcpose/audit"
+description: "Audit format v2, prompt evidence, awaited sealing, verification, and subject erasure."
+---
+
+`@mcpose/audit@3.0.0` records tools and prompts in a shared per-session HMAC chain.
+Low and medium tiers carry raw payloads; high-tier payloads use AES-256-GCM.
+Unknown names default to high sensitivity.
+The host provides durable event and manifest sinks.
+
+## Install
+
+```bash
+npm install mcpose@^3 @modelcontextprotocol/sdk@^1.17.0 @mcpose/audit@^3
+```
+
+## Wire both pipelines and shutdown
+
+The following factory accepts an already-connected backend and durable sinks.
+`onSessionClosed` belongs in the third argument of `startHttpProxy`.
+
+```ts title="audit-proxy.ts" check
+import { startHttpProxy } from 'mcpose';
+import type { BackendClient } from 'mcpose';
+import { createAuditMiddleware, createDefaultSigningKeyProvider, createSensitivityResolver } from '@mcpose/audit';
+import type { AuditEvent, ReplayManifest } from '@mcpose/audit';
+
+export async function serveAudited(
+  backend: BackendClient,
+  secret: string,
+  appendEvent: (event: AuditEvent) => Promise<void>,
+  saveManifest: (manifest: ReplayManifest) => Promise<void>,
+) {
+  const audit = createAuditMiddleware({
+    signingKey: createDefaultSigningKeyProvider(secret),
+    sensitivityResolver: createSensitivityResolver({ search: 'low', summary: 'medium' }),
+    onEvent: appendEvent,
+    onManifest: saveManifest,
+  });
+  return startHttpProxy(backend, {
+    name: 'audit-gateway',
+    toolMiddleware: [audit.middleware],
+    promptMiddleware: [audit.promptMiddleware],
+  }, {
+    onSessionClosed: audit.closeSession,
+    onError: console.error,
+  });
+}
+```
+
+Use a strong signing secret or your own KMS-backed `SigningKeyProvider`.
+The audit middleware is already a pass-through observer.
+Prompt events have `kind: 'prompt'`; absent `kind` means a tool event, and `tool` holds the corresponding name.
+`proxy`, `delegatedFrom`, and `policy` preserve provenance and the policy decision when present.
+
+## Sealing and failure handling
+
+`closeSession(id)` drains calls already admitted to the session, persists their events, builds one Merkle tree, signs the whole manifest, and awaits `onManifest`.
+Concurrent closes share one operation.
+An empty or unknown session returns `undefined`.
+The default `closeDrainTimeoutMs` is 30,000; `Infinity` waits without a deadline.
+Stragglers after the deadline are reported through `onAuditError` and do not enter the sealed manifest.
+
+A signing or manifest-sink failure leaves the sealed session retryable: call `closeSession(id)` again to resume delivery of the same artifact.
+Tool-path audit failures are reported through `onAuditError` (default `console.error`) and do not fail tool calls.
+`includeRejections` defaults to `true`; disabling it omits rejected calls from the chain.
+Monitor sink failures because successful tool calls do not imply durable audit delivery.
+
+## Audit format v2
+
+Format v2 uses canonical serialization, signatures over the entire manifest, and domain-separated Merkle leaves and nodes (`mcpose/v2/leaf`, `mcpose/v2/node`).
+Per-event encryption keys and AES-GCM associated data bind ciphertext to the session, position, and event.
+`keyId` is a public identifier, never encryption or chain key material.
+The v3 release does not introduce another label rotation after format v2.
+Format-v1 archives require their pinned 2.x verifier; there is no dual-format mode.
+
+## Offline verification
+
+```ts title="verify.ts" check
+import { verifyAuditChain, verifyManifestSignature } from '@mcpose/audit';
+import type { AuditEvent, ReplayManifest, SigningKeyProvider } from '@mcpose/audit';
+import { assertReplayManifestValid } from '@mcpose/testing';
+
+export async function verify(events: AuditEvent[], manifest: ReplayManifest, key: SigningKeyProvider) {
+  const chain = await verifyAuditChain(events, key);
+  if (!chain.valid) throw new Error(`Invalid chain at ${chain.index}: ${chain.reason}`);
+  if (!await verifyManifestSignature(manifest, key)) throw new Error('Invalid signature');
+  assertReplayManifestValid(events, manifest);
+}
+```
+
+`verifyAuditChain` returns `{ valid: true }` or `{ valid: false, index, reason }`, not a boolean.
+`verifyManifestSignature` returns a boolean.
+Keyed checks establish authenticity against the trusted key; [keyless assertions](/docs/v3/packages/testing/) establish consistency and bind the event set to the manifest.
+A `ReplayManifest` is verification evidence, not session re-execution.
+
+## Subject erasure [#erasure]
+
+Supply `keyStore: SubjectKeyStore` to enable erasable mode.
+The store holds random per-subject keys, not keys derivable from the signing secret.
+High-tier encryption and payload HMACs depend on that subject key, so `await keyStore.destroy(subjectId)` removes decryptability and candidate-payload confirmability while the chain and manifest remain verifiable.
+Events carry the chain-covered `erasable: true` marker; the store returns a `destroyedAt` tombstone for your separate custody record.
+A later call from the same subject gets a fresh key.
+
+`createInMemorySubjectKeyStore()` is a development reference only: restart loses every key.
+Production needs durable, access-controlled key custody and destruction of any retained copies.
+Low/medium plaintext, identity metadata, and external payload copies are not erased by key destruction; the host must manage those records separately.
+Anonymous calls share the anonymous subject bucket, so resolve identity when erasure must be per person.

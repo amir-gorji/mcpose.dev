@@ -1,67 +1,95 @@
-import { SITE } from '@/lib/site';
+import Link from 'next/link';
 import styles from './packages-table.module.css';
 
-type PackageRow = {
+interface PackageItem {
   readonly name: string;
-  readonly href: string;
+  readonly path: string;
   readonly description: string;
-  readonly version: string;
-};
+}
 
-const ROWS: readonly PackageRow[] = [
+const PACKAGES: readonly PackageItem[] = [
   {
     name: 'mcpose',
-    href: SITE.npm.core,
-    description: 'Proxy core — pipeline, transports, identity, governance.',
-    version: SITE.versions.core,
+    path: '/docs/v3/packages/mcpose/',
+    description: 'Proxy, transport, middleware.',
+  },
+  {
+    name: '@mcpose/policy',
+    path: '/docs/v3/packages/policy/',
+    description: 'Role rules and per-session call budgets.',
+  },
+  {
+    name: '@mcpose/consent',
+    path: '/docs/v3/packages/consent/',
+    description: 'Consent resolved by the application.',
   },
   {
     name: '@mcpose/audit',
-    href: SITE.npm.audit,
-    description: 'Tamper-evident HMAC audit chain + Merkle replay manifest.',
-    version: SITE.versions.audit,
+    path: '/docs/v3/packages/audit/',
+    description: 'Chained events and signed session manifests.',
   },
   {
     name: '@mcpose/testing',
-    href: SITE.npm.testing,
-    description: 'Runner-agnostic compliance assertions for the audit chain.',
-    version: SITE.versions.testing,
+    path: '/docs/v3/packages/testing/',
+    description: 'Audit consistency assertions.',
   },
-];
+  {
+    name: '@mcpose/otel',
+    path: '/docs/v3/packages/otel/',
+    description: 'OpenTelemetry.',
+  },
+  {
+    name: '@mcpose/store-redis',
+    path: '/docs/v3/packages/store-redis/',
+    description: 'Persistent SSE events.',
+  },
+  {
+    name: '@mcpose/store-postgres',
+    path: '/docs/v3/packages/store-postgres/',
+    description: 'Persistent SSE events.',
+  },
+] as const;
 
-const PackagesTable = () => (
-  <>
-    <div className={`kicker ${styles.kicker}`}>Packages</div>
-    <h2 className={styles.heading}>Three packages, one surface.</h2>
-    <table className="table">
-      <thead>
-        <tr>
-          <th className={styles.thPackage}>Package</th>
-          <th>What it does</th>
-          <th className={styles.thVersion}>Version</th>
-        </tr>
-      </thead>
-      <tbody>
-        {ROWS.map((row) => (
-          <tr key={row.name}>
-            <td>
-              <a href={row.href} className={styles.packageLink}>
-                {row.name}
-              </a>
-            </td>
-            <td className={styles.description}>{row.description}</td>
-            <td className={styles.versionCell}>
-              <span className={`tag tag-neutral ${styles.versionTag}`}>{row.version}</span>
-            </td>
-          </tr>
+export default function PackagesTable() {
+  return (
+    <section aria-label="Packages" className={styles.section}>
+      <h2 className={styles.heading}>Only the pieces you need.</h2>
+
+      {/* Desktop table */}
+      <div className={styles.tableWrap}>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th className={styles.th}>Package</th>
+              <th className={styles.th}>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            {PACKAGES.map((pkg) => (
+              <tr key={pkg.name} className={styles.tr}>
+                <td className={styles.tdName}>
+                  <Link href={pkg.path} className={styles.packageLink}>
+                    {pkg.name}
+                  </Link>
+                </td>
+                <td className={styles.tdDesc}>{pkg.description}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile card list */}
+      <div className={styles.mobileList}>
+        {PACKAGES.map((pkg) => (
+          <div key={pkg.name} className={styles.mobileCard}>
+            <Link href={pkg.path} className={styles.packageLink}>
+              {pkg.name}
+            </Link>
+            <p className={styles.mobileDesc}>{pkg.description}</p>
+          </div>
         ))}
-      </tbody>
-    </table>
-    <div className={styles.footnote}>
-      Peer dependency: <code className={styles.footnoteCode}>@modelcontextprotocol/sdk ≥ 1.0</code>{' '}
-      — installed separately.
-    </div>
-  </>
-);
-
-export default PackagesTable;
+      </div>
+    </section>
+  );
+}

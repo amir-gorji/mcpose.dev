@@ -1,0 +1,13 @@
+{
+  "title": "Packages",
+  "pages": [
+    "mcpose",
+    "policy",
+    "consent",
+    "audit",
+    "testing",
+    "otel",
+    "store-redis",
+    "store-postgres"
+  ]
+}

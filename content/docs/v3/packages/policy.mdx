@@ -1,0 +1,69 @@
+---
+title: "@mcpose/policy"
+description: "Role rules, sensitivity gates, and shared tool/prompt call budgets."
+---
+
+`@mcpose/policy@1.0.0` gates tool calls and prompt fetches with pure, synchronous rules.
+An explicit deny wins over every allow; no matching allow denies the call.
+
+## Install
+
+```bash
+npm install mcpose@^3 @modelcontextprotocol/sdk@^1.17.0 @mcpose/policy@^1
+```
+
+## Configure rules
+
+This example exports proxy options for an HTTP host whose `resolveIdentity` authenticates callers and supplies their roles.
+Pass `proxyOptions` as the second argument to `startHttpProxy` and wire `onSessionClosed` in its third argument.
+
+```ts title="policy.ts" check
+import type { ProxyOptions, HttpProxyOptions } from 'mcpose';
+import { createPolicyMiddleware } from '@mcpose/policy';
+
+const policy = createPolicyMiddleware({
+  rules: [
+    { id: 'analyst-read', effect: 'allow', roles: ['analyst'], tools: ['search', 'summary'] },
+    { id: 'admin', effect: 'allow', roles: ['admin'], tools: '*' },
+    { id: 'no-delete', effect: 'deny', roles: '*', tools: ['delete_index'] },
+  ],
+  sensitivity: { search: 'low', summary: 'medium' },
+  sensitivityRules: [{ roles: ['analyst'], deniedTiers: ['high'] }],
+  budget: { maxCallsPerSession: 50 },
+});
+
+export const proxyOptions = {
+  name: 'policy-gateway',
+  toolMiddleware: [policy.middleware],
+  promptMiddleware: [policy.promptMiddleware],
+} satisfies ProxyOptions;
+
+export const lifecycle = {
+  onSessionClosed: policy.evictSession,
+} satisfies HttpProxyOptions;
+```
+
+`roles` and `tools` accept exact-name arrays or the bare wildcard `'*'`, never `['*']` or glob patterns.
+Empty rule IDs, array wildcards, and invalid denied tiers throw during construction.
+In mesh mode match public names such as `docs__search`.
+Prompt names use the same `tools` rule field.
+
+## Identity, tiers, and budgets
+
+A missing identity produces `IDENTITY_UNRESOLVED`.
+RBAC refusal produces `POLICY_DENIED`; a sensitivity rule can only subtract access after an allow and produces `SENSITIVITY_BLOCKED`.
+Unmapped names have tier `high` when sensitivity rules are enabled.
+The decision is recorded in `ctx.policy` before delegation or rejection.
+
+Tools and prompts share one in-memory budget per session and middleware handle.
+Calls without a session ID are not counted; the budget is not a distributed quota or a monetary cost limit.
+Exhaustion produces `BUDGET_EXCEEDED`.
+Release counters through `evictSession(sessionId)` when the session closes.
+
+## Compose with audit
+
+Put the audit observer last: `toolMiddleware: [policy.middleware, audit.middleware]` and `promptMiddleware: [policy.promptMiddleware, audit.promptMiddleware]`.
+It then records refused calls as well as successful ones.
+Do not put protected tools in `passThroughTools`: pass-through skips policy and consent because they are gates, not observers.
+Rules gate execution; they do not hide catalog entries.
+Use `hiddenTools` or `listToolsMiddleware` separately for discovery.

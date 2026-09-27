@@ -1,0 +1,56 @@
+---
+title: Transform Responses
+description: Intercept and augment upstream tool outputs before returning them to the client.
+topicId: recipes-transform-responses
+provenance:
+  tag: v2.1.1
+  path: packages/core/README.md
+---
+
+# Transform Responses
+
+Tool middleware in mcpose wraps request execution.
+A small function in the middle can inspect results and inject supplementary context.
+
+## Transforming Output
+
+To augment tool results, call `next(req)` and return a new result object with modified content:
+
+```ts
+import type { ToolMiddleware } from 'mcpose';
+
+export const withSource: ToolMiddleware = async (req, next) => {
+  const result = await next(req);
+  return {
+    ...result,
+    content: [
+      ...result.content,
+      {
+        type: 'text',
+        text: 'Source: internal docs',
+      },
+    ],
+  };
+};
+```
+
+## Configuring the Proxy
+
+Pass the middleware function to the `toolMiddleware` array in `ProxyOptions`:
+
+```ts
+import { createBackendClient, startProxy } from 'mcpose';
+import { withSource } from './middleware/with-source.mjs';
+
+const backend = await createBackendClient({
+  command: 'node',
+  args: ['./upstream-server.mjs'],
+});
+
+await startProxy(backend, {
+  toolMiddleware: [withSource],
+});
+```
+
+When a client calls any tool, `withSource` runs after the upstream server returns.
+The client receives the upstream data alongside the injected source annotation.

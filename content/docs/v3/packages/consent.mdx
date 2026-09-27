@@ -1,0 +1,49 @@
+---
+title: "@mcpose/consent"
+description: "Host-resolved consent for tools and prompts, with fail-closed enforcement."
+---
+
+`@mcpose/consent@1.0.0` asks the host whether an authenticated identity may invoke a tool or prompt.
+The host owns grant storage, purpose, expiry, and withdrawal; this package provides the enforcement point.
+
+## Install
+
+```bash
+npm install mcpose@^3 @modelcontextprotocol/sdk@^1.17.0 @mcpose/consent@^1
+```
+
+## Resolve consent
+
+The resolver receives an `Identity`, not a `ProxyContext`.
+This small example uses explicit in-memory grants; replace that lookup with your consent service.
+The HTTP host must authenticate callers through `resolveIdentity`.
+
+```ts title="consent.ts" check
+import type { ProxyOptions } from 'mcpose';
+import { createConsentMiddleware } from '@mcpose/consent';
+
+const grants = new Map([['user-123', new Set(['search', 'summary'])]]);
+const consent = createConsentMiddleware({
+  resolveConsent: (identity, name) => grants.get(identity.sub)?.has(name) === true,
+  onResolverError: (error, info) => console.error('Consent lookup failed', info, error),
+});
+
+export const proxyOptions = {
+  name: 'consent-gateway',
+  toolMiddleware: [consent.middleware],
+  promptMiddleware: [consent.promptMiddleware],
+} satisfies ProxyOptions;
+```
+
+Only the literal value `true` grants access.
+A missing identity, any other return value, a throw, or a rejected promise produces `CONSENT_MISSING`.
+`onResolverError` reports resolver failures without exposing their details to the caller; even a throwing error hook cannot bypass the gate.
+
+## Audit and withdrawal
+
+Use `[consent.middleware, audit.middleware]` for tools and the corresponding `promptMiddleware` handles for prompts.
+Audit runs outside the gate and records refusals.
+Do not exempt protected tools through `passThroughTools`.
+Consent does not add a context field or evaluate through the policy engine.
+Withdrawing a grant blocks future calls; deleting past encrypted payload access is a separate [audit erasure operation](/docs/v3/packages/audit/#erasure).
+This library does not determine whether your application's consent process meets a legal requirement.

@@ -96,7 +96,9 @@ export const getMDXComponents = (overrides: MDXComponents = {}): MDXComponents =
     <code {...props} className={cx(styles.inlineCode, props.className)} />
   ),
   table: (props: ComponentPropsWithoutRef<'table'>) => (
-    <table {...props} className={cx('table', styles.docsTable, props.className)} />
+    <div className={styles.tableScroll} tabIndex={0} role="region" aria-label="Scrollable reference table">
+      <table {...props} className={cx('table', styles.docsTable, props.className)} />
+    </div>
   ),
   Note,
   LinkCards,

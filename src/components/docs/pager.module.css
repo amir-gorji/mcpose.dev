@@ -15,7 +15,7 @@
 }
 
 .side:hover {
-  border-color: var(--color-accent-700);
+  border-color: var(--color-accent-hover);
 }
 
 .sideNext {

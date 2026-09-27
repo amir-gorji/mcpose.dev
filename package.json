@@ -9,7 +9,9 @@
     "serve": "npx serve out -l 4000",
     "postinstall": "fumadocs-mdx",
     "test": "pnpm build && node --test \"tests/*.test.mjs\"",
+    "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit",
+    "fonts": "node scripts/subset-fonts.mjs",
     "lint": "eslint .",
     "cf:deploy": "wrangler deploy",
     "cf:preview": "wrangler versions upload"
@@ -18,6 +20,7 @@
   "dependencies": {
     "fumadocs-core": "16.14.0",
     "fumadocs-mdx": "15.2.2",
+    "geist": "^1.7.2",
     "next": "16.3.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -25,13 +28,29 @@
     "zod": "^4.0.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.1",
+    "@mcpose/audit": "3.0.0",
+    "@mcpose/consent": "1.0.0",
+    "@mcpose/otel": "0.1.0",
+    "@mcpose/policy": "1.0.0",
+    "@mcpose/store-postgres": "0.1.0",
+    "@mcpose/store-redis": "0.1.0",
+    "@mcpose/testing": "3.0.0",
+    "@modelcontextprotocol/sdk": "1.27.1",
+    "@opentelemetry/api": "1.9.0",
+    "@playwright/test": "^1.50.0",
     "@types/mdx": "^2.0.13",
     "@types/node": "^25.0.0",
+    "@types/pg": "8.15.6",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "eslint": "^9.0.0",
     "eslint-config-next": "16.3.0",
+    "mcpose": "3.0.0",
     "pagefind": "1.5.2",
+    "pg": "8.16.3",
+    "redis": "5.11.0",
+    "subset-font": "^2.9.0",
     "typescript": "^5.7.0",
     "wrangler": "4.119.0"
   }

@@ -1,0 +1,12 @@
+{
+  "title": "v3",
+  "pages": [
+    "index",
+    "getting-started",
+    "concepts",
+    "recipes",
+    "packages",
+    "migration",
+    "project"
+  ]
+}

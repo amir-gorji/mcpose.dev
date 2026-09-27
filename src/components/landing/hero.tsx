@@ -1,72 +1,59 @@
 import Link from 'next/link';
-import { Fragment } from 'react';
-import CodeBlockFrame from '@/components/code-block';
 import CopyButton from '@/components/copy-button';
-import InstallRow from '@/components/install-row';
-import { highlight } from '@/lib/shiki';
-import { SITE } from '@/lib/site';
-import { HERO_SNIPPET } from '@/lib/snippets';
+import HeroInteractive from './hero-interactive';
 import styles from './hero.module.css';
 
-const META_ITEMS = [
-  `${SITE.versions.core} on npm`,
-  'MIT',
-  'Node 20+',
-  'ESM, types included',
-  'semver-disciplined',
-] as const;
+const INSTALL_CMD = 'npm install mcpose @modelcontextprotocol/sdk';
 
-const Hero = async () => {
-  const html = await highlight(HERO_SNIPPET, 'typescript');
-
+export default function Hero() {
   return (
-    <div className={styles.grid}>
-      <div>
-        <div className={`kicker ${styles.kicker}`}>
-          Transparent MCP proxy · TypeScript
-        </div>
-        <h1 className={styles.heading}>
-          The audit and governance layer for MCP.
+    <div className={styles.hero}>
+      <div className={styles.copyCol}>
+        <span className={styles.eyebrow}>The composable MCP proxy</span>
+        <h1 className={styles.headline}>
+          Make MCP <span className={styles.headlineAccent}>work your way.</span>
         </h1>
-        <p className={styles.lede}>
-          Drop mcpose between any LLM client and any MCP server. Intercept,
-          transform, and govern every tool call through composable onion
-          middleware — and log it in a tamper-evident, compliance-grade audit
-          trail. Nothing upstream changes.
+        <p className={styles.lead}>
+          Transform responses. Shape tool access. Connect servers. Add the behavior you need between your client and its MCP servers.
         </p>
-        <div className={styles.installRow}>
-          <InstallRow variant="hero" />
-        </div>
-        <div className={styles.buttonRow}>
-          <Link className="btn btn-primary" href="/docs/getting-started/quick-start/">
-            Get started →
+        <div className={styles.actions}>
+          <Link href="/docs/v3/getting-started/quick-start/" className="btn btn-primary">
+            Get started
           </Link>
-          <a className="btn btn-secondary" href={SITE.github} rel="noreferrer">
-            GitHub
+          <a href="#explore" className="btn btn-secondary">
+            Explore middleware
           </a>
         </div>
-        <div className={styles.metaRow}>
-          {META_ITEMS.map((item, index) => (
-            <Fragment key={item}>
-              {index > 0 ? <span className={styles.metaDot}>·</span> : null}
-              <span>{item}</span>
-            </Fragment>
-          ))}
+        <div className={styles.installBlock}>
+          <code className={styles.installCode} tabIndex={0} role="region" aria-label="Install command">
+            {INSTALL_CMD}
+          </code>
+          <CopyButton text={INSTALL_CMD} />
+        </div>
+        <div className={styles.metadata}>
+          TypeScript / MIT / stdio + HTTP
         </div>
       </div>
-      <div className={styles.codeColumn}>
-        <CodeBlockFrame
-          title="proxy.ts"
-          lang="TypeScript"
-          action={<CopyButton text={HERO_SNIPPET} style={{ fontSize: 11 }} />}
-          lineHeight={1.7}
-          elevation="md"
-        >
-          <div dangerouslySetInnerHTML={{ __html: html }} />
-        </CodeBlockFrame>
+
+      <div className={styles.visualCol}>
+        <div className={styles.desktopArtwork}>
+          <HeroInteractive />
+        </div>
+        <div className={styles.mobileDiagram} aria-hidden="true">
+          <div className={styles.mobileCard}>Client request</div>
+          <div className={styles.mobileConnector}>↓</div>
+          <div className={`${styles.mobileCard} ${styles.mobileCardAccent}`}>
+            <strong>mcpose</strong>
+            <br />
+            Your middleware
+          </div>
+          <div className={styles.mobileConnector}>↓</div>
+          <div className={styles.mobileCard}>MCP server</div>
+        </div>
+        <p className={styles.caption}>
+          A small function in the middle can change the whole interaction.
+        </p>
       </div>
     </div>
   );
-};
-
-export default Hero;
+}

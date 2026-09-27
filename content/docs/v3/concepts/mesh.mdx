@@ -1,0 +1,87 @@
+---
+title: Multi-server Mesh
+description: Connect named upstreams and expose their tools through a shared proxy endpoint.
+topicId: concepts-mesh
+---
+
+# Multi-server Mesh
+
+mcpose v3 supports multi-backend composition.
+You can connect multiple named upstream MCP servers and expose their capabilities through a single unified proxy.
+Clients connect to one familiar MCP endpoint, while calls route deterministically to backend servers based on tool namespace.
+
+## Composition Architecture
+
+Instead of passing a single backend client to `startProxy`, pass an object dictionary mapping prefix keys to backend clients:
+
+```ts title="mesh.ts" check
+import { createBackendClient, startProxy } from 'mcpose';
+
+const docsClient = await createBackendClient({
+  command: 'node',
+  args: ['./servers/docs.mjs'],
+});
+
+const crmClient = await createBackendClient({
+  command: 'node',
+  args: ['./servers/crm.mjs'],
+});
+
+await startProxy(
+  {
+    docs: docsClient,
+    crm: crmClient,
+  },
+  {
+    name: 'workspace-gateway',
+  },
+);
+```
+
+## Tool Namespacing
+
+Upstream tools are exposed to the client using a double underscore namespace convention:
+
+- `docs__search` routes to the `search` tool on `docsClient`.
+- `crm__lookup` routes to the `lookup` tool on `crmClient`.
+- `files__read` routes to the `read` tool on `filesClient`.
+
+This naming format prevents naming collisions between independent upstream servers.
+Clients discover tools with their namespace prefixes intact.
+
+## Shared Middleware Model
+
+Middleware configured on the proxy wraps all incoming calls before they route to the target backend:
+
+- Policies can enforce authorization rules globally across all backends.
+- Response transformers can decorate or format outputs across services uniformly.
+- Audit logs record tool invocations with clear upstream attribution.
+
+Backend keys remain part of the public tool name, ensuring clear visibility into which service performed work.
+
+## Keys and prompts
+
+A backend key must match `[A-Za-z0-9][A-Za-z0-9._-]*` and cannot contain `__`.
+An empty record or invalid key fails during proxy construction.
+Prompts use the same `key__name` convention, and `promptMiddleware` wraps `prompts/get` before routing.
+An unprefixed name, unknown key, or target without the requested capability rejects with `BACKEND_UNROUTABLE`; there is no implicit fallback.
+Middleware and policy see the public prefixed name; the backend receives its original name.
+
+## Resource URIs
+
+V3 also serves mesh resources through `mcpose://<backendKey>/<upstreamUri>`.
+For example, `mcpose://docs/file:///guide.md` routes to `file:///guide.md` on `docs`.
+The upstream URI is appended verbatim, without percent-encoding or inference from previous listings.
+`hiddenResources` and `passThroughResources` match this public wrapped URI.
+Reads run through `resourceMiddleware`; invalid prefixes reject inside that pipeline.
+
+`resources/list` drains backend pages into one unpaginated result and isolates failing backends with degradation telemetry.
+Capabilities are the union of supported upstream surfaces; list-changed notifications fan out.
+Resource templates and resource subscriptions are not exposed in v3 mesh mode.
+Renaming a backend key changes its public tool names, prompt names, and resource URIs.
+
+## Listing and failure isolation
+
+Tool and prompt catalogs also drain each backend's pages, bounded at 100 pages per backend.
+A failed backend is omitted from that listing and produces a `backend_degraded` telemetry event; healthy backends remain discoverable.
+This is deterministic composition, not automatic failover, retry, or load balancing between equivalent servers.

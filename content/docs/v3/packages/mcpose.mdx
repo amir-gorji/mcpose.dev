@@ -1,0 +1,177 @@
+---
+title: "mcpose"
+description: "Released v3 proxy API: middleware, mesh, local tools, identity, and transports."
+---
+
+`mcpose@3.0.0` connects MCP clients to one upstream or a named mesh of upstreams.
+Add behavior through tool, resource, prompt, and tool-list middleware.
+Requires Node.js 20+ and `@modelcontextprotocol/sdk ^1.17.0`; ships ESM and TypeScript types.
+
+## Install [#install]
+
+```bash
+npm install mcpose@^3 @modelcontextprotocol/sdk@^1.17.0
+```
+
+## Quick start [#quick-start]
+
+```ts title="proxy.ts" check
+import { createBackendClient, startProxy } from 'mcpose';
+import type { ToolMiddleware } from 'mcpose';
+
+const backend = await createBackendClient({ command: 'node', args: ['./server.mjs'] });
+const logging: ToolMiddleware = async (req, next) => {
+  console.error(`Calling ${req.params.name}`);
+  return next(req);
+};
+await startProxy(backend, { name: 'my-proxy', toolMiddleware: [logging] });
+```
+
+`name` is required and must not be blank.
+`version` is optional and defaults to the installed mcpose version.
+Both identify the proxy in `initialize`, request context, audit events, and manifests.
+
+## Entry points [#api-surface]
+
+| Export | Contract |
+| --- | --- |
+| `createBackendClient(config)` | Connects a client using stdio or Streamable HTTP. |
+| `createProxyServer(backends, options)` | Returns an SDK `Server` without attaching a transport. Backends must already be connected. |
+| `startProxy(backends, options)` | Starts the stdio proxy; resolves to `void`. |
+| `startHttpProxy(backends, options, httpOptions?)` | Starts HTTP/HTTPS; resolves to the Node server. |
+| `compose(middlewares)` | Composes middleware outermost-first, unlike proxy option arrays. |
+| `markPassThroughObserver(mw)` | Returns a wrapper that still observes pass-through tool calls. |
+| `createProxyContext(overrides?)` | Creates a context with a fresh request ID unless provided. |
+| `rejectionMcpError(reason, code, message)` | Builds an SDK `McpError` with `data.rejectionReason`. |
+| `createInMemoryEventStore(maxEvents?)` | Creates an SSE replay store; shared cap defaults to 1,000 events. |
+| `hasToolContent(result)` | Narrows compatibility results to the content-block form. |
+| `mapToolResult(result, handlers)` | Explicitly maps text, other blocks, and structured content. |
+| `dispatcherAwareBlock(options)` | Builds a hidden-tool predicate that also checks dispatcher arguments. |
+| `sanitizeToolDescriptions(options?)` | Sanitizes descriptions in the tool catalog. |
+| `outboundDelegationChain(ctx)` | Returns prior hops followed by the resolved caller. |
+| `serializeDelegationChain(chain)` | Produces the versioned attribution payload for `DELEGATION_META_KEY`. |
+
+`Backends` is either one `BackendClient` or a readonly record of named clients.
+A single client keeps its names unchanged; the record form enables [mesh namespacing](/docs/v3/concepts/mesh/).
+
+## BackendConfig [#backend-config]
+
+Supply `command` and optional `args` for a spawned stdio server, or `url` for Streamable HTTP.
+`url` takes precedence; only HTTP and HTTPS URLs are accepted.
+`headers` and `authProvider` apply only to HTTP, and are ignored in stdio mode.
+The OAuth provider uses the SDK's `OAuthClientProvider` contract.
+See the [OAuth recipe](/docs/v3/recipes/oauth-upstream/) for the browser callback and token exchange flow.
+
+## ProxyOptions [#proxy-options]
+
+| Option | Behavior |
+| --- | --- |
+| `name`, `version?` | Required nonblank proxy name and optional version. |
+| `toolMiddleware` | Wraps `tools/call`, including local tools. |
+| `resourceMiddleware` | Wraps `resources/read`. |
+| `promptMiddleware` | Wraps `prompts/get`, including unroutable mesh rejections. |
+| `listToolsMiddleware` | Rewrites `tools/list`; hidden filtering runs before and after it. |
+| `hiddenTools` | Exact-name array or `(name, args) => boolean`; list calls supply `undefined` arguments. |
+| `hiddenResources` | Exact public resource URIs to hide and reject. |
+| `passThroughTools` | Skips transformers and gates, but keeps marked observers. Hidden tools still reject. |
+| `passThroughResources` | Skips the resource middleware pipeline. |
+| `localTools` | `{ tool, handler }` entries served inside the complete tool pipeline. |
+| `stripRequestMeta` | Defaults to `true`; strips client `_meta` before middleware. |
+| `stripResultMeta` | Defaults to `true`; strips upstream top-level `_meta` before middleware sees results. |
+| `onTelemetry` | Receives tool outcomes and mesh degradation events; sink failures do not fail calls. |
+
+All four middleware arrays use response-processing order: first innermost, last outermost.
+For example, `[redact, audit.middleware]` lets audit observe the transformed response.
+It does not by itself redact the request that audit captured on entry.
+Do not use `passThroughTools` for tools that must run authorization or consent gates.
+
+### Local tools [#local-tools]
+
+```ts title="local-tools.ts" check
+import type { ProxyOptions } from 'mcpose';
+
+export const options = {
+  name: 'workspace-proxy',
+  localTools: [{
+    tool: { name: 'health', description: 'Proxy health', inputSchema: { type: 'object' } },
+    handler: async () => ({ content: [{ type: 'text', text: 'ok' }] }),
+  }],
+} satisfies ProxyOptions;
+```
+
+Hidden tools take precedence over local tools; local tools shadow matching upstream names.
+Duplicate local names throw at construction.
+Local tools are listed only on the first catalog page, always run the full pipeline, and advertise the tools capability even when the upstream has none.
+
+### Metadata and catalog boundaries [#metadata]
+
+Request stripping applies to pass-through tools too; progress relay still works through SDK request metadata.
+Result stripping removes only top-level upstream `_meta`, preserving nested metadata and metadata deliberately added by middleware.
+Local results are not stripped because they have no upstream boundary.
+Delegation is extracted before request stripping and forwarded as a fresh attribution payload.
+
+`dispatcherAwareBlock({ tools, dispatchers, argPath })` closes a name-array bypass when a dispatcher names its real target in an argument.
+`sanitizeToolDescriptions({ patterns?, replacement? })` removes its built-in patterns plus your patterns from catalog descriptions, including nested schema descriptions.
+Catalog rewriting is separate from call authorization.
+
+## Context and identity [#proxycontext]
+
+`ProxyContext` carries `requestId`, `transport`, optional `sessionId`, sanitized `headers`, `signal`, resolved `identity`, `delegatedFrom`, `proxy`, and `policy`.
+`ProxyIdentity` is `{ name, version }` provenance, not a caller or delegation hop.
+`PolicyDecision` records `{ decision: 'allow' | 'deny', ruleId?, reason? }`; core does not evaluate policy.
+
+`Identity` contains `sub`, `type` (`human`, `agent`, or `service`), optional `displayName`, `roles`, `claims`, `resolvedAt`, and `source` (`jwt`, `mtls`, `apikey`, or `custom`).
+Only the host-resolved identity authorizes access; wire delegation entries have empty roles and claims.
+See [identity and sessions](/docs/v3/concepts/identity-and-sessions/).
+
+## HTTP options [#http-proxy-options]
+
+```ts title="http-proxy.ts" check
+import { createBackendClient, startHttpProxy } from 'mcpose';
+
+const backend = await createBackendClient({ command: 'node', args: ['./server.mjs'] });
+const server = await startHttpProxy(backend, { name: 'http-gateway' }, {
+  host: '127.0.0.1',
+  port: 3000,
+  path: '/mcp',
+  maxSessions: 1000,
+  sessionTtlMs: 30 * 60 * 1000,
+  onError: console.error,
+});
+```
+
+| Option | Contract / default |
+| --- | --- |
+| `host`, `port`, `path` | `127.0.0.1`, `3000`, `/mcp`. Non-loopback binding is explicit. |
+| `maxBodyBytes` | 4 MiB; excess requests return HTTP 413. |
+| `maxSessions` | 1,000; excess sessions return HTTP 503. `0` denies all; `Infinity` disables the cap. |
+| `sessionTtlMs` | 30 minutes; `Infinity` disables expiry. Finite values cannot exceed Node's timer limit. |
+| `resolveIdentity(req)` | Authenticates once per new session; a throw returns HTTP 401. |
+| `validateSession(req, session)` | Rechecks routed requests; false or throw returns HTTP 401. |
+| `onRequest(req, res)` | Runs before MCP handling; return false after writing your own rejection. |
+| `onError(error)` | Reports request, authentication, and teardown failures. |
+| `tlsOptions` | Node HTTPS options for server TLS and mutual TLS. |
+| `eventStore` | In-memory replay by default; `null` disables replay. |
+| `sessionRegistry` | Optional shared session records; pair with a persistent event store. |
+| `onSessionClosed(id)` | Awaited on DELETE, expiry, and shutdown; errors go to `onError`. |
+| `allowedHosts`, `allowedOrigins`, `enableDnsRebindingProtection` | Forwarded to the SDK transport's Host/Origin checks. |
+
+Credential headers are removed from context; authentication hooks still see the original request.
+Only an initialize POST creates a new session.
+`server.close(callback)` waits for session-close hooks before completing.
+Database connection shutdown belongs after that callback.
+Loopback binds enable DNS-rebinding protection by default and derive enforcing Host/Origin allowlists from the actual listening address and port.
+Explicit allowlists replace those defaults; reverse proxies may need explicit public host entries.
+
+## Result transforms [#results]
+
+`mapToolResult` requires all three decisions: `onText`, `onOther`, and `onStructured`.
+Return `null` to drop a content block, or `undefined` to drop structured content.
+This prevents a text-only redactor from silently forwarding images, embedded resources, or structured JSON.
+See [transform responses](/docs/v3/recipes/transform-responses/) for a checked example.
+
+## mcpose/testing [#testing]
+
+The core subpath exports `createMockBackendClient` and `runToolMiddleware` for proxy and pipeline tests.
+The separate [@mcpose/testing](/docs/v3/packages/testing/) package checks audit evidence.
+They are different entry points with different responsibilities.

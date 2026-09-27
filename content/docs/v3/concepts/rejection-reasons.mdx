@@ -1,0 +1,41 @@
+---
+title: "Rejection reasons"
+description: "Structured refusals emitted by the v3 core, policy, and consent packages."
+---
+
+MCP call rejections carry `error.data.rejectionReason` alongside the SDK error code.
+HTTP transport limits return their HTTP status before a tool pipeline exists.
+All eleven reasons below are implemented in v3.
+
+## Reasons [#union]
+
+| Reason | Producer / meaning |
+| --- | --- |
+| `TOOL_HIDDEN` | Core: direct or dispatcher-mediated call to a hidden tool. |
+| `RESOURCE_HIDDEN` | Core: read of a hidden public resource URI. |
+| `BACKEND_UNROUTABLE` | Mesh: invalid name or URI prefix, unknown backend, or unsupported target surface. |
+| `POLICY_DENIED` | Policy: explicit deny or no matching allow. |
+| `IDENTITY_UNRESOLVED` | Policy: no host-resolved caller identity. |
+| `CONSENT_MISSING` | Consent: missing identity, grant, or successful resolver result. |
+| `SENSITIVITY_BLOCKED` | Policy: denied sensitivity tier. |
+| `DELEGATION_INVALID` | Core: malformed wire chain or a detected caller loop. |
+| `BUDGET_EXCEEDED` | Policy: per-session tool/prompt call budget exhausted. |
+| `SESSION_LIMIT` | HTTP: maximum live sessions reached, status 503. |
+| `BODY_LIMIT` | HTTP: body exceeds `maxBodyBytes`, status 413. |
+
+## Auditing rejections [#lifecycle]
+
+Tool and prompt gates throw inside their pipelines, so an outer audit observer records `outcome: 'rejected'` and the reason.
+Place the audit handle last in each proxy middleware array.
+A plain error without a structured rejection reason is recorded as `outcome: 'error'`.
+`includeRejections: false` opts out of recording refusals.
+HTTP limits and authentication failures happen before tool execution and do not automatically become tool audit events.
+
+## Custom rejections [#building]
+
+```ts title="rejection.ts" check
+import { rejectionMcpError } from 'mcpose';
+import { ErrorCode } from '@modelcontextprotocol/sdk/types.js';
+
+throw rejectionMcpError('POLICY_DENIED', ErrorCode.InvalidRequest, 'Call not permitted');
+```

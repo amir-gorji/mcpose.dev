@@ -1,0 +1,21 @@
+<svg width="584" height="470" viewBox="0 0 584 470" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M110 300L325 240L475 345L260 405Z" fill="#FFFFFF" stroke="#D8DED7" />
+        <path d="M130 195L345 135L495 240L280 300Z" fill="#2456E8" />
+        <path d="M150 90L365 30L515 135L300 195Z" fill="#FFFFFF" stroke="#D8DED7" />
+        <path
+          d="M40 135H150L300 195L280 300L475 345H548"
+          stroke="#2456E8"
+          stroke-width="2"
+          stroke-dasharray="4 6"
+        />
+        <circle cx="40" cy="135" r="5" fill="#2456E8" />
+        <circle cx="548" cy="345" r="5" fill="#2456E8" />
+        <g font-family="Geist, sans-serif" text-anchor="middle">
+          <text x="333" y="115" fill="#18221D" font-size="18">Client request</text>
+          <text x="312" y="220" fill="#FFFFFF" font-size="24" font-weight="600">mcpose</text>
+          <text x="320" y="244" fill="#FFFFFF" font-size="14">Your middleware</text>
+          <text x="292" y="332" fill="#18221D" font-size="18">MCP server</text>
+          <text x="67" y="113" fill="#56635B" font-size="12">Request</text>
+          <text x="522" y="376" fill="#56635B" font-size="12">Response</text>
+        </g>
+</svg>

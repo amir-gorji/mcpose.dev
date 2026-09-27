@@ -9,7 +9,7 @@ export const dynamic = 'force-static';
 /* The docs hub and Quick Start are the canonical entries into the docs;
    other doc pages sit below them. */
 const docPriority = (url: string): number =>
-  url === '/docs' || url.endsWith('/quick-start') ? 0.8 : 0.6;
+  url === '/docs/v3' || url === '/docs/v2' || url.endsWith('/quick-start') ? 0.8 : 0.6;
 
 /* lastModified is omitted deliberately: the static export has no git-derived
    dates, and a fabricated build date would be worse than none. */
