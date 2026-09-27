@@ -64,7 +64,10 @@ test.describe('Documentation Search (D06)', () => {
 
     // Arrow navigation
     await input.focus();
+    await expect(results.first()).toHaveAttribute('aria-selected', 'true');
     await page.keyboard.press('ArrowDown');
+    await expect(results.first()).toHaveAttribute('aria-selected', 'false');
+    await expect(results.nth(1)).toHaveAttribute('aria-selected', 'true');
 
     // Toggle include v2 results
     const includeCheckbox = dialog.locator('input[type="checkbox"]');

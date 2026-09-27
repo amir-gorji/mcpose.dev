@@ -7,9 +7,7 @@ type Theme = 'light' | 'dark';
 const emptySubscribe = () => () => {};
 
 function getThemeSnapshot(): Theme {
-  if (typeof document === 'undefined') return 'light';
-  const docTheme = document.documentElement.getAttribute('data-theme');
-  if (docTheme === 'dark' || docTheme === 'light') return docTheme;
+  if (typeof window === 'undefined') return 'light';
   const stored = localStorage.getItem('mcpose.theme');
   if (stored === 'dark' || stored === 'light') return stored;
   if (window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
