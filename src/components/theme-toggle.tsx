@@ -7,20 +7,25 @@ type Theme = 'light' | 'dark';
 const emptySubscribe = () => () => {};
 
 function getThemeSnapshot(): Theme {
-  if (typeof document === 'undefined') return 'light';
-  const docTheme = document.documentElement.getAttribute('data-theme');
-  if (docTheme === 'dark' || docTheme === 'light') return docTheme;
-  const stored = localStorage.getItem('mcpose.theme');
-  if (stored === 'dark' || stored === 'light') return stored;
-  if (window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
-  return 'light';
+  if (typeof window === 'undefined') return 'light';
+  const attr = document.documentElement.getAttribute('data-theme');
+  return attr === 'dark' ? 'dark' : 'light';
 }
 
 function subscribeToTheme(callback: () => void) {
   if (typeof window === 'undefined') return () => {};
 
   const media = window.matchMedia('(prefers-color-scheme: dark)');
-  const handleMedia = () => callback();
+  const handleMedia = () => {
+    let stored: string | null = null;
+    try {
+      stored = localStorage.getItem('mcpose.theme');
+    } catch {}
+    if (stored !== 'dark' && stored !== 'light') {
+      document.documentElement.setAttribute('data-theme', media.matches ? 'dark' : 'light');
+    }
+    callback();
+  };
   media.addEventListener('change', handleMedia);
 
   const observer = new MutationObserver((mutations) => {

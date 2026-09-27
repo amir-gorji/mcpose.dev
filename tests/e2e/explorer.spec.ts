@@ -14,7 +14,7 @@ test.describe('Request Explorer (D03)', () => {
 
     await expect(explorer.locator('h3')).toHaveText('Transform a response');
     await expect(explorer.locator('text=The deployment guide is ready.').first()).toBeVisible();
-    await expect(explorer.locator('.explorer-module__Dtz3lG__resultItem:has-text("Source: internal docs"), div[class*="resultItem"]:has-text("Source: internal docs")').first()).toBeVisible();
+    await expect(explorer.locator('div[class*="resultItem"]:has-text("Source: internal docs")').first()).toBeVisible();
 
     const runBtn = explorer.locator('button:has-text("Run example")');
     await expect(runBtn).toBeVisible();

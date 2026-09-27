@@ -126,7 +126,7 @@ export const UNAVAILABLE_TOPICS_V2: Record<string, UnavailableTopicInfo> = {
     description:
       'The active project roadmap reflects upcoming goals for the library and is not maintained as historical v2 documentation.',
     v3Url: '/docs/v3/project/roadmap/',
-    fallbackUrl: '/docs/v2/packages/mcpose/',
+    fallbackUrl: '/docs/v2/',
   },
 };
 
