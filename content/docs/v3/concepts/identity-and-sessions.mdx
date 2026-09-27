@@ -28,7 +28,7 @@ interface Identity {
 
 </details>
 
-`sub` is the stable key: sessions, audit events, and future policy rules all key off it.
+`sub` is the stable key: audit events and subject erasure use it to identify the caller.
 `type` records whether the caller is a human user, an AI agent, or an automated service.
 `roles` and `claims` carry what your middleware needs for governance, without re-parsing the original credential.
 `resolvedAt` is the ISO 8601 timestamp of when the identity was resolved.
@@ -51,17 +51,28 @@ Middleware and audit see the same identity on the first request and on every rou
 HTTP sessions are keyed by `mcp-session-id`, and a client that holds the id can route requests into the session.
 To make sure the id alone is not enough, pass `validateSession`:
 
-```ts title="session.ts"
-validateSession: async (req, session) => {
-  const token = parseBearer(req.headers.authorization);
-  return token !== null && (await tokenStillValid(token));
-},
+Your hook must authenticate the presented credential and compare its subject with `session.identity?.sub`.
+Merely checking that a token is valid allows a different valid user to reuse a leaked session ID.
+
+```ts title="session.ts" check
+import type { IncomingMessage } from 'node:http';
+import type { HttpProxyOptions, Identity } from 'mcpose';
+
+export function authenticatedSessions(
+  authenticate: (req: IncomingMessage) => Promise<Identity>,
+): HttpProxyOptions {
+  return {
+    resolveIdentity: authenticate,
+    validateSession: async (req, session) => {
+      const caller = await authenticate(req);
+      return session.identity !== undefined && caller.sub === session.identity.sub;
+    },
+  };
+}
 ```
 
-`validateSession` re-validates an existing session on every routed request.
-It receives the raw `http.IncomingMessage` and the session record (`sessionId` plus the resolved `identity`).
-Return `false`, or throw, to reject the request with a 401.
-This binds the session to its original credential: a leaked `mcp-session-id` alone cannot take over a session, because the leaked id still fails the re-check.
+False or a thrown error rejects the request with HTTP 401.
+The host must validate credentials and their expiry; mcpose does not supply a JWT verifier.
 
 ## Credential header stripping [#credential-headers]
 
@@ -81,7 +92,7 @@ After that, `mcp-session-id` names the session on every routed request.
 A session ends through one of three paths:
 
 - The client sends a `DELETE` for the session.
-- The TTL expires, when `sessionTtlMs` is set.
+- The TTL expires (30 minutes by default; set `sessionTtlMs: Infinity` to disable it).
 - The server shuts down.
 
 All three flow through the same teardown path, and `onSessionClosed` fires on every one of them.
@@ -94,13 +105,42 @@ The stdio transport is a process-local pipe, so there is no `mcp-session-id`, no
 On stdio, a session is an audit-only boundary: the concept that groups audit events and produces one replay manifest on close.
 Identity resolution is HTTP-only too: `resolveIdentity` and `validateSession` live on `HttpProxyOptions`, and `ProxyOptions` has no equivalent.
 
+## Session resume [#resume]
+
+Pair `eventStore` with `sessionRegistry` to resume on a fresh process or another instance.
+A `SessionRecord` stores the initialize parameters, identity, and original expiry deadline.
+The proxy recreates the SDK transport by replaying the original initialize internally, preserving the session ID and negotiated client state.
+It writes the record before returning the original initialize response.
+An expired or absent record cannot resume; without a registry, a fresh process returns 404 for the old session ID.
+
+Client DELETE and TTL expiry delete the registry entry; shutdown keeps it for restart.
+All teardown paths await `onSessionClosed`; a failure goes to `onError`, and `server.close()` waits for hooks to settle.
+SSE streams are stored under `<sessionId>:<streamId>`; a `Last-Event-ID` belonging to another session is rejected with HTTP 400.
+
+Resume restores transport negotiation and stored SSE events, not in-flight calls, backend subscriptions, policy counters, or an in-memory audit chain.
+It is not full execution replay or exactly-once processing.
+Keep the same backend configuration, identity validation, and policy on every instance.
+See [Redis](/docs/v3/packages/store-redis/) and [Postgres](/docs/v3/packages/store-postgres/) for setup.
+
 ## Agent delegation [#delegation]
 
-`ProxyContext` carries a `delegatedFrom?: Identity[]` field, intended to record the chain of agents that handed off the request before reaching mcpose.
-Core does not populate it: there is no delegation header spec yet, and core's request-to-context path never sets `delegatedFrom`.
-Only the host can stamp it, for example by building the context with `createProxyContext({ delegatedFrom })`.
-When the host does stamp it, the audit middleware records the chain on the event and the chain is covered by the audit chain and manifest.
-Populating delegation directly from requests lands with the v3 delegation spec.
+V3 reads `params._meta["mcpose/delegation"]` on tool calls, prompt fetches, and resource reads, on both stdio and HTTP.
+The versioned payload contains an oldest-first chain:
+
+```json
+{ "v": 1, "chain": [{ "sub": "agent-a", "type": "agent" }] }
+```
+
+Each entry requires a nonempty `sub` and a valid identity `type`; optional fields are `displayName`, `resolvedAt`, and `source`.
+The chain is unsigned attribution, never authorization.
+Extracted entries always receive empty `roles` and `claims`; a host-stamped chain takes precedence.
+Malformed payloads, unknown versions, more than 32 entries, and loops involving the resolved caller reject inside the pipeline with `DELEGATION_INVALID`.
+Without a resolved stdio identity only structural validation is possible.
+
+Core extracts delegation before metadata stripping and forwards a fresh chain containing prior hops plus the current caller.
+The proxy name is separate `ctx.proxy` provenance and never a delegation principal.
+Local handlers making their own outbound calls use `serializeDelegationChain(outboundDelegationChain(ctx))` under `DELEGATION_META_KEY`.
+Audit signs the recorded attribution; that does not retroactively authenticate prior hops.
 
 ## Mapping identity to the upstream [#upstream-mapping]
 

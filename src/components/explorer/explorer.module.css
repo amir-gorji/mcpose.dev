@@ -71,7 +71,7 @@
 
 .layout {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 32px;
   align-items: start;
 }
@@ -199,7 +199,7 @@
 
 .resultsGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 16px;
 }
 
@@ -383,7 +383,7 @@
 /* Mobile & responsive */
 @media (max-width: 1023px) {
   .layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 32px;
   }
 }
@@ -400,7 +400,7 @@
 
   .tabList {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 8px;
     border-bottom: none;
     padding-bottom: 0;
@@ -414,7 +414,7 @@
   }
 
   .resultsGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .actionsRow {
@@ -425,4 +425,24 @@
   .controlsGroup {
     justify-content: space-between;
   }
+}
+
+/* Grid children must shrink before their scrollable code does. */
+.leftCol,
+.rightCol,
+.resultCol {
+  min-width: 0;
+}
+
+.requestBadge {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 767px) {
+  .diagramBox { padding: 16px 12px; }
+  .node { min-width: 0; flex: 1; padding: 12px 4px; font-size: 12px; }
+  .nodeSubtext { font-size: 10px; }
+  .tracePath { flex: 0 0 12px; margin: 0 4px; }
+  .simBadge { flex-wrap: wrap; }
 }

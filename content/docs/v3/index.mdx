@@ -1,10 +1,10 @@
 ---
 title: "Documentation"
 description: "Guides, concepts, and package reference for mcpose — the drop-in audit and governance proxy for MCP."
-next: "/docs/getting-started/quick-start"
 ---
 
-mcpose sits between any LLM client and any MCP server, routing every tool call through composable onion middleware and recording it in a tamper-evident, compliance-grade audit trail — nothing upstream changes.
+mcpose sits between any LLM client and any MCP server, routing calls through composable middleware without changing the upstream.
+Transform results, shape tool access, connect named servers, and add audit when you need it.
 These docs cover the core workflow, the concepts behind the proxy, and the reference for every published package.
 
 ## Start here [#start-here]
@@ -33,7 +33,7 @@ These docs cover the core workflow, the concepts behind the proxy, and the refer
   <LinkCard
     href="/docs/v3/packages/mcpose/"
     title="Packages →"
-    body="Reference for mcpose, @mcpose/audit, and @mcpose/testing."
+    body="Reference for all eight released packages, from core to policy and persistent sessions."
   />
   <LinkCard
     href="/docs/v3/recipes/pii-redaction-audit/"

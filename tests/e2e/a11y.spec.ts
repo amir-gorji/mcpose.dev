@@ -2,11 +2,13 @@ import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 test.describe('Accessibility Audits (WCAG 2.2 AA)', () => {
+  test.use({ reducedMotion: 'reduce' });
   const routes = [
     '/',
     '/docs/v3/',
     '/docs/v3/getting-started/quick-start/',
     '/docs/v2/concepts/proxy-model/',
+    '/docs/v3/packages/store-postgres/',
   ];
 
   for (const route of routes) {
@@ -14,21 +16,17 @@ test.describe('Accessibility Audits (WCAG 2.2 AA)', () => {
       await page.goto(route);
       const accessibilityScanResults = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
-        .disableRules(['color-contrast']) // color-contrast is verified separately in visual tokens
         .analyze();
 
       expect(accessibilityScanResults.violations).toEqual([]);
     });
 
     test(`route ${route} passes axe audit in dark theme`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme: 'dark' });
       await page.goto(route);
-      await page.evaluate(() => {
-        document.documentElement.setAttribute('data-theme', 'dark');
-      });
 
       const accessibilityScanResults = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
-        .disableRules(['color-contrast'])
         .analyze();
 
       expect(accessibilityScanResults.violations).toEqual([]);
@@ -46,7 +44,6 @@ test.describe('Accessibility Audits (WCAG 2.2 AA)', () => {
     const accessibilityScanResults = await new AxeBuilder({ page })
       .include('dialog[aria-label="Search documentation"]')
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
-      .disableRules(['color-contrast'])
       .analyze();
 
     expect(accessibilityScanResults.violations).toEqual([]);

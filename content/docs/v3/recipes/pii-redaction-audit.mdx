@@ -4,15 +4,18 @@ description: "Keep raw PII out of audit logs with middleware ordering."
 ---
 
 This is the origin use case for mcpose: a financial-grade MCP server where every Elasticsearch tool response must be scrubbed of PII before it reaches the LLM or the audit log.
-Two middleware layers sit in front of the upstream: one redacts the response, the other records it in a tamper-evident, compliance-grade audit trail.
+Two middleware layers sit in front of the upstream: one redacts the response, the other records it in a tamper-evident audit trail.
 
 ## The recipe [#recipe]
 
 The compact form wires a PII redaction middleware ahead of the audit middleware from `@mcpose/audit`.
 The PII patterns come from the runnable example, covering social security style IDs, passport-style codes, card numbers, and email addresses.
 
-```ts title="pii-redaction-audit.ts" copy="full"
-import { hasToolContent } from 'mcpose';
+The excerpt assumes a connected `backend`, an authenticating `extractJwt` resolver, and your `auditLog` and `manifestStore` persistence adapters.
+See the [complete audit setup](/docs/v3/packages/audit/).
+
+```ts title="pii-redaction-audit.ts · excerpt"
+import { hasToolContent, mapToolResult, startHttpProxy } from 'mcpose';
 import type { ToolMiddleware } from 'mcpose';
 import { createAuditMiddleware, createDefaultSigningKeyProvider, createSensitivityResolver } from '@mcpose/audit';
 
@@ -28,14 +31,11 @@ function createPiiMiddleware(patterns: RegExp[]): ToolMiddleware {
   return async (req, next) => {
     const result = await next(req);
     if (!hasToolContent(result)) return result;
-    return {
-      ...result,
-      content: result.content.map((item) =>
-        item.type === 'text'
-          ? { ...item, text: patterns.reduce((t, re) => t.replace(re, '[REDACTED]'), item.text) }
-          : item,
-      ),
-    };
+    return mapToolResult(result, {
+      onText: item => ({ ...item, text: patterns.reduce((t, re) => t.replace(re, '[REDACTED]'), item.text) }),
+      onOther: () => null,
+      onStructured: () => undefined,
+    });
   };
 }
 
@@ -49,6 +49,7 @@ const auditHandle = createAuditMiddleware({
 
 // 3 · Wire it together: PII first, audit second
 await startHttpProxy(backend, {
+  name: 'pii-gateway',
   toolMiddleware: [
     createPiiMiddleware(PII_PATTERNS), // PII first
     auditHandle.middleware,           // audit sees clean data
@@ -59,12 +60,13 @@ await startHttpProxy(backend, {
 });
 ```
 
-PII is redacted before the audit layer ever sees the response; no raw PII reaches a log.
+Matching text is redacted before audit sees the response; non-text blocks and structured content are dropped in this example.
+Legacy `toolResult` responses pass through unchanged and need a separate policy if your upstream returns them.
 
 ## Why the order matters [#ordering]
 
 <Note kicker="Note · Middleware order">Middleware arrays use **response-processing order**: the first element processes the response first.
-With `toolMiddleware: [piiMW, auditMW]`, the PII middleware redacts the response, and the audit layer processes it last, so it only ever sees redacted data.
+With `toolMiddleware: [piiMW, auditMW]`, the PII middleware redacts the response, and the audit layer processes it last, so it sees the transformed response.
 Swap the order and raw PII lands in the audit log.</Note>
 
 This is why ordering is part of the compliance story, not just a style choice.
@@ -89,12 +91,16 @@ Errors from `resolveIdentity` abort the session with HTTP 401.
 Miss the hook and the manifest is never closed.
 See [Identity and sessions](/docs/v3/concepts/identity-and-sessions/) for the full model.
 
+Response ordering alone does not redact audit inputs: audit captures the incoming arguments before inner middleware runs.
+Sanitize arguments before that capture or classify and encrypt them according to your data policy.
+For results, use `mapToolResult` to decide what happens to text, non-text blocks, and structured content; a text-only replacement can leave other channels unchanged.
+
 ## Proving the redaction [#proving]
 
 `@mcpose/testing` ships compliance assertions for exactly this guarantee.
 `assertPiiRedacted(event, patterns)` throws if any pattern still matches a plaintext field, or if a high-tier event is not structurally encrypted.
 
-```ts title="audit.test.ts" copy="full"
+```ts title="audit.test.ts · excerpt"
 import { assertPiiRedacted } from '@mcpose/testing';
 
 // Throws if PII survived redaction

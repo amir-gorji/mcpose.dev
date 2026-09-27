@@ -78,3 +78,75 @@ Existing ADR numbers never change, so references stay stable.
     body="The threat model and trust boundary that ADR-0003 and ADR-0004 underpin."
   />
 </LinkCards>
+
+## ADR-0005 [#adr-0005]
+
+[The HTTP proxy binds loopback by default and derives enforcing Host and Origin allowlists](https://github.com/amir-gorji/mcpose/blob/v3.0.0/docs/adr/0005-loopback-bind-by-default.md).
+
+## ADR-0006 [#adr-0006]
+
+[hiddenTools accepts a predicate so a dispatcher cannot reach a hidden tool by name](https://github.com/amir-gorji/mcpose/blob/v3.0.0/docs/adr/0006-hidden-tools-accept-a-predicate.md).
+
+## ADR-0007 [#adr-0007]
+
+[Local tools route to their handler from inside the innermost next, so the full pipeline still applies](https://github.com/amir-gorji/mcpose/blob/v3.0.0/docs/adr/0007-local-tools-run-the-full-pipeline.md).
+
+## ADR-0008 [#adr-0008]
+
+[Request _meta is stripped before it reaches the upstream](https://github.com/amir-gorji/mcpose/blob/v3.0.0/docs/adr/0008-strip-request-meta.md).
+
+## ADR-0009 [#adr-0009]
+
+[Result _meta is stripped before it reaches the client](https://github.com/amir-gorji/mcpose/blob/v3.0.0/docs/adr/0009-strip-result-meta.md).
+
+## ADR-0010 [#adr-0010]
+
+[The tool catalog is an egress channel, sanitized by an opt-in middleware](https://github.com/amir-gorji/mcpose/blob/v3.0.0/docs/adr/0010-tool-catalog-egress-sanitizer.md).
+
+## ADR-0011 [#adr-0011]
+
+[Proxy-originated outbound calls carry the inbound delegation chain, stamped by the host](https://github.com/amir-gorji/mcpose/blob/v3.0.0/docs/adr/0011-proxy-originated-call-attribution.md).
+
+## ADR-0012 [#adr-0012]
+
+[Proxy identity is recorded as provenance, not as a principal](https://github.com/amir-gorji/mcpose/blob/v3.0.0/docs/adr/0012-proxy-identity-recorded-as-provenance.md).
+
+## ADR-0013 [#adr-0013]
+
+[One governed endpoint over many upstreams, with double-underscore namespacing and no inferred routing](https://github.com/amir-gorji/mcpose/blob/v3.0.0/docs/adr/0013-multi-backend-composition.md).
+
+## ADR-0014 [#adr-0014]
+
+[Prompt calls run a middleware pipeline and are audited as a new event kind](https://github.com/amir-gorji/mcpose/blob/v3.0.0/docs/adr/0014-prompt-calls-run-a-pipeline-and-are-audited.md).
+
+## ADR-0015 [#adr-0015]
+
+[The sensitivity tier is covered by the chain, amending format v2 in place](https://github.com/amir-gorji/mcpose/blob/v3.0.0/docs/adr/0015-sensitivity-tier-covered-by-the-chain.md).
+
+## ADR-0016 [#adr-0016]
+
+[The delegation chain crosses the wire in request \_meta as unsigned attribution](https://github.com/amir-gorji/mcpose/blob/v3.0.0/docs/adr/0016-delegation-chain-wire-format.md).
+
+## ADR-0017 [#adr-0017]
+
+[The policy engine is deny-by-default middleware that stamps its decision on the context](https://github.com/amir-gorji/mcpose/blob/v3.0.0/docs/adr/0017-policy-engine-contract.md).
+
+## ADR-0018 [#adr-0018]
+
+[Cryptographic erasure destroys stored subject keys and never touches the chain](https://github.com/amir-gorji/mcpose/blob/v3.0.0/docs/adr/0018-cryptographic-erasure-and-the-chain.md).
+
+## ADR-0019 [#adr-0019]
+
+[The v3 release ships audit format v2, amended in place; the label rotation is reserved](https://github.com/amir-gorji/mcpose/blob/v3.0.0/docs/adr/0019-no-label-rotation-for-the-v3-release.md).
+
+## ADR-0020 [#adr-0020]
+
+[There is no fintech identity package; identity mapping is host resolver code](https://github.com/amir-gorji/mcpose/blob/v3.0.0/docs/adr/0020-no-fintech-identity-package.md).
+
+## ADR-0021 [#adr-0021]
+
+[A resumed session replays the client's initialize into a fresh transport, and carries its deadline with it](https://github.com/amir-gorji/mcpose/blob/v3.0.0/docs/adr/0021-session-resume-replays-the-initialize.md).
+
+## ADR-0022 [#adr-0022]
+
+[A mesh exposes upstream resources under `mcpose://<backendKey>/<uri>` and routes reads by that prefix alone](https://github.com/amir-gorji/mcpose/blob/v3.0.0/docs/adr/0022-mesh-resources-under-the-mcpose-scheme.md).

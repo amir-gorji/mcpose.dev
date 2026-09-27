@@ -53,7 +53,7 @@ Do not invent lastModified dates from build time.
 ## Metadata and static presentation
 
 Update `src/lib/site.ts`, `src/app/layout.tsx`, `src/app/sitemap.ts`, `src/app/robots.ts`, `src/app/opengraph-image.tsx`, `src/components/seo/json-ld.tsx`, favicon and touch icon to the new brand and general-purpose positioning.
-Use a 1200 by 630 social card with paper background, ink headline, cobalt opposing-path mark, `Make MCP work your way.` and `mcpose.dev`; no tiny code or legal-compliance claim.
+Use a 1200 by 630 social card with paper background, ink headline, cobalt open-layer mark, `Make MCP work your way.` and `mcpose.dev`; no tiny code or legal-compliance claim.
 Keep SoftwareSourceCode structured data for the library and accurate TechArticle/BreadcrumbList data for versioned articles.
 Repository, license, versions and breadcrumbs must match visible content; no fabricated ratings, adoption numbers or product offers.
 Core title, explanation, code and navigation must exist in initial HTML with JavaScript disabled.

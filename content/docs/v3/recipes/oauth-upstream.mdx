@@ -33,7 +33,7 @@ It cannot refresh, so when the upstream issues short-lived tokens, use an `authP
 For backends that run the MCP OAuth flow instead of accepting a static token, pass an `authProvider` to `createBackendClient`.
 
 ```ts title="backend.ts" copy="full"
-import { OAuthClientProvider } from '@modelcontextprotocol/sdk/client/auth';
+import type { OAuthClientProvider } from '@modelcontextprotocol/sdk/client/auth.js';
 
 // Your OAuthClientProvider implementation, see "A minimal provider" below
 const authProvider: OAuthClientProvider = /* ... */;
@@ -53,7 +53,7 @@ You never manage tokens yourself.
 An `OAuthClientProvider` is a small stateful object: it describes the client, persists the dynamic registration and tokens, and saves and reloads the PKCE verifier.
 
 ```ts title="oauth-provider.ts" copy="full"
-import { OAuthClientProvider } from '@modelcontextprotocol/sdk/client/auth';
+import type { OAuthClientProvider } from '@modelcontextprotocol/sdk/client/auth.js';
 import type {
   OAuthClientInformationFull,
   OAuthClientMetadata,

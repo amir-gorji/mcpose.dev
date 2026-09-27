@@ -1,45 +1,59 @@
 ---
 title: "@mcpose/store-redis"
-description: Redis-backed EventStore and SessionRegistry for mcpose to enable persistent SSE replay across restarts.
-topicId: packages-store-redis
+description: "Redis-backed session resume and SSE replay."
 ---
 
-# @mcpose/store-redis
+`@mcpose/store-redis@0.1.0` supplies a persistent SSE `EventStore` and a `SessionRegistry`.
+Use both so a reconnect on another process can restore the session before replaying its events.
 
-The `@mcpose/store-redis` package provides Redis storage adapters for mcpose.
-It implements the `PersistentEventStore` and `SessionRegistry` interfaces for multi-instance deployments.
-
-## Installation
+## Install
 
 ```bash
-npm install @mcpose/store-redis
+npm install mcpose@^3 @modelcontextprotocol/sdk@^1.17.0 @mcpose/store-redis@0.1.0 redis@^5
 ```
 
-Peer requirement: `mcpose >= 3.0.0 < 4`.
+## Configure HTTP storage
 
-## Features
+Transport options belong in the third argument of `startHttpProxy`.
+The host owns database credentials, TLS, connections, and shutdown.
 
-- Persistent SSE event storage surviving process restarts.
-- Session registry supporting distributed multi-process HTTP gateways.
-- Automatic TTL expiration for inactive streams.
-
-## Example
-
-```ts
-import { startHttpProxy } from 'mcpose';
+```ts title="redis-proxy.ts" check
+import { createBackendClient, startHttpProxy } from 'mcpose';
 import { createRedisEventStore, createRedisSessionRegistry } from '@mcpose/store-redis';
 import { createClient } from 'redis';
 
-const redis = createClient({ url: process.env.REDIS_URL });
-await redis.connect();
+const client = createClient({ url: process.env.REDIS_URL });
+client.on('error', console.error);
+await client.connect();
 
-const eventStore = createRedisEventStore(redis);
-const sessionRegistry = createRedisSessionRegistry(redis);
+const eventStore = createRedisEventStore(client);
+const sessionRegistry = createRedisSessionRegistry(client);
+const upstream = await createBackendClient({ command: 'node', args: ['./server.mjs'] });
 
-await startHttpProxy(upstream, {
-  name: 'cluster-gateway',
+await startHttpProxy(upstream, { name: 'redis-gateway' }, {
   port: 8080,
   eventStore,
   sessionRegistry,
 });
 ```
+
+The default bind address is `127.0.0.1`.
+For remote access, deliberately configure `host` and authenticate clients through `resolveIdentity`.
+
+## Retention and lifecycle
+
+Event history defaults to 30 minutes (`ttlMs: 1_800_000`); align retention with your configured `sessionTtlMs`.
+Session records retain their original expiration deadline across resumes.
+Client DELETE and TTL expiry remove the record; server shutdown preserves it for restart.
+Shutdown still runs `onSessionClosed`, so an audit manifest closes at that process boundary.
+
+A persistent event store alone does not restore a session.
+Neither adapter persists policy counters, in-flight calls, subscriptions, or the audit middleware's in-memory chain.
+See [identity and sessions](/docs/v3/concepts/identity-and-sessions/#resume) for the resume contract.
+
+## Redis options
+
+Requires Redis 6.2 or newer.
+Both factories accept an already-connected client and an optional `keyPrefix`; use separate prefixes for environments and tenants.
+The event store uses Redis streams with time-based retention, not the in-memory store's shared 1,000-event cap.
+The session registry uses expiring records keyed by session ID.

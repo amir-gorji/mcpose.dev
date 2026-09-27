@@ -19,9 +19,11 @@ Middleware can observe or rewrite both the request and the response, though rewr
 The compact form annotates high-risk tools so the LLM sees the requirement before it calls them.
 Append a warning to the `wire_transfer` description, leaving every other tool untouched.
 
-```ts title="list-tools-rewriting.ts" copy="full"
-import { startHttpProxy } from 'mcpose';
+```ts title="list-tools-rewriting.ts" check
+import { createBackendClient, startHttpProxy } from 'mcpose';
 import type { ListToolsMiddleware } from 'mcpose';
+
+const backend = await createBackendClient({ command: 'node', args: ['./server.mjs'] });
 
 // Annotate high-risk tools so the LLM sees the requirement before calling
 const enrichDescriptions: ListToolsMiddleware = async (req, next) => {
@@ -37,6 +39,7 @@ const enrichDescriptions: ListToolsMiddleware = async (req, next) => {
 };
 
 await startHttpProxy(backend, {
+  name: 'catalog-proxy',
   listToolsMiddleware: [enrichDescriptions],
 });
 ```
@@ -47,7 +50,7 @@ await startHttpProxy(backend, {
 Branch on `identity.roles` or `identity.claims` to tailor the listing per caller.
 Static `hiddenTools` applies to every caller alike, so per-caller gating is exactly the job of `listToolsMiddleware`.
 
-```ts title="role-aware-listing.ts" copy="full"
+```ts title="role-aware-listing.ts" check
 import type { ListToolsMiddleware } from 'mcpose';
 
 const roleAwareListing: ListToolsMiddleware = async (req, next, context) => {

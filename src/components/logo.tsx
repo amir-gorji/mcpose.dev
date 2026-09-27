@@ -11,7 +11,7 @@ const Logo = ({ size = 'nav', className, ...props }: LogoProps) => {
     <svg
       width={dimension}
       height={dimension}
-      viewBox="0 0 30 30"
+      viewBox="0 0 32 32"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
@@ -19,10 +19,8 @@ const Logo = ({ size = 'nav', className, ...props }: LogoProps) => {
       style={{ display: 'inline-block', flexShrink: 0, color: 'var(--color-accent)' }}
       {...props}
     >
-      <path
-        d="M2.8125 6.5625H10.3125L15 15L10.3125 23.4375H2.8125L7.5 15L2.8125 6.5625ZM19.6875 6.5625H27.1875L22.5 15L27.1875 23.4375H19.6875L15 15L19.6875 6.5625Z"
-        fill="currentColor"
-      />
+      <path d="M4 12V8Q4 4 8 4H24Q28 4 28 8V24Q28 28 24 28H12 M20 10H12Q10 10 10 12V20Q10 22 12 22H20Q22 22 22 20V16" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="14" y="14" width="4" height="4" rx="1" fill="currentColor" />
     </svg>
   );
 };

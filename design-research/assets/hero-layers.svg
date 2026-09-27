@@ -1,13 +1,21 @@
 <svg width="584" height="470" viewBox="0 0 584 470" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g id="Frame">
-<path id="Vector" d="M0 233H85C97.6667 233 109.333 227.333 120 216L226 110C236.667 99.3333 248.667 94 262 94H584" stroke="#D8DED7"/>
-<path id="Vector_2" d="M0 282H66C81.3333 282 95.3333 288.333 108 301L246 430C259.333 442 274.333 448 291 448H584" stroke="#D8DED7"/>
-<path id="Vector_3" d="M133 147L393 73L535 238L273 315L133 147Z" fill="white" stroke="#D8DED7"/>
-<path id="Vector_4" d="M112 190L372 116L514 281L252 358L112 190Z" fill="#E9EFFF" stroke="#2456E8"/>
-<path id="Vector_5" d="M91 234L351 160L493 325L231 402L91 234Z" fill="#2456E8"/>
-<path id="Vector_6" d="M0 257H95C105 257 117.333 263.667 132 277L225 364C234.333 372.667 244.667 374.667 256 370L487 302C501 298.667 513 297 523 297H584" stroke="#2456E8"/>
-<path id="Vector_7" d="M57 263C60.3137 263 63 260.314 63 257C63 253.686 60.3137 251 57 251C53.6863 251 51 253.686 51 257C51 260.314 53.6863 263 57 263Z" fill="#2456E8"/>
-<path id="Vector_8" d="M548 303C551.314 303 554 300.314 554 297C554 293.686 551.314 291 548 291C544.686 291 542 293.686 542 297C542 300.314 544.686 303 548 303Z" fill="#2456E8"/>
-</g>
+        <path d="M110 300L325 240L475 345L260 405Z" fill="#FFFFFF" stroke="#D8DED7" />
+        <path d="M130 195L345 135L495 240L280 300Z" fill="#2456E8" />
+        <path d="M150 90L365 30L515 135L300 195Z" fill="#FFFFFF" stroke="#D8DED7" />
+        <path
+          d="M40 135H150L300 195L280 300L475 345H548"
+          stroke="#2456E8"
+          stroke-width="2"
+          stroke-dasharray="4 6"
+        />
+        <circle cx="40" cy="135" r="5" fill="#2456E8" />
+        <circle cx="548" cy="345" r="5" fill="#2456E8" />
+        <g font-family="Geist, sans-serif" text-anchor="middle">
+          <text x="333" y="115" fill="#18221D" font-size="18">Client request</text>
+          <text x="312" y="220" fill="#FFFFFF" font-size="24" font-weight="600">mcpose</text>
+          <text x="320" y="244" fill="#FFFFFF" font-size="14">Your middleware</text>
+          <text x="292" y="332" fill="#18221D" font-size="18">MCP server</text>
+          <text x="67" y="113" fill="#56635B" font-size="12">Request</text>
+          <text x="522" y="376" fill="#56635B" font-size="12">Response</text>
+        </g>
 </svg>
-

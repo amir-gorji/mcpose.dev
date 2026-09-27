@@ -1,44 +1,62 @@
 ---
 title: "@mcpose/store-postgres"
-description: Postgres-backed EventStore and SessionRegistry for mcpose to enable persistent SSE replay across restarts.
-topicId: packages-store-postgres
+description: "Postgres-backed session resume and SSE replay."
 ---
 
-# @mcpose/store-postgres
+`@mcpose/store-postgres@0.1.0` supplies a persistent SSE `EventStore` and a `SessionRegistry`.
+Use both so a reconnect on another process can restore the session before replaying its events.
 
-The `@mcpose/store-postgres` package provides PostgreSQL storage adapters for mcpose.
-It implements durable transactional event storage and session tracking.
-
-## Installation
+## Install
 
 ```bash
-npm install @mcpose/store-postgres
+npm install mcpose@^3 @modelcontextprotocol/sdk@^1.17.0 @mcpose/store-postgres@0.1.0 pg@^8
 ```
 
-Peer requirement: `mcpose >= 3.0.0 < 4`.
+## Configure HTTP storage
 
-## Features
+Transport options belong in the third argument of `startHttpProxy`.
+The host owns database credentials, TLS, connections, and shutdown.
 
-- Transactional SSE notification storage.
-- Schema migrations included for session and event tables.
-- Robust restart durability for compliance-driven infrastructures.
-
-## Example
-
-```ts
-import { startHttpProxy } from 'mcpose';
+```ts title="postgres-proxy.ts" check
+import { createBackendClient, startHttpProxy } from 'mcpose';
 import { createPostgresEventStore, createPostgresSessionRegistry } from '@mcpose/store-postgres';
 import pg from 'pg';
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const client = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 
-const eventStore = await createPostgresEventStore(pool);
-const sessionRegistry = await createPostgresSessionRegistry(pool);
+const eventStore = createPostgresEventStore(client);
+const sessionRegistry = createPostgresSessionRegistry(client);
+await eventStore.init();
+await sessionRegistry.init();
+const upstream = await createBackendClient({ command: 'node', args: ['./server.mjs'] });
 
-await startHttpProxy(upstream, {
-  name: 'postgres-gateway',
+await startHttpProxy(upstream, { name: 'postgres-gateway' }, {
   port: 8080,
   eventStore,
   sessionRegistry,
 });
 ```
+
+The default bind address is `127.0.0.1`.
+For remote access, deliberately configure `host` and authenticate clients through `resolveIdentity`.
+
+## Retention and lifecycle
+
+Event history defaults to 30 minutes (`ttlMs: 1_800_000`); align retention with your configured `sessionTtlMs`.
+Session records retain their original expiration deadline across resumes.
+Client DELETE and TTL expiry remove the record; server shutdown preserves it for restart.
+Shutdown still runs `onSessionClosed`, so an audit manifest closes at that process boundary.
+
+A persistent event store alone does not restore a session.
+Neither adapter persists policy counters, in-flight calls, subscriptions, or the audit middleware's in-memory chain.
+See [identity and sessions](/docs/v3/concepts/identity-and-sessions/#resume) for the resume contract.
+
+## PostgreSQL options
+
+Both factories are synchronous and accept a `Pool`, `PoolClient`, or `Client`.
+Call each adapter's asynchronous `init()` before serving requests to create its table; this is table initialization, not a schema migration framework.
+Defaults are `mcpose_events` and `mcpose_sessions`; custom `table` names are validated SQL identifiers and may be schema-qualified.
+
+Expired rows are excluded on read.
+Both adapters prune every `pruneEveryWrites` writes (default 1,000), report prune failures through `onError`, and expose `pruneExpired()` for host scheduling.
+The host should close the pool only after proxy shutdown and pending writes finish.

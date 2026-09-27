@@ -12,8 +12,8 @@ Only the latest minor release line receives security fixes.
 
 | Version | Supported |
 |---|---|
-| 2.x | Yes |
-| < 2.0 | No |
+| 3.x | Yes |
+| < 3.0 | No |
 
 ## Reporting a vulnerability [#reporting-a-vulnerability]
 
@@ -28,7 +28,7 @@ Please include as much of the following as you can:
 - A description of the issue and its impact.
 - The exact version (or commit) you tested against.
 - Steps to reproduce, or a proof of concept.
-- Any affected package: `mcpose`, `@mcpose/audit`, or `@mcpose/testing`.
+- Any affected package: any of the eight published mcpose packages.
 
 ## Response commitments [#response-commitments]
 
@@ -42,6 +42,7 @@ In scope:
 - The proxy core, transports, and middleware pipeline (`mcpose`).
 - The audit chain, signing key derivation, encryption, and `ReplayManifest` (`@mcpose/audit`).
 - The compliance assertions (`@mcpose/testing`).
+- Policy, consent, telemetry, and the Redis/Postgres adapters.
 
 Out of scope:
 
@@ -51,7 +52,7 @@ Out of scope:
 
 ## Threat model and trust boundary [#threat-model-and-trust-boundary]
 
-The cryptographic trust model is documented in ADR-0003, listed on the [ADRs page](/docs/v3/project/adrs/).
+The cryptographic trust model is documented in ADR-0003, ADR-0004, and ADR-0018, listed on the [ADRs page](/docs/v3/project/adrs/).
 Read it before reporting issues that touch:
 
 - HMAC chain hash derivation or tamper-evidence.

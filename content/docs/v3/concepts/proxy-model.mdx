@@ -28,11 +28,12 @@ For each supported tool or resource, the proxy picks one of three routing paths:
 | Path | Option | Behavior |
 |---|---|---|
 | **Hidden** | `hiddenTools` / `hiddenResources` | Omitted from list responses; rejected with `TOOL_HIDDEN` / `RESOURCE_HIDDEN` at call time. |
-| **Pass-through** | `passThroughTools` / `passThroughResources` | Forwarded raw to the upstream; transforming middleware is skipped. Wrapped observers still run. |
+| **Pass-through** | `passThroughTools` / `passThroughResources` | Forwarded raw to the upstream; transforming middleware is skipped. Marked observers still run for tools; pass-through resources skip their pipeline. |
 | **Middleware** | everything else | Routed through the full `toolMiddleware` / `resourceMiddleware` pipeline. |
 
 Hidden beats pass-through: a tool listed in both `hiddenTools` and `passThroughTools` stays hidden.
-A governance decision is therefore never bypassed by a broad pass-through list.
+Hidden filtering cannot be bypassed by a pass-through list.
+Policy and consent middleware are skipped for pass-through tools, so do not exempt tools that require those gates.
 
 For hidden tools, the rejection is thrown inside the middleware pipeline, not before it.
 Middleware such as audit observes the rejected call and records an `outcome: 'rejected'` event.
@@ -63,12 +64,19 @@ The proxy preserves core request semantics end to end:
 - List-changed notifications are advertised and fanned out when the upstream supports them.
 - `list_tools` responses can be transformed through `listToolsMiddleware` without weakening local `hiddenTools` guarantees, because hidden filtering is applied both before and after the middleware.
 
+## V3 surfaces
+
+Named meshes combine tools, prompts, and resources; see [mesh routing](/docs/v3/concepts/mesh/) for URI and name contracts.
+`localTools` execute proxy-owned handlers inside the full tool pipeline.
+`promptMiddleware` covers prompt fetches, while prompt catalog middleware and prompt visibility options remain deferred.
+Request and upstream result metadata are stripped by default, with explicit opt-outs and separate delegation handling.
+
 ## Transport contrast [#transport]
 
 The proxy surface is identical on both transports; only the entry point differs:
 
 - **stdio**: `startProxy()` connects to an upstream spawned as a child process via `createBackendClient({ command, args })`.
-  Core has no session concept on stdio; sessions are an audit-only notion there.
+  Core has no HTTP session lifecycle on stdio; an audit session boundary must be managed by the host.
 - **HTTP/SSE**: `startHttpProxy()` serves remote clients with stateful sessions, each mapping 1:1 to an `mcp-session-id` lifetime.
   It adds per-session identity resolution through `resolveIdentity`, `validateSession` re-checks, mTLS via `tlsOptions`, and SSE reconnect replay through the event store.
 

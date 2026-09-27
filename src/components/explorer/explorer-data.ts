@@ -28,8 +28,12 @@ export const PRESETS: readonly PresetData[] = [
     after: ['The deployment guide is ready.', 'Source: internal docs'],
     explanation: 'The response carries the extra context your middleware added.',
     guideUrl: '/docs/v3/recipes/transform-responses/',
-    codeSnippet: `const withSource: ToolMiddleware = async (req, next) => {
+    codeSnippet: `import { hasToolContent } from 'mcpose';
+import type { ToolMiddleware } from 'mcpose';
+
+const withSource: ToolMiddleware = async (req, next) => {
   const result = await next(req);
+  if (!hasToolContent(result)) return result;
   return {
     ...result,
     content: [...result.content, {

@@ -1,80 +1,26 @@
 ---
 title: "Roadmap"
-description: "Where mcpose is heading."
+description: "What shipped in v3 and which boundaries remain."
 ---
 
-mcpose's roadmap is organized into shipped work, the next major release (v3), and long-term ambitions (v4).
-Everything below mirrors the [Roadmap section](https://github.com/amir-gorji/mcpose/blob/main/README.md#roadmap) of the repository README.
+## Shipped in v3 [#near-term]
 
-## Shipped [#shipped]
+The v3 release is available now.
+It includes named meshes with tools, prompts, and resources; local tools; request/result metadata stripping; catalog sanitization; and dispatcher-aware hiding.
+Policy, consent, OpenTelemetry, Redis, and Postgres are released companion packages.
+Audit format v2 supports tool/prompt evidence, keyed verification, subject erasure, and awaited session sealing.
+HTTP sessions can resume through persistent session and event adapters.
 
-These landed in the current 2.x release line:
+## Remaining boundaries [#long-term]
 
-- [x] Composable middleware: `startProxy()`, `startHttpProxy()`, `createProxyServer()`
-- [x] Streamable HTTP transport with stateful sessions and SSE reconnect replay
-- [x] Identity resolution: `resolveIdentity` hook, `Identity` on `ProxyContext`
-- [x] mTLS support: `tlsOptions` on `HttpProxyOptions`
-- [x] `@mcpose/audit`: HMAC chain, Merkle proofs, `ReplayManifest`, sensitivity tiers
-- [x] `@mcpose/testing`: compliance assertion helpers
+- Full session re-execution is not SSE reconnect replay and is not implemented in v3.
+- Mesh resource templates and subscriptions remain unavailable.
+- Prompt catalog middleware, prompt hiding, and prompt pass-through options remain deferred.
+- Delegation is unsigned attribution; interoperable signed hops require a trust and key-distribution design.
+- Persistent adapters do not make policy counters or audit chains distributed.
+- Compliance reports and managed audit storage are outside the current library contract.
 
-Audit format v2 and the keyed verifiers are merged on `main` but not yet published.
-See the [changelog](/docs/v3/project/changelog/) for what is and is not on npm.
-
-## Next: v3 [#next]
-
-v3 targets Q1 2027.
-
-- `@mcpose/policy`: RBAC policy engine
-- `@mcpose/fintech-identity`: OIDC to financial identity profile
-- `@mcpose/otel`: OpenTelemetry spans adapter (does not exist yet)
-- Persistent EventStore adapters: Redis and Postgres
-- GDPR/CCPA consent middleware with cryptographic erasure
-- Signed delegation JWTs
-- Budget enforcement
-
-## Long term: v4 [#long-term]
-
-v4 targets Q3 2027.
-
-- Compliance report generator
-- Runnable compliance playbook
-- Full session replay
-- `@mcpose/splunk` and `@mcpose/datadog` adapters
-- `@mcpose/a2a` bridge
-
-## Timeline [#timeline]
-
-| Version | Target | Scope |
-| --- | --- | --- |
-| v2 | Aug 2026 | Core pipeline, transports, identity, mTLS, audit, testing |
-| v3 | Q1 2027 | Policy, fintech identity, otel, EventStore adapters, consent and erasure, delegation, budget enforcement |
-| v4 | Q3 2027 | Compliance tooling, full replay, observability adapters, A2A bridge |
-
-## Protocol watch [#protocol-watch]
-
-We track adjacent agent interoperability protocols in case they change the integration surface.
-
-- A2A: agent-to-agent communication between platforms; informs the long-term `@mcpose/a2a` bridge.
-- ATXP: agent transfer and handoff between platforms; informs the signed delegation JWT design.
-- OpenAI agent protocol: the emerging standard for agent task execution; watched for overlap with MCP tool discovery and sessions.
-
-## A note on dates [#note-on-dates]
-
-Roadmap items are plans, not promises.
-Dates are targets, not deadlines.
-Priorities may shift as the protocol ecosystem and compliance requirements evolve.
-
-## Next steps [#next-steps]
-
-<LinkCards>
-  <LinkCard
-    href="/docs/v3/project/contributing/"
-    title="Contributing →"
-    body="Development setup, the common pnpm commands, and the project conventions."
-  />
-  <LinkCard
-    href="/docs/v3/project/adrs/"
-    title="ADRs →"
-    body="Architecture decision records behind the audit chain and serialization format."
-  />
-</LinkCards>
+There is no released `@mcpose/fintech-identity` package; the host resolves its own identity profile (ADR-0020).
+No additional audit label rotation ships merely because the core version is v3 (ADR-0019).
+These boundaries are not dated delivery promises.
+Track active work in the [library issues](https://github.com/amir-gorji/mcpose/issues) and [architecture records](/docs/v3/project/adrs/).

@@ -187,3 +187,6 @@
     width: 100%;
   }
 }
+
+.desktopArtwork { width: 100%; }
+.visualCol { min-width: 0; }

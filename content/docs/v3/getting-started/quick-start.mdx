@@ -1,17 +1,15 @@
 ---
 title: "Quick Start"
 description: "Wrap an upstream MCP server with a logging middleware and serve it over stdio."
-prev: "/docs/getting-started/install"
-next: "/docs/concepts/proxy-model"
 ---
 
 Wrap an upstream MCP server with a logging middleware and serve it over stdio.
-Ten lines of glue — nothing upstream changes.
+Give your proxy a name and keep the upstream unchanged.
 
 ## Prerequisites [#prerequisites]
 
 - Node.js `20` or newer.
-- `@modelcontextprotocol/sdk ≥ 1.0` as a peer dependency.
+- `@modelcontextprotocol/sdk ^1.17.0` as a peer dependency.
 - TypeScript is optional — mcpose ships ESM with first-class types.
 
 ## Install [#install]
@@ -21,7 +19,7 @@ Ten lines of glue — nothing upstream changes.
 npm install mcpose
 
 # peer dependency — installed separately
-npm install @modelcontextprotocol/sdk@">=1.0.0"
+npm install @modelcontextprotocol/sdk@"^1.17.0"
 
 # compliance audit trails (optional)
 npm install @mcpose/audit
@@ -32,7 +30,7 @@ npm install @mcpose/audit
 Connect to the upstream, define middleware, start the proxy.
 Middleware follows the onion model: each layer runs before *and* after the inner pipeline.
 
-```ts title="proxy.ts" copy="strip-line-comments"
+```ts title="proxy.ts" copy="strip-line-comments" check
 import { createBackendClient, startProxy } from 'mcpose';
 import type { ToolMiddleware } from 'mcpose';
 
@@ -52,6 +50,7 @@ const logging: ToolMiddleware = async (req, next) => {
 
 // 3 · Start the proxy on stdio
 await startProxy(backend, {
+  name: 'my-proxy',
   toolMiddleware: [logging],
 });
 ```
@@ -60,6 +59,8 @@ await startProxy(backend, {
 
 ## Run it [#run]
 
+Save the example as `proxy.ts` and replace the backend path with your upstream server.
+Run `npx tsx proxy.ts` to launch it.
 The proxy is a normal MCP server.
 Point any client at it:
 
@@ -67,8 +68,8 @@ Point any client at it:
 {
   "mcpServers": {
     "governed-search": {
-      "command": "node",
-      "args": ["./proxy.mjs"]
+      "command": "npx",
+      "args": ["tsx", "/absolute/path/to/proxy.ts"]
     }
   }
 }

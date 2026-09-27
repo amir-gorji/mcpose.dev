@@ -41,7 +41,7 @@ type Middleware<Req, Res> = (
 ```
 
 `next(req)` invokes the rest of the pipeline and resolves with the upstream's response.
-`ToolMiddleware`, `ResourceMiddleware`, and `ListToolsMiddleware` are aliases that fix `Req` and `Res` to the MCP message shapes for each call type.
+`ToolMiddleware`, `ResourceMiddleware`, `PromptMiddleware`, and `ListToolsMiddleware` are aliases that fix `Req` and `Res` to the MCP message shapes for each call type.
 See the [type definitions](#type-definitions) below for the full declarations.
 
 ## Response-processing order [#response-processing-order]
@@ -68,11 +68,17 @@ The array position of `piiMW` before `auditMW` means the PII layer redacts the r
 
 ## Why this order [#why-this-order]
 
-`[piiMW, auditMW]` reads as "PII runs before audit", meaning audit never sees raw PII.
+`[piiMW, auditMW]` reads as "PII runs before audit", meaning audit sees the redacted response.
 That intent maps naturally to array position.
 `compose([outerMW, innerMW])` uses the **opposite** outermost-first convention: its first argument is the outermost layer.
 `ProxyOptions` arrays are therefore **not** interchangeable with `compose()` arguments, and an array must not be passed directly to `compose()`.
 The decision is recorded in [ADR-0002](/docs/v3/project/adrs/#adr-0002).
+
+Audit captures request arguments on entry, before an inner redactor runs.
+Ordering alone does not sanitize audit inputs; redact sensitive arguments before the audit layer captures them, or classify and encrypt them appropriately.
+
+Prompt fetches use the same ordering through `promptMiddleware`.
+Wire policy, consent, and audit prompt handles explicitly; `prompts/list` has no middleware, hidden list, or pass-through option in v3.
 
 ## markPassThroughObserver [#markpassthroughobserver]
 
@@ -103,10 +109,10 @@ interface ProxyContext {
   signal?: AbortSignal;
   /** Resolved caller identity. Present when resolveIdentity is configured. */
   identity?: Identity;
-  /** Agent delegation chain: populated from A2A handoff headers. */
+  /** Unsigned attribution from request _meta, oldest-first. */
   delegatedFrom?: Identity[];
-  /** Reserved for v3 policy engine. */
-  policy?: never;
+  proxy?: { name: string; version: string };
+  policy?: { decision: 'allow' | 'deny'; ruleId?: string; reason?: string };
 }
 
 type Middleware<Req, Res> = (
@@ -118,6 +124,7 @@ type Middleware<Req, Res> = (
 type ToolMiddleware      = Middleware<CallToolRequest, CompatibilityCallToolResult>;
 type ResourceMiddleware  = Middleware<ReadResourceRequest, ReadResourceResult>;
 type ListToolsMiddleware = Middleware<ListToolsRequest, ListToolsResult>;
+type PromptMiddleware = Middleware<GetPromptRequest, GetPromptResult>;
 
 // Wraps a middleware so it still runs for passThroughTools (returns a new
 // middleware; the input is not mutated). Use for observers, never transformers.

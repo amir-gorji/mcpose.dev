@@ -141,8 +141,9 @@ export default async function DocsPage({ params }: PageProps) {
               })}
         >
           <Breadcrumb trail={breadcrumbTrail(pageTree, page.url, page.data.title, typedVersion)} />
+          <h1 className={styles.title}>{page.data.title}</h1>
           <MobileToc items={page.data.toc} />
-          <MDX components={getMDXComponents({})} />
+          <MDX components={getMDXComponents({ h1: () => null })} />
           <Pager prev={prevTarget} next={nextTarget} />
         </article>
       </main>

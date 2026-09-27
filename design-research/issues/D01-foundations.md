@@ -9,7 +9,7 @@ Implement in the redesign branch; pushing to main currently publishes production
 ## Design authority
 
 [Foundations](https://www.figma.com/design/97unM73vIbH5ot6ccs0EJc?node-id=4-7), [components](https://www.figma.com/design/97unM73vIbH5ot6ccs0EJc?node-id=9-2), and [home](https://www.figma.com/design/97unM73vIbH5ot6ccs0EJc?node-id=10-2).
-Use `design-research/design-tokens.json` for the exported variables and typography, and `design-research/assets/logo.svg` for the actual opposing-path mark.
+Use `design-research/design-tokens.json` for the exported variables and typography, and `design-research/assets/logo.svg` for the actual open-layer mark.
 If the handoff bundle is unavailable, export the mark from Figma node `12:3`; do not redraw it approximately.
 The values below resolve gaps in the prototype and are the implementation contract.
 

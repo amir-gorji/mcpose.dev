@@ -83,6 +83,7 @@ The proxy awaits `onSessionClosed` on every session termination path:
 ```ts
 const proxy = await startHttpProxy(backend, {
   name: 'gateway',
+}, {
   port: 8080,
   onSessionClosed: async (sessionId) => {
     await audit.closeSession(sessionId);
@@ -98,3 +99,54 @@ This prevents lost audit manifests during container shutdowns.
 SSE reconnect replay in v3 is strictly scoped per session ID (library issue #154).
 Stream IDs reach the store prefixed with `<sessionId>:<streamId>`.
 Replay requests providing a `Last-Event-ID` from another session are rejected with HTTP 400.
+
+## Network and privacy defaults
+
+HTTP binds to `127.0.0.1`, not every interface.
+Remote gateways must opt into a non-loopback `host` and configure authentication.
+Default limits are 1,000 sessions and a 30-minute TTL; use `Infinity` only when deliberately removing those bounds.
+`ProxyOptions.name` and the options argument itself are required.
+
+Client request `_meta` and upstream top-level result `_meta` are stripped by default, including pass-through paths.
+Disable `stripRequestMeta` or `stripResultMeta` only when the integration needs those fields.
+Progress forwarding remains supported; delegation has its own extraction and forwarding path.
+
+## Expanded middleware surface
+
+`hiddenTools` now accepts a predicate, with `dispatcherAwareBlock` for meta-tools whose arguments name a target.
+`localTools` implement proxy-owned tools inside the full pipeline.
+`sanitizeToolDescriptions` sanitizes catalog descriptions, and `mapToolResult` requires explicit handling of all result channels.
+
+`promptMiddleware` gates and audits prompt fetches.
+Wire `policy.promptMiddleware`, `consent.promptMiddleware`, and `audit.promptMiddleware` explicitly; a tool middleware array does not protect prompts.
+The policy and consent factories return handles, not middleware functions.
+Policy uses `rules`, not a role-keyed configuration object; see [policy](/docs/v3/packages/policy/).
+The telemetry adapter export is `createOtelTelemetry(tracer)`.
+
+## Delegation and provenance
+
+Core reads unsigned, oldest-first attribution from `params._meta["mcpose/delegation"]` and forwards the chain plus the current caller.
+It validates the wire shape and rejects loops with `DELEGATION_INVALID`.
+Wire entries never grant roles or claims.
+Proxy name/version appear separately as `ctx.proxy`; policy decisions are recorded in `ctx.policy`.
+
+## Mesh resources and persistent sessions
+
+Named backends expose tools and prompts as `key__name` and resources as `mcpose://key/upstreamUri`.
+Backend keys are validated identifiers without `__`; unroutable names and URIs fail explicitly.
+Mesh resource templates and subscriptions are still unavailable.
+
+Pair a persistent event store with a session registry to restore HTTP negotiation and replay after restart.
+Postgres adapters require `await eventStore.init()` and `await sessionRegistry.init()` before serving.
+Session restoration does not restore in-flight execution, audit chain memory, or policy counters.
+
+## Audit and assertion changes
+
+`assertAuditChainIntegrity` rejects empty chains.
+`assertReplayManifestValid` recomputes roots and checks proof indices; `assertPiiRedacted` checks high-tier encrypted structure.
+`assertDelegationHonored` takes an `AuditEvent`, not an identity array, and checks structural continuity.
+`verifyAuditChain` returns a discriminated result object; inspect `.valid`.
+
+Audit now supports prompt events, awaited draining, retryable manifest delivery, and optional per-subject erasable keys.
+Key destruction does not erase low/medium plaintext or external copies.
+Do not reset or mix historical format-v1 records into a new format-v2 chain.

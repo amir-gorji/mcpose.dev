@@ -45,21 +45,21 @@
     }
   ],
   "screens": {
-    "Home · Light": "10:2",
-    "Home · Dark": "10:3",
-    "Home · Mobile": "10:4",
-    "Docs · v3 Middleware": "10:5",
-    "Docs · v2 Middleware": "10:6",
-    "Docs · Migration": "10:7",
-    "Docs · Package reference": "10:8",
-    "Docs · Mobile": "10:9",
-    "Search · v3": "10:10",
-    "Versions · Menu": "10:11",
-    "Version · Topic unavailable": "10:12",
-    "Explore · Transform": "10:13",
-    "Explore · Tool filtering": "10:14",
-    "Explore · Mesh": "10:15",
-    "Explore · Audit": "10:16"
+    "Home \u00b7 Light": "10:2",
+    "Home \u00b7 Dark": "10:3",
+    "Home \u00b7 Mobile": "10:4",
+    "Docs \u00b7 v3 Middleware": "10:5",
+    "Docs \u00b7 v2 Middleware": "10:6",
+    "Docs \u00b7 Migration": "10:7",
+    "Docs \u00b7 Package reference": "10:8",
+    "Docs \u00b7 Mobile": "10:9",
+    "Search \u00b7 v3": "10:10",
+    "Versions \u00b7 Menu": "10:11",
+    "Version \u00b7 Topic unavailable": "10:12",
+    "Explore \u00b7 Transform": "10:13",
+    "Explore \u00b7 Tool filtering": "10:14",
+    "Explore \u00b7 Mesh": "10:15",
+    "Explore \u00b7 Audit": "10:16"
   },
   "finalStates": {
     "createdNodeIds": [
@@ -383,6 +383,33 @@
       "28:242",
       "28:263",
       "28:287"
+    ]
+  },
+  "releasedV3Revision": {
+    "sourceCommit": "72e42dc58774f671a27c8d5fc8fb8bbb7d5faa26",
+    "identity": "94:2",
+    "mobilePostgres": "95:148",
+    "logoNodes": [
+      "12:3",
+      "13:14",
+      "13:183",
+      "14:30",
+      "14:104",
+      "15:40",
+      "15:107",
+      "15:188",
+      "21:86",
+      "21:158"
+    ],
+    "heroNodes": [
+      "12:34",
+      "13:41"
+    ],
+    "changes": [
+      "Open nested-layer logo, favicon and social identity",
+      "Separated hero plates with native text labels",
+      "Released API snippets including hasToolContent guards",
+      "Mobile article spacing, readable title and PostgreSQL specimen"
     ]
   }
 }

@@ -4,3 +4,12 @@ allowBuilds:
   # Pulled in by wrangler; its postinstall fetches the local Workers runtime
   # binary used by `wrangler dev`.
   workerd: true
+minimumReleaseAgeExclude:
+  - '@mcpose/audit@3.0.0'
+  - '@mcpose/consent@1.0.0'
+  - '@mcpose/otel@0.1.0'
+  - '@mcpose/policy@1.0.0'
+  - '@mcpose/store-postgres@0.1.0'
+  - '@mcpose/store-redis@0.1.0'
+  - '@mcpose/testing@3.0.0'
+  - mcpose@3.0.0

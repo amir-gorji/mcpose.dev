@@ -19,7 +19,7 @@ export const DOCS_VERSIONS: Record<DocsVersionId, VersionInfo> = {
     status: 'Current',
     basePath: '/docs/v3',
     sourceTag: 'v3.0.0',
-    sourceCommit: 'HEAD',
+    sourceCommit: '72e42dc58774f671a27c8d5fc8fb8bbb7d5faa26',
     packages: {
       mcpose: PUBLISHED_V3.core,
       '@mcpose/policy': PUBLISHED_V3.policy,

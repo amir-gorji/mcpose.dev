@@ -16,7 +16,10 @@ That is not marketing phrasing, it is the removal story: there is nothing upstre
 2. **Delete the proxy entry point.** Your `startProxy` or `startHttpProxy` call and your middleware functions. Middleware here is a plain `(req, next, ctx) => Promise<Result>` function with no framework registration, so there is nothing to unwire.
 3. **Uninstall.** `npm uninstall mcpose @mcpose/audit @mcpose/testing`.
 
-There is no database to migrate, no config format to export, and no state to drain.
+First stop accepting new work, close the HTTP server, and await session hooks and manifest delivery.
+If persistent adapters are configured, retire their session/event records according to your retention policy.
+Preserve audit archives, matching verifiers, and any subject keys that must remain available.
+Mesh clients also need new endpoints and unprefixed names/URIs; local tools need replacement implementations.
 
 ## Your audit archive was never ours [#audit-archive]
 
@@ -44,11 +47,9 @@ If any of these are load-bearing for a control you have attested to, removal is 
 
 Verifying an archive you already wrote needs the verifier that matches its format, and that is where the honest caveat lives.
 
-**On npm today**, `@mcpose/audit` 2.0.3 exports `verifyMerkleProof` and nothing else.
-There is no shipped chain verifier, so verifying a v1 archive after removal means reimplementing the chain hash yourself.
-
-**On `main`**, `verifyAuditChain` and `verifyManifestSignature` exist, but `@mcpose/audit` imports from `mcpose` at runtime, so a verifier-only install still pulls in the proxy core.
-That is a packaging defect, not a design one, and it is worth knowing before you plan an exit.
+`@mcpose/audit@3.0.0` exports `verifyAuditChain` and `verifyManifestSignature` for format-v2 evidence.
+A verifier-only install still has a runtime dependency on `mcpose`.
+Historical format-v1 archives need the matching pinned 2.x verifier and procedures; v3 does not convert them.
 
 The counterweight is that the format is specified rather than implied.
 Canonical serialization, the domain labels, the Merkle construction, and the manifest signature payload are all written down in [ADR-0003 and ADR-0004](/docs/v3/project/adrs/).

@@ -14,7 +14,7 @@ export const MobileToc = ({ items }: TocProps) => {
   if (h2Count < 3) return null;
 
   return (
-    <div style={{ margin: '16px 0 24px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: 12 }}>
+    <div className={styles.mobileToc}>
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
@@ -27,6 +27,7 @@ export const MobileToc = ({ items }: TocProps) => {
           background: 'none',
           border: 'none',
           padding: 0,
+          minHeight: 44,
           fontFamily: 'var(--font-sans)',
           fontSize: 14,
           fontWeight: 500,

@@ -13,7 +13,7 @@ const Breadcrumb = ({ trail }: BreadcrumbProps) => {
   const current = trail[trail.length - 1];
 
   return (
-    <div className={styles.breadcrumb}>
+    <nav aria-label="Breadcrumb" className={styles.breadcrumb}>
       {leading.map((crumb) => (
         <Fragment key={crumb.name}>
           {crumb.url ? (
@@ -27,7 +27,7 @@ const Breadcrumb = ({ trail }: BreadcrumbProps) => {
         </Fragment>
       ))}
       <span className={styles.current}>{current.name}</span>
-    </div>
+    </nav>
   );
 };
 

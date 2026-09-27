@@ -33,12 +33,18 @@ Peers: `mcpose >= 3.0.0 < 4`, `@mcpose/audit >= 3.0.0 < 4`.
 - `assertAuditChainIntegrity(events)`: Throws if the chain is empty, has duplicate hashes, or non-sequential replay manifest positions.
 - `assertReplayManifestValid(events, manifest)`: Recomputes the Merkle root from the events and verifies each proof against the manifest root.
 - `assertPiiRedacted(event, patterns)`: Asserts no plaintext field matches forbidden patterns; structurally verifies high-tier encrypted payloads.
-- `assertDelegationHonored(event)`: Verifies that delegation metadata exists and every hop identifies a valid subject.
+- `assertDelegationHonored(event)`: Allows an absent or empty chain; otherwise requires nonempty, distinct hop subjects and rejects a chain containing the event's own subject.
+  This is structural continuity, not proof of signatures or chronology.
 
 ## Example
 
-```ts
-import { test } from 'vitest';
+```ts title="audit.test.ts" check
+import { test } from 'node:test';
+import type { AuditEvent, ReplayManifest } from '@mcpose/audit';
+
+// Host-provided access to persisted test evidence.
+declare function getRecordedEvents(): Promise<AuditEvent[]>;
+declare function getSessionManifest(): Promise<ReplayManifest>;
 import {
   assertAuditChainIntegrity,
   assertReplayManifestValid,

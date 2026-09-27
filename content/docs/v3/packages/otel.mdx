@@ -1,39 +1,36 @@
 ---
 title: "@mcpose/otel"
-description: OpenTelemetry span adapter for the mcpose onTelemetry hook.
-topicId: packages-otel
+description: "Post-hoc OpenTelemetry spans from the proxy telemetry hook."
 ---
 
-# @mcpose/otel
+`@mcpose/otel@0.1.0` adapts `onTelemetry` to an OpenTelemetry tracer.
+Your application installs and configures the SDK, exporter, and sampler.
 
-The `@mcpose/otel` package bridges the `onTelemetry` hook in mcpose with OpenTelemetry tracers.
-It creates structured spans for every tool call with timing, outcome status, and caller identity.
-
-## Installation
+## Install
 
 ```bash
-npm install @mcpose/otel
+npm install mcpose@^3 @modelcontextprotocol/sdk@^1.17.0 @mcpose/otel@0.1.0 @opentelemetry/api@^1
 ```
 
-Peer requirement: `mcpose >= 3.0.0 < 4`.
+## Connect a tracer
 
-## Features
-
-- Automatic span creation per tool call.
-- Semantic attributes for tool name, duration, session ID, and identity subject.
-- Standard OpenTelemetry exporter compatibility (Jaeger, Prometheus, OTLP collectors).
-
-## Example
-
-```ts
-import { startProxy } from 'mcpose';
-import { createOtelHook } from '@mcpose/otel';
+```ts title="telemetry.ts" check
+import { createBackendClient, startProxy } from 'mcpose';
+import { createOtelTelemetry } from '@mcpose/otel';
 import { trace } from '@opentelemetry/api';
 
-const tracer = trace.getTracer('mcpose-tracer');
-
+const upstream = await createBackendClient({ command: 'node', args: ['./server.mjs'] });
 await startProxy(upstream, {
   name: 'monitored-proxy',
-  onTelemetry: createOtelHook(tracer),
+  onTelemetry: createOtelTelemetry(trace.getTracer('mcpose-gateway')),
 });
 ```
+
+## Span semantics
+
+One completed span is emitted per `TelemetryEvent`.
+A `tool_call` span is backdated using `duration_ms` and ended immediately; a `backend_degraded` span is a zero-duration marker.
+Spans are unparented and never enter the active context.
+Correlate through `mcpose.request.id`, `mcpose.session.id`, `mcpose.identity.sub`, and `mcpose.proxy.*` attributes rather than expecting a nested upstream trace.
+A throwing telemetry sink does not fail the proxied call.
+The adapter exports traces, not a metrics pipeline, and it does not automatically instrument prompt fetches.

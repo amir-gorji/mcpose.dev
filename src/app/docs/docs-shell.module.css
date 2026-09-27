@@ -7,7 +7,7 @@
   margin: 0 auto;
   padding: 0 var(--space-8);
   display: flex;
-  gap: calc(var(--space-8) * 2);
+  gap: 48px;
   align-items: flex-start;
 }
 
@@ -15,12 +15,15 @@
   flex: 1;
   min-width: 0;
   max-width: 720px;
-  padding: calc(var(--space-8) * 1.6) 0 calc(var(--space-8) * 3);
+  padding: 48px 0 96px;
 }
 
 .title {
-  font-size: 32px;
-  margin: 0 0 var(--space-4);
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+  overflow-wrap: anywhere;
+  margin: 0 0 24px;
 }
 
 /* The article's first paragraph is the lede. */
@@ -41,6 +44,6 @@
 
   .main {
     max-width: none;
-    padding-top: var(--space-8);
+    padding-top: 24px;
   }
 }

@@ -29,7 +29,7 @@ const walk = async (dir) => {
 const CLIPBOARD = {
   bash: [
     'npm install mcpose',
-    'npm install @modelcontextprotocol/sdk@">=1.0.0"',
+    'npm install @modelcontextprotocol/sdk@"^1.17.0"',
     'npm install @mcpose/audit',
   ].join('\n'),
   ts: [
@@ -49,6 +49,7 @@ const CLIPBOARD = {
     '};',
     '',
     'await startProxy(backend, {',
+    "  name: 'my-proxy',",
     '  toolMiddleware: [logging],',
     '});',
   ].join('\n'),
@@ -56,8 +57,8 @@ const CLIPBOARD = {
     '{',
     '  "mcpServers": {',
     '    "governed-search": {',
-    '      "command": "node",',
-    '      "args": ["./proxy.mjs"]',
+    '      "command": "npx",',
+    '      "args": ["tsx", "/absolute/path/to/proxy.ts"]',
     '    }',
     '  }',
     '}',
@@ -326,4 +327,12 @@ test('the preview Lighthouse gates differ from production only where they must',
     [],
     'a preview Lighthouse gate drifted from production; preview must not be the looser environment',
   );
+});
+
+test('every documentation article has exactly one visible title', async () => {
+  for (const file of await walk('docs')) {
+    const html = read(file);
+    if (!html.includes('data-pagefind-body')) continue;
+    assert.equal([...html.matchAll(/<h1(?:\s|>)/g)].length, 1, file);
+  }
 });

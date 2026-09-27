@@ -16,6 +16,9 @@ This is a pnpm + Turborepo monorepo.
 | `packages/core` | The `mcpose` package: proxy pipeline, transports, identity, governance. |
 | `packages/audit` | The `@mcpose/audit` package: HMAC audit chain, Merkle `ReplayManifest`, sensitivity tiers. |
 | `packages/testing` | The `@mcpose/testing` package: runner-agnostic compliance assertions. |
+| `packages/policy`, `packages/consent` | Tool and prompt gates. |
+| `packages/otel` | OpenTelemetry adapter. |
+| `packages/store-redis`, `packages/store-postgres` | Persistent SSE event and session adapters. |
 | `examples/` | Runnable examples (type-checked in CI). |
 | `docs/adr/` | Architecture Decision Records. |
 | `CONTEXT.md` | The ubiquitous-language glossary for the domain. |

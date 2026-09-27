@@ -1,73 +1,39 @@
 ---
 title: "Changelog"
-description: "What is published, what is merged but unreleased, and what upgrading does to archives written under an older audit format."
+description: "The v3 release and its compatibility boundaries."
 ---
 
-This page answers two questions: **what version am I on**, and **what happens to audit archives written under an older version if I upgrade**.
-The second one matters more here than it would for an ordinary library.
-An audit format change means chains written under the old format stop verifying under the new one, so an upgrade is a records-retention decision, not just a dependency bump.
+## v3 release [#published]
 
-The canonical file is [`CHANGELOG.md`](https://github.com/amir-gorji/mcpose/blob/main/CHANGELOG.md) in the repository.
+These docs describe the release tagged [`v3.0.0`](https://github.com/amir-gorji/mcpose/tree/v3.0.0), commit `72e42dc58774f671a27c8d5fc8fb8bbb7d5faa26`.
+All eight packages are published on npm.
 
-## Published on npm [#published]
+| Package | Version |
+| --- | --- |
+| `mcpose` | 3.0.0 |
+| `@mcpose/audit` | 3.0.0 |
+| `@mcpose/testing` | 3.0.0 |
+| `@mcpose/policy` | 1.0.0 |
+| `@mcpose/consent` | 1.0.0 |
+| `@mcpose/otel` | 0.1.0 |
+| `@mcpose/store-redis` | 0.1.0 |
+| `@mcpose/store-postgres` | 0.1.0 |
 
-| Package | Version | Audit format |
-|---|---|---|
-| `mcpose` | 2.1.1 | — |
-| `@mcpose/audit` | 2.0.3 | v1 |
-| `@mcpose/testing` | 2.0.3 | v1 |
+## What changed
 
-These are the versions `npm install` gives you today.
+V3 adds named meshes, including resource URIs; local tools; prompt middleware and audit; metadata stripping; catalog sanitization; and dispatcher-aware tool blocking.
+Proxy names are required and recorded as provenance.
+Delegation crosses the wire as validated, unsigned attribution.
+Policy, consent, telemetry, persistent sessions, and event replay are available through the companion packages.
 
-## Unreleased [#unreleased]
+Audit 3.0 writes format v2, adds keyed verifiers and erasable subject keys, and drains pending events before signing the complete manifest.
+Session-close hooks are awaited, including shutdown; SSE replay is isolated per session.
+Testing assertions reject empty chains, recompute manifest roots, inspect encrypted structure, and validate delegation continuity on an event.
 
-<Note kicker="Note · merged, not published">
-Everything in this section is on `main` and is **not** installable from npm.
-Several docs pages describe this code because it is the current shape of the project; each of those pages carries a fence saying so.
-</Note>
+See the [migration guide](/docs/v3/migration/from-v2/) for upgrade steps, the [package reference](/docs/v3/packages/mcpose/) for the API, and the [release changelog](https://github.com/amir-gorji/mcpose/blob/v3.0.0/CHANGELOG.md) for the original release notes.
 
-- **`@mcpose/audit` 3.0.0 — audit format v2.** Breaking. Canonical preimages, a signature covering the whole manifest rather than only the Merkle root, domain-separated Merkle leaves and nodes, `keyId` no longer derived as `SHA256(secret)`, and ciphertext keys bound to session, position, and event with AES-GCM AAD. Adds the keyed verifiers `verifyAuditChain` and `verifyManifestSignature`. See [ADR-0004](/docs/v3/project/adrs/).
-- **`@mcpose/testing` 3.0.0 — strengthened assertions.** Breaking. `assertAuditChainIntegrity` throws on an empty chain; `assertReplayManifestValid` recomputes the Merkle root and checks proof indices; `assertPiiRedacted` structurally checks high-tier events; `assertDelegationHonored` takes an `AuditEvent` rather than an `Identity[]`.
-- **`mcpose` 2.2.0** — audit-visible rejections, pass-through observers.
+## Historical audit archives [#v1-to-v2]
 
-### Upgrading across the v1 to v2 boundary [#v1-to-v2]
-
-Chains, manifests, key ids, and ciphertexts written under v1 do not verify under v2, and the reverse is also true.
-There is deliberately no dual-format mode.
-v1 chains are forgeable by any manifest-holder with a guessable secret, so continuing to attest them would lend the new verifier's credibility to artifacts that do not deserve it.
-
-If you hold v1 archives, keep a pinned `@mcpose/audit` 2.x alongside the new one and verify old archives with it.
-
-## 2.1.1 — 2026-07-16 [#v2-1-1]
-
-Re-release of 2.1.0, which was published and then unpublished. npm does not allow republishing a version number, so the corrected build shipped as 2.1.1. No functional change from 2.1.0.
-
-## 2.1.0 — 2026-07-16 [#v2-1-0]
-
-- `BackendConfig` gains `headers`, sent on every request to an HTTP/SSE backend.
-- `BackendConfig` gains `authProvider`, driving the MCP OAuth flow with transparent token refresh. HTTP/SSE only; ignored on stdio.
-- `ProxyOptions` gains `name` and `version`, controlling the server identity advertised in `initialize`.
-- Fixed: the proxy no longer advertises a hardcoded `1.1.1` as its version.
-
-## 2.0.2 — 2026-06-02 · security [#v2-0-2]
-
-**Audit subkeys now derive from the signing secret through the `sign()` oracle rather than from the public `keyId`.**
-
-The per-entry HMAC chain key and the high-tier AES encryption root were previously `keyId`, which is `SHA256(secret)` and is published in `ReplayManifest.signedBy`.
-Anyone holding a manifest could therefore forge `chainHash` values and decrypt high-tier payloads.
-Keys now derive through domain-separated labels (`mcpose/v1/chain`, `mcpose/v1/enc`) and never leave the process; `keyId` is a public identifier only.
-
-**Format change.** `chainHash` and the encrypted payloads differ from 2.0.0, so chains written under the old scheme do not verify under 2.0.2.
-Core (2.0.1) and `@mcpose/testing` (2.0.0) were unaffected.
-See [ADR-0003](/docs/v3/project/adrs/).
-
-## 2.0.0 — 2026-06-02 [#v2-0-0]
-
-- **`@mcpose/audit`** — new package: HMAC-chained `AuditEvent` records, per-event SHA-256 input/output hashes, sensitivity tiers with AES-256-GCM encryption for the high tier, and a signed `ReplayManifest` with a Merkle proof per event.
-- **`@mcpose/testing`** — new package: runner-agnostic compliance assertions.
-- **Identity resolution** — `resolveIdentity` on `HttpProxyOptions`, resolved once per session and stamped on every `ProxyContext`.
-- **Agent delegation** — `delegatedFrom` on `ProxyContext` for recording A2A handoff sequences.
-
-## 1.0.0 — 2026-02-27 [#v1-0-0]
-
-Initial release: the transparent proxy, onion middleware, and the stdio and HTTP transports.
+Format-v1 and format-v2 records do not verify interchangeably.
+Keep the verifier matching the format of each retained archive; do not treat an upgrade as an archive conversion.
+[Previous-version documentation](/docs/v2/project/changelog/) preserves the v2 context.
