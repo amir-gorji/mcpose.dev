@@ -100,17 +100,11 @@ Each still catches a genuine regression, because a real one moves these numbers 
 The PR comment always prints the raw number against the 2500ms marker, so the gap stays visible on every run even though the gate tolerates it.
 Once the page is under 2500ms, tighten this assertion.
 
-`color-contrast` is asserted as a warning rather than an error.
-It currently fails on the docs index (`.card-body`).
-See "Known issues" below.
+`color-contrast` is asserted as a warning rather than an error, kept as a defensive floor rather than tightened to an error.
 
 ## Known issues
 
-Lighthouse reports insufficient colour contrast on one element:
-
-- `.card-body` on the docs index (inherits `--color-text` at `opacity: 0.8` on `--color-surface`).
-
-Three previous contrast failures were resolved when `--text-muted` replaced `--color-neutral-600` in small-text CSS classes and in the Shiki code theme. `color-contrast` is still asserted as a warning rather than an error because `.card-body` still trips it.
+None currently tracked. The last two contrast failures — `.card-body` inheriting `--color-text` at `opacity: 0.8`, and `--color-neutral-600` in small-text CSS classes and the Shiki code theme — were resolved by giving `.card-body` its own `--color-muted` color and replacing `--color-neutral-600` with `--text-muted`.
 
 ## Real-user metrics
 
