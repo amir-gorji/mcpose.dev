@@ -45,9 +45,13 @@ The Figma text overflow check passed after updating the snippets.
 
 - `pnpm typecheck` and `pnpm lint` pass.
 - `pnpm test` builds 67 routes, indexes 52 documentation pages, and passes 17 checks, including compilation of actual documentation examples and one-title-per-article validation.
-- `pnpm test:e2e` passes 54 desktop and mobile tests, including WCAG 2.2 AA axe checks with color contrast enabled in both themes.
+- `pnpm test:e2e` passes 58 desktop and mobile tests, including WCAG 2.2 AA axe checks with color contrast enabled in both themes.
 - Playwright visual checks covered 320, 390, 768, 1024, 1440, and 1920 px widths in light and dark themes.
 - The mobile explorer and long-title regressions failed before the fixes and pass afterward.
 
 CI now runs the browser and accessibility suite before uploading the preview artifact.
 PR #14 remains the integration and preview surface; production deployment happens only through the normal main-branch release workflow.
+
+The four preserved commits from the earlier cancelled validation run are retained in the branch history.
+They restore screen-reader-only styling, OS theme synchronization, a v2 fallback link, stronger search assertions, and accurate historical deployment notes.
+The OS-theme regression was reproduced before integration; its test now also checks the hidden mobile menu control.

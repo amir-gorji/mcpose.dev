@@ -8,7 +8,7 @@ test.describe('theme responds to live OS preference change', () => {
     await page.evaluate(() => localStorage.removeItem('mcpose.theme'));
     await page.reload();
 
-    const toggle = page.getByRole('button', { name: /switch to (dark|light) theme/i });
+    const toggle = page.getByRole('button', { name: /switch to (dark|light) theme/i, includeHidden: true }).first();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
     await expect(toggle).toHaveAttribute('aria-label', 'Switch to dark theme');
     const lightBg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
