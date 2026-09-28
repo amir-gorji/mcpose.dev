@@ -2,22 +2,19 @@ import styles from './capabilities.module.css';
 
 const CAPABILITIES = [
   {
-    pillar: 'Adapt',
-    title: 'Transform, shape, serve',
+    title: 'Build a gateway',
     description:
-      'Transform results, shape discovery, and serve local tools alongside upstream tools.',
+      'Connect local and remote MCP servers through one endpoint, with distinct tool names and shared middleware.',
   },
   {
-    pillar: 'Operate',
-    title: 'Identity, observe, persist',
+    title: 'Adapt your tools',
     description:
-      'Resolve identity, observe calls, and persist transport events with Redis or Postgres.',
+      'Filter the tool catalog, transform results, and add local tools without forking upstream servers.',
   },
   {
-    pillar: 'Govern',
-    title: 'Policy, consent, audit',
+    title: 'Debug calls',
     description:
-      'Apply policy and consent, then preserve tamper-evident evidence with audit.',
+      'Inspect call timing, outcomes, and backend failures. Send events to your existing telemetry stack.',
   },
 ] as const;
 
@@ -26,17 +23,16 @@ export default function Capabilities() {
     <section aria-label="Capabilities" className={styles.section}>
       <div className={styles.header}>
         <h2 className={styles.heading}>
-          Useful in a side project. Ready for serious work.
+          What will you build?
         </h2>
         <p className={styles.lede}>
-          Keep the core small. Compose the capabilities your application needs.
+          Start with a developer problem. Solve it in the space between client and server.
         </p>
       </div>
 
       <div className={styles.grid}>
         {CAPABILITIES.map((cap) => (
-          <div key={cap.pillar} className={styles.card}>
-            <span className={styles.pillar}>{cap.pillar}</span>
+          <div key={cap.title} className={styles.card}>
             <h3 className={styles.cardTitle}>{cap.title}</h3>
             <p className={styles.cardText}>{cap.description}</p>
           </div>

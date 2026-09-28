@@ -7,7 +7,7 @@ export default function CtaCard() {
       <div className={styles.card}>
         <h2 className={styles.heading}>The next layer is yours.</h2>
         <p className={styles.lede}>
-          Start with one proxy and one function. See where it takes you.
+          Your first gateway, tool adapter, or debugging layer starts with one proxy.
         </p>
         <div className={styles.action}>
           <Link

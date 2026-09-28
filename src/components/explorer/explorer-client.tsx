@@ -240,8 +240,8 @@ export default function ExplorerClient({ highlightedSnippets }: ExplorerClientPr
       className={styles.section}
     >
       <div className={styles.header}>
-        <h2 className={styles.heading}>What would you change?</h2>
-        <p className={styles.lede}>Follow one call. Add middleware. See the difference.</p>
+        <h2 className={styles.heading}>Make existing tools fit your app.</h2>
+        <p className={styles.lede}>Transform results, filter discovery, or add audit. The same composable middleware.</p>
       </div>
 
       {/* Manual activation tabs */}

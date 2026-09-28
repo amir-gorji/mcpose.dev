@@ -100,10 +100,6 @@
   text-align: center;
 }
 
-.mobileDiagram {
-  display: none;
-}
-
 @media (max-width: 1439px) and (min-width: 1024px) {
   .hero {
     grid-template-columns: 1fr 1fr;
@@ -139,42 +135,6 @@
     font-size: 44px;
     line-height: 46px;
   }
-
-  .desktopArtwork {
-    display: none;
-  }
-
-  .mobileDiagram {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-    margin-top: 16px;
-  }
-
-  .mobileCard {
-    width: 100%;
-    max-width: 320px;
-    padding: 16px;
-    border-radius: var(--radius-md);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    text-align: center;
-    font-weight: 500;
-    font-size: 14px;
-  }
-
-  .mobileCardAccent {
-    background: #2456E8;
-    color: #FFFFFF;
-    border-color: #2456E8;
-  }
-
-  .mobileConnector {
-    font-size: 18px;
-    color: var(--color-accent);
-  }
 }
 
 @media (max-width: 380px) {
@@ -188,5 +148,32 @@
   }
 }
 
-.desktopArtwork { width: 100%; }
 .visualCol { min-width: 0; }
+
+.motionArtwork {
+  width: 100%;
+  max-width: 584px;
+  position: relative;
+}
+
+.motionControl {
+  display: block;
+  margin: 8px 0 0 auto;
+  padding: 8px 12px;
+  color: var(--color-muted);
+  font: inherit;
+  font-size: 12px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.motionControl:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motionControl { display: none; }
+}

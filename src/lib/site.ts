@@ -20,9 +20,9 @@ export const PUBLISHED_V3 = {
 export const SITE = {
   url: 'https://mcpose.dev',
   name: 'mcpose',
-  title: 'mcpose | The composable MCP proxy',
+  title: 'mcpose | The programmable MCP proxy',
   description:
-    'A composable TypeScript proxy for MCP servers. Transform responses, shape tool access, and connect upstreams through middleware you control.',
+    'A programmable TypeScript proxy for MCP. Build a gateway, shape tools and results, and inspect calls through middleware you control.',
   github: 'https://github.com/amir-gorji/mcpose',
   githubSecurity: 'https://github.com/amir-gorji/mcpose/blob/main/SECURITY.md',
   npm: {
@@ -51,6 +51,9 @@ export const SITE = {
     'Model Context Protocol',
     'middleware',
     'proxy',
+    'MCP gateway',
+    'tool filtering',
+    'observability',
     'audit',
     'policy',
     'consent',

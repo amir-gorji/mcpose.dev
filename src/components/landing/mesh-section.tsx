@@ -27,12 +27,12 @@ export default function MeshSection() {
     <section aria-label="Multi-server mesh" className={styles.section}>
       <div className={styles.card}>
         <div className={styles.copyCol}>
-          <h2 className={styles.heading}>Bring your servers together.</h2>
+          <h2 className={styles.heading}>Your gateway. Your middleware.</h2>
           <p className={styles.subheading}>
-            One endpoint. Distinct tools. The same middleware model.
+            Many servers. One MCP endpoint. Behavior you control in TypeScript.
           </p>
           <p className={styles.description}>
-            Connect named upstreams and expose their tools through a shared proxy. Add a transformation once and reuse it across your integrations.
+            Combine docs, CRM, and file tools behind one proxy. Add shared behavior once. Deploy the library in your own application.
           </p>
           <div className={styles.actionRow}>
             <a
@@ -40,7 +40,7 @@ export default function MeshSection() {
               className="btn btn-secondary"
               onClick={handleExploreMesh}
             >
-              Explore multi-server composition
+              Explore the gateway example
             </a>
           </div>
         </div>

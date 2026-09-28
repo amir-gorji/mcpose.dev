@@ -5,17 +5,17 @@ test.describe('Homepage', () => {
     await page.goto('/');
 
     // Check title and meta
-    await expect(page).toHaveTitle('mcpose | The composable MCP proxy');
+    await expect(page).toHaveTitle('mcpose | The programmable MCP proxy');
 
     // Eyebrow and headline
-    await expect(page.locator('text=The composable MCP proxy').first()).toBeVisible();
+    await expect(page.locator('text=The programmable MCP proxy').first()).toBeVisible();
     await expect(page.locator('h1')).toContainText('Make MCP');
     await expect(page.locator('h1')).toContainText('work your way.');
 
     // Lead text
     await expect(
       page.locator(
-        'text=Transform responses. Shape tool access. Connect servers. Add the behavior you need between your client and its MCP servers.',
+        'text=Build an MCP gateway. Shape tools and results. See what happens on every call. A TypeScript proxy library you run and extend.',
       ),
     ).toBeVisible();
 
@@ -37,30 +37,28 @@ test.describe('Homepage', () => {
   test('renders all sections in expected order', async ({ page }) => {
     await page.goto('/');
 
-    // Section 4: Explorer
-    const explorer = page.locator('#explore');
-    await expect(explorer).toBeVisible();
-    await expect(explorer.locator('h2')).toHaveText('What would you change?');
-
-    // Section 5: Mesh
-    const meshSection = page.locator('section[aria-label="Multi-server mesh"]');
-    await expect(meshSection).toBeVisible();
-    await expect(meshSection.locator('h2')).toHaveText('Bring your servers together.');
-
-    // Section 6: Capabilities
-    const capSection = page.locator('section[aria-label="Capabilities"]');
-    await expect(capSection).toBeVisible();
-    await expect(capSection.locator('h2')).toHaveText('Useful in a side project. Ready for serious work.');
-
-    // Section 7: Packages
-    const pkgSection = page.locator('section[aria-label="Packages"]');
-    await expect(pkgSection).toBeVisible();
-    await expect(pkgSection.locator('h2')).toHaveText('Only the pieces you need.');
-
-    // Section 8: CTA Card
-    const ctaSection = page.locator('section[aria-label="Get started"]');
-    await expect(ctaSection).toBeVisible();
-    await expect(ctaSection.locator('h2')).toHaveText('The next layer is yours.');
+    await expect(page.locator('main section > h2, main section > div > h2, main section > div > div > h2')).toHaveText([
+      'What will you build?',
+      'Your gateway. Your middleware.',
+      'Make existing tools fit your app.',
+      'Add capabilities as you need them.',
+      'The next layer is yours.',
+    ]);
+    await expect(page.locator('section[aria-label="Capabilities"] h3')).toHaveText([
+      'Build a gateway',
+      'Adapt your tools',
+      'Debug calls',
+    ]);
+    await expect(page.locator('section[aria-label="Packages"] a:visible')).toHaveText([
+      'mcpose',
+      '@mcpose/otel',
+      '@mcpose/store-redis',
+      '@mcpose/store-postgres',
+      '@mcpose/policy',
+      '@mcpose/consent',
+      '@mcpose/audit',
+      '@mcpose/testing',
+    ]);
   });
 
   test('theme toggle switches theme and persists', async ({ page, isMobile }) => {

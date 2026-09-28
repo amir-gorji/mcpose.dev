@@ -10,7 +10,15 @@
   font-weight: 500;
   letter-spacing: -0.03em;
   color: var(--color-text);
-  margin: 0 0 32px 0;
+  margin: 0 0 16px 0;
+  text-align: center;
+}
+
+.lede {
+  margin: 0 0 32px;
+  font-size: 18px;
+  line-height: 28px;
+  color: var(--color-muted);
   text-align: center;
 }
 
