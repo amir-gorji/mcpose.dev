@@ -42,9 +42,9 @@ export default function LandingPage() {
       <JsonLd data={webSite} />
 
       <Hero />
-      <Explorer />
-      <MeshSection />
       <Capabilities />
+      <MeshSection />
+      <Explorer />
       <PackagesTable />
       <CtaCard />
     </main>

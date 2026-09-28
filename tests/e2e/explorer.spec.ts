@@ -71,7 +71,7 @@ test.describe('Request Explorer (D03)', () => {
   });
 
   test('mesh section button selects mesh preset and scrolls to explore', async ({ page }) => {
-    const meshExploreBtn = page.locator('a:has-text("Explore multi-server composition")');
+    const meshExploreBtn = page.locator('a:has-text("Explore the gateway example")');
     await expect(meshExploreBtn).toBeVisible();
 
     await meshExploreBtn.click();

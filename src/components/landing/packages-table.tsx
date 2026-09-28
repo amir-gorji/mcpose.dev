@@ -14,6 +14,21 @@ const PACKAGES: readonly PackageItem[] = [
     description: 'Proxy, transport, middleware.',
   },
   {
+    name: '@mcpose/otel',
+    path: '/docs/v3/packages/otel/',
+    description: 'Connect telemetry to OpenTelemetry.',
+  },
+  {
+    name: '@mcpose/store-redis',
+    path: '/docs/v3/packages/store-redis/',
+    description: 'Persistent SSE events.',
+  },
+  {
+    name: '@mcpose/store-postgres',
+    path: '/docs/v3/packages/store-postgres/',
+    description: 'Persistent SSE events.',
+  },
+  {
     name: '@mcpose/policy',
     path: '/docs/v3/packages/policy/',
     description: 'Role rules and per-session call budgets.',
@@ -33,27 +48,16 @@ const PACKAGES: readonly PackageItem[] = [
     path: '/docs/v3/packages/testing/',
     description: 'Audit consistency assertions.',
   },
-  {
-    name: '@mcpose/otel',
-    path: '/docs/v3/packages/otel/',
-    description: 'OpenTelemetry.',
-  },
-  {
-    name: '@mcpose/store-redis',
-    path: '/docs/v3/packages/store-redis/',
-    description: 'Persistent SSE events.',
-  },
-  {
-    name: '@mcpose/store-postgres',
-    path: '/docs/v3/packages/store-postgres/',
-    description: 'Persistent SSE events.',
-  },
 ] as const;
 
 export default function PackagesTable() {
   return (
     <section aria-label="Packages" className={styles.section}>
-      <h2 className={styles.heading}>Only the pieces you need.</h2>
+      <h2 className={styles.heading}>Add capabilities as you need them.</h2>
+
+      <p className={styles.lede}>
+        Telemetry and persistence for operations. Optional policy, consent, redaction, and audit for sensitive workflows.
+      </p>
 
       {/* Desktop table */}
       <div className={styles.tableWrap}>

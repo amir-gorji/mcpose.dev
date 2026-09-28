@@ -1,157 +1,120 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import styles from './hero.module.css';
 
 export default function HeroInteractive() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const pathRef = useRef<SVGPathElement>(null);
-  const [markerPos, setMarkerPos] = useState<{ x: number; y: number } | null>(null);
-  const [markerOpacity, setMarkerOpacity] = useState(0);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const pausedRef = useRef(false);
+  const syncRef = useRef<() => void>(() => {});
+  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
-    // Check reduced motion preference
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return;
+    const svg = svgRef.current;
+    if (!svg) return;
+    const parts = new Map(Array.from(svg.querySelectorAll<SVGElement>('[data-part]'), el => [el.dataset.part, el]));
+    const $ = (name: string) => parts.get(name)!;
+    const route = $('route') as SVGPathElement;
+    const length = route.getTotalLength();
+    const clamp = (n: number) => Math.max(0, Math.min(1, n));
+    const ease = (value: number) => { const n = clamp(value); return n * n * (3 - 2 * n); };
+    // Route distances to the gates at (345,215), (570,240), (480,285), (615,310), (420,415).
+    // Precomputed: measuring the path on load blocked the main thread. Recompute if the route changes.
+    const gates = [262.5, 719.9, 828.4, 1098.2, 1390.6];
+    let time = 0.025;
+    // Update SVG attributes directly; pause/play never rebuilds the animation.
+    const attr = (id: string, name: string, value: string | number) => $(id).setAttribute(name, String(value));
+    function render() {
+      const distance = time * length;
+      const point = route.getPointAtLength(distance);
+      const response = distance >= gates[2];
+      const approve = ease((distance - gates[0]) / 35);
+      const adapt = ease((distance - gates[1]) / 45);
+      const simplify = ease((distance - gates[3]) / 55);
+      const mask = ease((distance - gates[4]) / 45);
+      attr('token', 'transform', `translate(${point.x} ${point.y}) scale(0.9)`);
+      attr('token', 'opacity', Math.min(clamp(distance / 20), clamp((length - distance) / 25)));
+      attr('card', 'fill', response ? '#e4f5f1' : '#fff4dd');
+      for (const id of ['card', 'fold']) attr(id, 'stroke', response ? '#198681' : '#bc731e');
+      $('rows').style.color = response ? '#198681' : '#bc731e';
+      attr('approval', 'opacity', response ? 0 : approve);
+      attr('row1', 'width', response ? 25 - 5 * simplify : 21 - 7 * adapt);
+      attr('row1', 'y', response ? -10 + 2 * simplify : -10 + 10 * adapt);
+      attr('row2', 'width', response ? 21 : 14 + 11 * adapt);
+      attr('row2', 'y', response ? 6 * simplify : -10 * adapt);
+      attr('row3', 'width', response ? 15 : 25 - 5 * adapt);
+      attr('row3', 'opacity', response ? 1 - simplify : 1);
+      attr('row2', 'opacity', 1 - mask);
+      attr('mask', 'opacity', mask);
+      const activity = Math.max(0, 1 - Math.abs(distance - gates[2]) / 40);
+      attr('server', 'fill', `rgb(${41 + 30 * activity},${84 + 30 * activity},237)`);
     }
-
-    let animationFrameId: number;
-    let delayTimer: ReturnType<typeof setTimeout>;
-    let hasRun = false;
-
-    const cubicBezier = (t: number): number => {
-      // Approximation for cubic-bezier(0.22, 1, 0.36, 1)
-      return t === 0 ? 0 : t === 1 ? 1 : 1 - Math.pow(1 - t, 3);
+    let frame = 0;
+    let last = 0;
+    let visible = false;
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const step = (now: number) => {
+      if (last) time = (time + Math.min(now - last, 50) / 12000) % 1;
+      last = now;
+      render();
+      frame = requestAnimationFrame(step);
     };
-
-    const runAnimation = () => {
-      if (hasRun || !pathRef.current) return;
-      hasRun = true;
-
-      const path = pathRef.current;
-      const length = path.getTotalLength();
-      const startPoint = path.getPointAtLength(0);
-      setMarkerPos({ x: startPoint.x, y: startPoint.y });
-
-      delayTimer = setTimeout(() => {
-        setMarkerOpacity(1);
-        const startTime = performance.now();
-        const duration = 960;
-        const fadeDuration = 120;
-
-        const step = (now: number) => {
-          const elapsed = now - startTime;
-          const progress = Math.min(elapsed / duration, 1);
-          const eased = cubicBezier(progress);
-
-          if (pathRef.current) {
-            const point = pathRef.current.getPointAtLength(eased * length);
-            setMarkerPos({ x: point.x, y: point.y });
-          }
-
-          if (progress < 1) {
-            animationFrameId = requestAnimationFrame(step);
-          } else {
-            // Fade out over 120ms
-            const fadeStartTime = performance.now();
-            const fadeStep = (fadeNow: number) => {
-              const fadeElapsed = fadeNow - fadeStartTime;
-              const fadeProgress = Math.min(fadeElapsed / fadeDuration, 1);
-              setMarkerOpacity(1 - fadeProgress);
-
-              if (fadeProgress < 1) {
-                animationFrameId = requestAnimationFrame(fadeStep);
-              } else {
-                setMarkerPos(null);
-              }
-            };
-            animationFrameId = requestAnimationFrame(fadeStep);
-          }
-        };
-
-        animationFrameId = requestAnimationFrame(step);
-      }, 250);
+    const sync = () => {
+      cancelAnimationFrame(frame);
+      last = 0;
+      if (!pausedRef.current && !motion.matches && !document.hidden && visible) frame = requestAnimationFrame(step);
     };
-
-    // Intersection observer: run only when >= 50% visible
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
-            runAnimation();
-            observer.disconnect();
-          }
-        });
-      },
-      { threshold: 0.5 },
-    );
-
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
-
-    const handleVisibilityOrResize = () => {
-      if (document.hidden) {
-        clearTimeout(delayTimer);
-        cancelAnimationFrame(animationFrameId);
-        setMarkerPos(null);
-      }
-    };
-
-    window.addEventListener('resize', handleVisibilityOrResize);
-    document.addEventListener('visibilitychange', handleVisibilityOrResize);
-
+    syncRef.current = sync;
+    const observer = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      sync();
+    });
+    render();
+    observer.observe(svg);
+    motion.addEventListener('change', sync);
+    document.addEventListener('visibilitychange', sync);
     return () => {
+      cancelAnimationFrame(frame);
       observer.disconnect();
-      clearTimeout(delayTimer);
-      cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('resize', handleVisibilityOrResize);
-      document.removeEventListener('visibilitychange', handleVisibilityOrResize);
+      syncRef.current = () => {};
+      motion.removeEventListener('change', sync);
+      document.removeEventListener('visibilitychange', sync);
     };
   }, []);
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        position: 'relative',
-        width: '100%',
-        maxWidth: 584,
-        aspectRatio: '584 / 470',
-        margin: '0 auto',
-      }}
-    >
-      <svg
-        width="100%"
-        height="100%"
-        viewBox="0 0 584 470"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        role="img"
-        aria-label="Three layers: client request, your middleware, and the upstream MCP server"
-        style={{ display: 'block' }}
-      >
-        <path d="M110 300L325 240L475 345L260 405Z" fill="var(--color-surface)" stroke="var(--color-border)" />
-        <path d="M130 195L345 135L495 240L280 300Z" fill="var(--color-hero-plate)" />
-        <path d="M150 90L365 30L515 135L300 195Z" fill="var(--color-surface)" stroke="var(--color-border)" />
-        <path
-          ref={pathRef}
-          d="M40 135H150L300 195L280 300L475 345H548"
-          stroke="var(--color-accent)"
-          strokeWidth="2"
-          strokeDasharray="4 6"
-        />
-        <circle cx="40" cy="135" r="5" fill="var(--color-accent)" />
-        <circle cx="548" cy="345" r="5" fill="var(--color-accent)" />
-        <g fontFamily="var(--font-sans)" textAnchor="middle">
-          <text x="333" y="115" fill="var(--color-text)" fontSize="18">Client request</text>
-          <text x="312" y="220" fill="var(--color-hero-plate-text)" fontSize="24" fontWeight="600">mcpose</text>
-          <text x="320" y="244" fill="var(--color-hero-plate-text)" fontSize="14">Your middleware</text>
-          <text x="292" y="332" fill="var(--color-text)" fontSize="18">MCP server</text>
-          <text x="67" y="113" fill="var(--color-muted)" fontSize="12">Request</text>
-          <text x="522" y="376" fill="var(--color-muted)" fontSize="12">Response</text>
+    <div className={styles.motionArtwork}>
+      <svg ref={svgRef} viewBox="75 22 670 483" role="img" aria-label="A request transforms through mcpose layers, then returns as a refined response" width="100%" style={{ display: 'block' }}>
+        <desc>A request is approved and adapted. The MCP server responds, and middleware simplifies the response and masks a field before returning it.</desc>
+        <text x="480" y="46" textAnchor="middle" fontFamily="var(--font-mono)" fontSize="18" letterSpacing="1.5" fill="var(--color-muted)">YOUR MIDDLEWARE</text>
+        <g data-part="guides"><path data-part="route" fill="none" stroke="var(--color-border)" strokeWidth="1.5" strokeDasharray="3 7" d="M120 260H325Q345 260 345 240V165Q345 145 365 145H595Q615 145 615 165V220Q615 240 595 240H535Q525 240 515 248L492 267Q480 277 480 293V315Q480 335 500 335H515Q535 335 535 315V285Q535 265 555 265H595Q615 265 615 285V395Q615 415 595 415H200"/></g>
+        <path fill="none" stroke="var(--color-accent)" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" d="M300 220V140Q300 100 340 100H620Q660 100 660 140V420Q660 460 620 460H420"/>
+        <path fill="none" stroke="var(--color-accent)" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" d="M540 190H420Q390 190 390 220V340Q390 370 420 370H540Q570 370 570 340V295"/>
+        <text x="490" y="88" textAnchor="middle" fontFamily="var(--font-mono)" fontSize="18" letterSpacing="1.2" fill="var(--color-muted)">FILTER</text>
+        <text x="462" y="224" textAnchor="middle" fontFamily="var(--font-mono)" fontSize="18" letterSpacing="1.2" fill="var(--color-muted)">TRANSFORM</text>
+        <text fontFamily="var(--font-mono)" fontSize="18" letterSpacing="1.5" fill="var(--color-muted)" x="113" y="218">REQUEST →</text>
+        <text fontFamily="var(--font-mono)" fontSize="18" letterSpacing="1.5" fill="var(--color-muted)" x="160" y="465">← RESPONSE</text>
+        <g data-part="token" transform="translate(120 260) scale(0.9)">
+        <rect data-part="card" x="-22" y="-27" width="44" height="54" rx="7" fill="#fff4dd" stroke="#bc731e" strokeWidth="2.5"/>
+        <path data-part="fold" d="M8 -26V-15H21" fill="none" stroke="#bc731e" strokeWidth="1.5"/>
+        <g fill="currentColor" data-part="rows" style={{ color: "#bc731e" }}>
+        <rect data-part="row1" x="-13" y="-10" width="21" height="4" rx="2"/>
+        <rect data-part="row2" x="-13" y="0" width="14" height="4" rx="2"/>
+        <rect data-part="row3" x="-13" y="10" width="25" height="4" rx="2"/>
         </g>
-        {markerPos && <circle cx={markerPos.x} cy={markerPos.y} r="6" fill="var(--color-accent)" opacity={markerOpacity} />}
+        <g data-part="approval" opacity="0"><circle cx="20" cy="-24" r="9" fill="#eff8ed" stroke="#34815d" strokeWidth="2"/><path d="m16 -24 3 3 5 -6" fill="none" stroke="#34815d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></g>
+        <rect data-part="mask" x="-13" y="6" width="26" height="6" rx="2" fill="#215554" opacity="0"/>
+        </g>
+        <rect data-part="server" x="442" y="244" width="76" height="72" rx="10" fill="#2954ed"/>
+        <text fontFamily="var(--font-sans)" fontSize="14" fontWeight="600" fill="white" textAnchor="middle" x="480" y="276">MCP</text><text fontFamily="var(--font-sans)" fontSize="14" fontWeight="600" fill="white" textAnchor="middle" x="480" y="294">SERVER</text>
       </svg>
+      <button type="button" className={styles.motionControl} onClick={() => {
+        pausedRef.current = !pausedRef.current;
+        syncRef.current();
+        setPaused(pausedRef.current);
+      }} aria-label={paused ? 'Play illustration' : 'Pause illustration'}>
+        {paused ? 'Play' : 'Pause'}
+      </button>
     </div>
   );
 }
