@@ -18,22 +18,9 @@ export default function HeroInteractive() {
     const length = route.getTotalLength();
     const clamp = (n: number) => Math.max(0, Math.min(1, n));
     const ease = (value: number) => { const n = clamp(value); return n * n * (3 - 2 * n); };
-    // Sample once, then refine only the small interval around each crossing.
-    const samples = Array.from({ length: 201 }, (_, i) => route.getPointAtLength(i / 200 * length));
-    function distanceAt(x: number, y: number) {
-      const error = (p: DOMPoint) => Math.hypot(p.x - x, p.y - y);
-      const closest = samples.reduce((best, point, i) => error(point) < error(samples[best]) ? i : best, 0);
-      let low = Math.max(0, (closest - 1) / 200 * length);
-      let high = Math.min(length, (closest + 1) / 200 * length);
-      for (let i = 0; i < 16; i++) {
-        const left = low + (high - low) / 3;
-        const right = high - (high - low) / 3;
-        if (error(route.getPointAtLength(left)) < error(route.getPointAtLength(right))) high = right;
-        else low = left;
-      }
-      return (low + high) / 2;
-    }
-    const gates = [[345, 215], [570, 240], [480, 285], [615, 310], [420, 415]].map(([x, y]) => distanceAt(x, y));
+    // Route distances to the gates at (345,215), (570,240), (480,285), (615,310), (420,415).
+    // Precomputed: measuring the path on load blocked the main thread. Recompute if the route changes.
+    const gates = [262.5, 719.9, 828.4, 1098.2, 1390.6];
     let time = 0.025;
     // Update SVG attributes directly; pause/play never rebuilds the animation.
     const attr = (id: string, name: string, value: string | number) => $(id).setAttribute(name, String(value));
